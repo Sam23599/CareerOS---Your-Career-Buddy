@@ -12,6 +12,21 @@ Cady is designed to understand a user's profile, skills, experience, career goal
 
 ---
 
+## Run locally
+
+The implemented foundation is React + TypeScript, Express + TypeScript, and MongoDB. The rest of this README describes the planned product.
+
+```bash
+cp .env.example .env
+docker compose up --build -d --wait
+```
+
+Open http://localhost:5173 to check the frontend, API, and database connections. Copy the environment file only on first setup. Docker must be running.
+
+See [local development](docs/local-development.md) for host development, checks, ports, and persistence, and [ADR-001](docs/adr/001-local-platform-foundation.md) for the setup decisions.
+
+---
+
 ## What is CareerOS?
 
 CareerOS focuses on four major areas:
@@ -735,7 +750,7 @@ And at the center of that experience:
 
 ## Project Status
 
-**Status:** Initial development / Architecture planning
+**Status:** Local React, Express, and MongoDB foundation implemented; product features are next.
 
 The architecture, service boundaries, technology choices, and feature set are expected to evolve as the project is implemented.
 

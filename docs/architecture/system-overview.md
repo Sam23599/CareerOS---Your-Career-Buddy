@@ -1,5 +1,7 @@
 # CareerOS — System Architecture Overview
 
+Current implementation: one React app, one Express app, and MongoDB for local development. See [ADR-001](../adr/001-local-platform-foundation.md). The diagrams below describe the planned evolution; Python, Java, Redis, and Kafka are not implemented yet.
+
 ## 1. Purpose
 
 This document defines the initial technical architecture of CareerOS.

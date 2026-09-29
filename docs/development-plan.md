@@ -76,7 +76,7 @@ Establish the repository, development standards, documentation, and local develo
 * [x] Create initial README
 * [x] Create development plan
 * [x] Create `docs/` structure
-* [ ] Create ADR structure
+* [x] Create ADR structure
 * [ ] Define repository conventions
 * [ ] Define branch strategy
 * [ ] Define commit conventions
@@ -1273,12 +1273,12 @@ The goal is to progressively turn CareerOS into a unified career platform rather
 | Area                  | Status          |
 | --------------------- | --------------- |
 | Project definition    | Planned         |
-| Repository setup      | In progress     |
+| Repository setup      | Local foundation implemented |
 | README                | Initial version |
 | Development plan      | Initial version |
-| Architecture          | Planning        |
-| Frontend              | Not started     |
-| Node.js platform      | Not started     |
+| Architecture          | Foundation recorded in ADR-001 |
+| Frontend              | Connection status page implemented |
+| Node.js platform      | Health/readiness API implemented |
 | Python intelligence   | Not started     |
 | Java workflows        | Not started     |
 | Kafka                 | Future phase    |

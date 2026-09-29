@@ -1,12 +1,12 @@
 # CareerOS — Review and Next Implementation Steps
 
-Review date: 2026-09-30. Status: proposed execution sequence; core workflow first and community in Phase 5 confirmed by the user.
+Review date: 2026-09-30. Status: local foundation implemented and verified; core workflow first and community in Phase 5 confirmed by the user.
 
 ## 1. Current position
 
 CareerOS combines job discovery, career profiles, preparation, application tracking, and community. Cady connects these capabilities through personalized career intelligence. The project also deliberately develops engineering experience across Node.js, Python, Java, and distributed systems.
 
-Before this review, the repository contained five planning documents and an empty `docker-compose.yml`. There is no application code, dependency manifest, test suite, runnable environment, or recorded ADR yet. The tracked history contains one initial documentation commit. Work is at Phase 0, before an executable foundation.
+Before this review, the repository contained five planning documents and an empty `docker-compose.yml`. At that point there was no application code, dependency manifest, test suite, runnable environment, or recorded ADR. The tracked history contains one initial documentation commit. That review preceded the executable foundation.
 
 The original incremental approach remains appropriate: establish useful profile and job data in Node first, add intelligence in Python, then application workflows in Java. Start with one Node application containing separate domain modules, as permitted by `architecture/service-boundaries.md`.
 
@@ -39,7 +39,7 @@ Each step depends on the preceding foundation. Add relevant tests alongside beha
 | Step | Implementation scope | Completion evidence |
 | --- | --- | --- |
 | 0. Align the plan | Record initial architecture/repository decisions; release naming, community scope, and roadmap alignment are resolved by this review | One consistent release checklist and ADR index, with proposals distinguished from accepted decisions |
-| 1. Runnable foundation | Scaffold React and one Express application; configure MongoDB, environment examples, ignore rules, lint/build commands, Docker Compose, API prefix, structured errors, request IDs, and health/readiness checks | A clean checkout starts using documented commands; frontend reaches the API; readiness reflects database availability; data survives restart |
+| 1. Runnable foundation — complete | Scaffold React and one Express application; configure MongoDB, environment examples, ignore rules, lint/build commands, Docker Compose, API prefix, structured errors, request IDs, and health/readiness checks | A clean checkout starts using documented commands; frontend reaches the API; readiness reflects database availability; data survives restart |
 | 2. Authentication | Registration, login, JWT access/refresh handling, logout, USER/ADMIN enforcement, protected UI routes, and current-user API | A user can register, log in, refresh, and log out; invalid/revoked refresh tokens fail; protected APIs reject unauthenticated access and unauthorized actions |
 | 3. Career profile | Skills, experience, education, preferences, and professional-profile links, with validated read/update APIs and UI | Profile changes persist; one user cannot read or edit another user's private profile |
 | 4. Resume management | Upload, metadata, versions, active selection, authenticated download, and deletion; storage abstraction with a local implementation | Supported uploads work; invalid/oversized files fail; access is owner-only; active-resume and deletion behavior are defined and verified |
@@ -50,7 +50,7 @@ Each step depends on the preceding foundation. Add relevant tests alongside beha
 
 ## 5. First implementation batch
 
-Implement Step 1 after recording the foundation decisions. Keep it limited to a running web app, API, and database.
+Step 1 is implemented and verified. It is limited to a running web app, API, and database; see [verification evidence](local-development.md#verification-recorded-for-this-batch).
 
 Proposed layout:
 
@@ -75,4 +75,4 @@ Keep `development-plan.md` as the overall roadmap, `phase-1-backlog.md` as the e
 
 Record decisions when needed rather than writing every future ADR up front. Add API contracts with each feature. Update status from working behavior and validation evidence, not from scaffolding alone.
 
-No application code was changed or tests run during this review; there is no runnable application or test suite yet.
+The initial review changed documentation only. The subsequently authorized foundation batch now includes React, Express, MongoDB Compose configuration, API checks, and ADR-001. See [local development](local-development.md) for commands and [the foundation decision](adr/001-local-platform-foundation.md) for accepted choices. Authentication is the next feature batch.

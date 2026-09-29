@@ -36,15 +36,23 @@ The goal is to establish a stable platform foundation that later phases can cons
 * [x] Add README
 * [x] Add development plan
 * [x] Add `docs/`
-* [ ] Add ADR structure
-* [ ] Add `.gitignore`
-* [ ] Add `.env.example`
-* [ ] Define local development conventions
-* [ ] Add Docker Compose foundation
+* [x] Add ADR structure
+* [x] Add `.gitignore`
+* [x] Add `.env.example`
+* [x] Define local development conventions
+* [x] Add Docker Compose foundation
 
 ### Output
 
 A clean repository that any developer can clone and start locally.
+
+### Backend foundation — implemented
+
+* [x] Express + TypeScript startup and validated environment configuration
+* [x] MongoDB connection and separate liveness/readiness endpoints
+* [x] JSON request logs, request IDs, and structured errors
+* [x] Lint, type checks, build commands, and foundation API tests
+* [x] Live Docker startup, database outage recovery, and persistence checks
 
 ---
 
@@ -52,15 +60,17 @@ A clean repository that any developer can clone and start locally.
 
 ### Tasks
 
-* [ ] Create React application
+* [x] Create React application
 * [ ] Configure routing
 * [ ] Create application shell
 * [ ] Create authentication pages
 * [ ] Create dashboard layout
 * [ ] Create reusable UI components
 * [ ] Configure API client
-* [ ] Configure error handling
+* [x] Configure error handling
 * [ ] Configure authentication state
+
+The current frontend is a connection-status page. Routing, authentication, and the product dashboard remain future work.
 
 ### Initial pages
 
@@ -419,7 +429,7 @@ Phase 1 is complete when:
 * [ ] Basic notifications work.
 * [ ] APIs have documentation.
 * [ ] Critical workflows have tests.
-* [ ] Local setup works through Docker.
+* [x] Local foundation setup works through Docker.
 
 ---
 
