@@ -31,11 +31,11 @@ The goal is to establish a stable platform foundation that later phases can cons
 
 ### Tasks
 
-* [ ] Initialize repository
+* [x] Initialize repository
 * [ ] Configure Git
-* [ ] Add README
-* [ ] Add development plan
-* [ ] Add `docs/`
+* [x] Add README
+* [x] Add development plan
+* [x] Add `docs/`
 * [ ] Add ADR structure
 * [ ] Add `.gitignore`
 * [ ] Add `.env.example`
@@ -72,7 +72,6 @@ A clean repository that any developer can clone and start locally.
 /jobs
 /jobs/:id
 /saved-jobs
-/teams
 /settings
 ```
 
@@ -246,9 +245,9 @@ Scheduled automation can follow after the source adapter architecture is stable.
 
 ---
 
-# 9. Milestone 9 — Community Foundation
+# 9. Deferred to Phase 5 — Community Foundation
 
-Implement the minimum viable community functionality.
+Deferred to Phase 5 by the confirmed release decision. The tasks below are retained for future planning and do not block Phase 1.
 
 ### Teams
 
@@ -277,9 +276,9 @@ MEMBER
 
 ---
 
-# 10. Milestone 10 — Community Sharing
+# 10. Deferred to Phase 5 — Community Sharing
 
-Allow members to share:
+In Phase 5, allow members to share:
 
 * [ ] Jobs
 * [ ] Articles
@@ -352,7 +351,7 @@ Minimum baseline:
 * [ ] Authentication tests
 * [ ] RBAC tests
 * [ ] Job normalization tests
-* [ ] Community permission tests
+* Community permission tests are deferred to Phase 5.
 
 ### Frontend
 
@@ -402,10 +401,6 @@ Search Jobs
 Open Job
    ↓
 Save Job
-   ↓
-Join/Create Team
-   ↓
-Share Job
 ```
 
 ---
@@ -421,10 +416,6 @@ Phase 1 is complete when:
 * [ ] Jobs can be searched and filtered.
 * [ ] Jobs can be saved.
 * [ ] Companies/career pages can be configured.
-* [ ] Teams can be created.
-* [ ] Users can join teams.
-* [ ] RBAC works for teams.
-* [ ] Jobs/resources can be shared inside teams.
 * [ ] Basic notifications work.
 * [ ] APIs have documentation.
 * [ ] Critical workflows have tests.
@@ -436,6 +427,7 @@ Phase 1 is complete when:
 
 Do not block Phase 1 on:
 
+* Community, teams, and sharing (Phase 5)
 * LLM integration
 * ATS analysis
 * Semantic job matching
@@ -477,41 +469,41 @@ The recommended implementation order is:
       ↓
 10. Saved Jobs
       ↓
-11. Community
+11. Notifications
       ↓
-12. Notifications
+12. Testing / Hardening
       ↓
-13. Testing / Hardening
-      ↓
-14. Phase 1 Release
+13. Phase 1 Release
 ```
 
 ---
 
 # 19. First ADR Set
 
-Before major implementation decisions, create:
+Record decisions as their implementation begins. Assign IDs in one `docs/adr/` index; the topics below are not preassigned numbers.
 
 ```text
-ADR-001 — Overall Architecture
-ADR-002 — Repository Structure
-ADR-003 — Node.js Platform Boundaries
-ADR-004 — MongoDB Data Ownership
-ADR-005 — Authentication & RBAC
-ADR-006 — Job Source Adapter Architecture
-ADR-007 — Community Service Boundary
-ADR-008 — Resume/Object Storage Strategy
+Overall Architecture
+Repository Structure
+Node.js Platform Boundaries
+MongoDB Data Ownership
+Authentication & RBAC
+Job Source Adapter Architecture
+Resume/Object Storage Strategy
 ```
 
 Later:
 
 ```text
-ADR-009 — AI Intelligence Service
-ADR-010 — Vector Storage
-ADR-011 — Kafka Event Architecture
-ADR-012 — Application Service Ownership
-ADR-013 — Notification Architecture
-ADR-014 — Production Deployment
+Community Service Boundary
+AI Intelligence Service
+Vector Storage
+Kafka Event Architecture
+Application Service Ownership
+Notification Architecture
+Production Deployment
 ```
 
 The ADR list should grow only when a decision has meaningful architectural consequences.
+
+See [review and next implementation steps](implementation-next-steps.md) for the current foundation batch and completion criteria.

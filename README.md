@@ -545,7 +545,13 @@ Expand the social/community layer.
 
 ---
 
-## Phase 6 — Production Infrastructure
+## Phase 6 — Notifications & Automation
+
+Expand basic notifications with scheduled source scans, matching-job alerts, interview reminders, and preparation follow-ups.
+
+---
+
+## Phase 7 — Production Infrastructure
 
 Containerize and deploy the platform.
 
@@ -576,6 +582,12 @@ Progressively introduce:
 * Distributed tracing
 * Scaling
 * Secrets management
+
+---
+
+## Phase 8 — Advanced Cady
+
+Extend Cady into a career agent for personalized preparation, discovery, and career planning, following the detailed development roadmap.
 
 ---
 
@@ -727,10 +739,6 @@ And at the center of that experience:
 
 The architecture, service boundaries, technology choices, and feature set are expected to evolve as the project is implemented.
 
-The detailed development plan will eventually move into:
+The [development plan](docs/development-plan.md) defines the roadmap. The [Phase 1 backlog](docs/phase-1-backlog.md) tracks the first release, and the [review and next steps](docs/implementation-next-steps.md) define the proposed implementation sequence.
 
-```text
-docs/development-plan.md
-```
-
-while this README will remain focused primarily on the product, architecture, capabilities, and project vision.
+The first release focuses on the core job workflow; community belongs to Phase 5. This README describes the product vision and planned architecture.

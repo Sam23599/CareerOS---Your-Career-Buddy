@@ -73,9 +73,9 @@ Establish the repository, development standards, documentation, and local develo
 ### Repository
 
 * [ ] Create GitHub repository
-* [ ] Create initial README
-* [ ] Create development plan
-* [ ] Create `docs/` structure
+* [x] Create initial README
+* [x] Create development plan
+* [x] Create `docs/` structure
 * [ ] Create ADR structure
 * [ ] Define repository conventions
 * [ ] Define branch strategy
@@ -120,13 +120,13 @@ Define:
 
 ### Initial ADRs
 
-Potential initial records:
+Potential initial topics (assign IDs in one `docs/adr/` index as decisions are recorded):
 
 ```text
-ADR-001 — Overall Architecture
-ADR-002 — Repository Structure
-ADR-003 — Database Strategy
-ADR-004 — Authentication Strategy
+Overall Architecture
+Repository Structure
+Database Strategy
+Authentication Strategy
 ```
 
 ---
@@ -1206,9 +1206,11 @@ A phase is considered complete when:
 
 ---
 
-# 16. Initial MVP Target
+# 16. Release Targets
 
-The first meaningful MVP should focus on:
+The first usable release is Phase 1: authentication, profile/preferences, resume management, job ingestion/search, saved jobs, custom source configuration, and basic notifications. Community, teams, and sharing are deferred to Phase 5.
+
+The broader product MVP spans Phases 1–3 and should focus on:
 
 ```text
 Authentication
@@ -1228,7 +1230,7 @@ Application Tracking
 Basic AI Matching
 ```
 
-Community functionality can initially remain lightweight while the core career workflow is established.
+This broader target does not add AI or application tracking to the Phase 1 release requirements.
 
 ---
 
@@ -1285,3 +1287,5 @@ The goal is to progressively turn CareerOS into a unified career platform rather
 | Production deployment | Future phase    |
 
 This document should be updated continuously as implementation progresses and architectural decisions are made.
+
+See [review and next implementation steps](implementation-next-steps.md) for the implementation sequence and completion criteria.
