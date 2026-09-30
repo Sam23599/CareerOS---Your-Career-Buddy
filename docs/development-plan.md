@@ -1277,8 +1277,8 @@ The goal is to progressively turn CareerOS into a unified career platform rather
 | README                | Initial version |
 | Development plan      | Initial version |
 | Architecture          | Foundation and auth recorded in ADR-001/002 |
-| Frontend              | Auth pages and protected dashboard implemented |
-| Node.js platform      | JWT sessions, RBAC, and OAuth flows implemented |
+| Frontend              | Auth pages, protected dashboard, and career profile editor implemented |
+| Node.js platform      | JWT sessions, RBAC, OAuth flows, and private profile APIs implemented |
 | Python intelligence   | Not started     |
 | Java workflows        | Not started     |
 | Kafka                 | Future phase    |

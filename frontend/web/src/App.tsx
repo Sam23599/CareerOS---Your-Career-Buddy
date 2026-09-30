@@ -3,6 +3,8 @@ import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router';
 import { AuthPage } from './auth/AuthPage';
 import { Dashboard } from './auth/Dashboard';
 import { initializeSession, refreshSession, useSession } from './auth/session';
+import { ProfileView } from './profiles/ProfileView';
+import { ProfilePage } from './profiles/ProfilePage';
 import { ConnectionStatus } from './ConnectionStatus';
 
 function AccountRoutes() {
@@ -23,6 +25,8 @@ function AccountRoutes() {
   return <Routes>
     <Route path="/login" element={<AuthPage key="login" mode="login" />} />
     <Route path="/register" element={<AuthPage key="register" mode="register" />} />
+    <Route path="/profile" element={session.state === 'authenticated' ? <ProfileView key={session.user?.id} /> : <Navigate to="/login" replace />} />
+    <Route path="/profile/edit" element={session.state === 'authenticated' ? <ProfilePage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/dashboard" element={session.state === 'authenticated' ? <Dashboard key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/" element={<Navigate to={destination} replace />} />
     <Route path="*" element={<section className="panel auth-panel"><h1>Page not found</h1><Link to={destination}>Go to your workspace</Link></section>} />

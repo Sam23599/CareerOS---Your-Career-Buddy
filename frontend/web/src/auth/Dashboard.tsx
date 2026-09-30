@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { useEffect, useState } from 'react';
 import { getCurrentUser, signOut, useSession, type User } from './session';
 
@@ -26,8 +27,9 @@ export function Dashboard() {
       <p className="eyebrow">Your workspace</p>
       <h1 id="dashboard-heading">Welcome{user ? `, ${user.name}` : ''}.</h1>
       {user ? <p className="description">You’re signed in as <strong>{user.email}</strong>.</p> : !error && <p role="status">Loading your account…</p>}
-      <p>Your account is ready. Career profiles are the next step.</p>
+      <p>Add your skills, experience, and career preferences to your profile.</p>
       {error && <p className="form-error" role="alert">{error}</p>}
+      <p><Link to="/profile">View career profile</Link></p>
       <div className="actions">
         {error && <button className="secondary" onClick={() => { setError(''); setAttempt(value => value + 1); }}>Retry account</button>}
         <button onClick={logout} disabled={busy}>{busy ? 'Signing out…' : 'Sign out'}</button>

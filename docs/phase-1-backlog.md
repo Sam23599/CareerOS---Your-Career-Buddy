@@ -70,7 +70,7 @@ A clean repository that any developer can clone and start locally.
 * [x] Configure error handling
 * [x] Configure authentication state
 
-Login, registration, and a protected account dashboard are implemented. `/status` retains the connection diagnostic. Career profile and job pages remain future work.
+Login, registration, and a protected account dashboard are implemented. `/status` retains the connection diagnostic. The protected career profile editor is implemented; job pages remain future work.
 
 ### Initial pages
 
@@ -118,7 +118,7 @@ JWT sessions and Google/GitHub OAuth flows share the same authorization model. P
 
 ---
 
-# 4. Milestone 4 — User Profile
+# 4. Milestone 4 — User Profile — Implemented
 
 ### Backend
 
@@ -146,12 +146,16 @@ PATCH /profiles/me
 
 Create:
 
-* Profile dashboard
-* Skills editor
-* Experience editor
-* Education editor
-* Career preferences
-* Connected profile section
+* [x] Profile dashboard
+* [x] Skills editor
+* [x] Experience editor
+* [x] Education editor
+* [x] Career preferences
+* [x] Connected profile section (saved professional URLs; imports deferred)
+* [x] Certifications editor
+* [x] Owner-only access, input validation, and concurrent-save protection
+
+See [profile API and validation rules](api/profiles.md).
 
 ---
 
@@ -422,7 +426,7 @@ Save Job
 Phase 1 is complete when:
 
 * [x] JWT user authentication works (live OAuth requires provider credentials).
-* [ ] A complete career profile can be maintained.
+* [x] A complete career profile can be maintained.
 * [ ] A resume can be uploaded and managed.
 * [ ] Jobs can be ingested and normalized.
 * [ ] Jobs can be searched and filtered.

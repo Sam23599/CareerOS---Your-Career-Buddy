@@ -4,6 +4,7 @@ import { readConfig } from './config.js';
 import { AuthStore } from './auth/store.js';
 import { AuthService } from './auth/service.js';
 import { Tokens } from './auth/tokens.js';
+import { ProfileStore } from './profiles/store.js';
 import { createOAuthProviders } from './auth/oauth-providers.js';
 
 const config = readConfig();
@@ -17,7 +18,7 @@ const service = new AuthService(store, new Tokens(config.authSecret));
 const app = createApp(async () => {
   await store.initialize();
   await client.db().command({ ping: 1 }, { timeoutMS: 2000 });
-}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } });
+}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()));
 const server = app.listen(config.port, config.host, () => {
   console.info(JSON.stringify({ event: 'server_started', host: config.host, port: config.port }));
 });

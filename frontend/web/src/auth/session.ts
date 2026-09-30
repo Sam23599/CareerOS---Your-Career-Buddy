@@ -75,18 +75,18 @@ export async function signOut() {
     channel?.postMessage('signed-out');
   });
 }
-export async function getCurrentUser(): Promise<User> {
+export async function authenticatedRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!accessToken || expiresAt <= Date.now() + 30_000) await refreshSession();
   if (!accessToken) throw new RequestError(401, 'Please sign in again.');
   const attemptedToken = accessToken;
   try {
-    return (await request('/users/me', { headers: { Authorization: `Bearer ${attemptedToken}` } })).user;
+    return await request(path, { ...options, headers: { ...options.headers, Authorization: `Bearer ${attemptedToken}` } });
   } catch (error) {
     if (!(error instanceof RequestError) || error.status !== 401) throw error;
     if (accessToken === attemptedToken) await refreshSession();
     if (!accessToken) throw new RequestError(401, 'Please sign in again.');
     try {
-      return (await request('/users/me', { headers: { Authorization: `Bearer ${accessToken}` } })).user;
+      return await request(path, { ...options, headers: { ...options.headers, Authorization: `Bearer ${accessToken}` } });
     } catch (retryError) {
       if (retryError instanceof RequestError && retryError.status === 401) publish({ state: 'anonymous', user: null });
       throw retryError;
@@ -97,3 +97,7 @@ if (channel) channel.onmessage = event => {
   if (event.data === 'signed-out') publish({ state: 'anonymous', user: null });
   if (event.data === 'signed-in') void refreshSession().catch(() => {});
 };
+
+export async function getCurrentUser(): Promise<User> {
+  return (await authenticatedRequest<{ user: User }>('/users/me')).user;
+}

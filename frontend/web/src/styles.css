@@ -42,3 +42,39 @@ fieldset:disabled { opacity: .65; }
 .oauth-button { border: 1px solid #bdcbbf; border-radius: 8px; padding: 12px; text-align: center; text-decoration: none; font-weight: 600; }
 .oauth-button:hover { background: #f0f5ee; }
 .oauth-button:disabled { background: white; color: #637369; cursor: not-allowed; opacity: .7; }
+
+.profile-page { margin-top: 40px; }
+.profile-section { max-width: none; margin-bottom: 20px; }
+.profile-section h2 { margin-bottom: 22px; }
+.profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+.full-width { grid-column: 1 / -1; }
+textarea, select { width: 100%; padding: 12px; border: 1px solid #bdcbbf; border-radius: 8px; background: white; color: inherit; font: inherit; font-size: 16px; }
+textarea { resize: vertical; }
+textarea:focus-visible, select:focus-visible { outline: 3px solid #83ad91; outline-offset: 2px; }
+.field-help { color: #637369; font-size: 12px; font-weight: 400; }
+.profile-entry { border: 1px solid #dce3db; border-radius: 10px; padding: 18px; }
+.profile-entry legend, .work-modes legend { padding: 0 6px; font-size: 14px; font-weight: 600; }
+.check-label { display: flex; align-items: center; gap: 10px; }
+.check-label input { width: 18px; height: 18px; }
+.work-modes { margin: 0 0 18px; }
+.work-modes legend { margin-bottom: 12px; }
+.profile-save { padding: 16px 0 28px; }
+@media (max-width: 600px) { .profile-grid { grid-template-columns: 1fr; } .profile-page h1 { font-size: 32px; } }
+
+.profile-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.profile-edit-link { background: #183c34; color: white; padding: 12px 18px; border-radius: 8px; text-decoration: none; }
+.profile-hero { display: flex; align-items: center; gap: 24px; border-top: 6px solid #83ad91; }
+.profile-avatar { flex-shrink: 0; width: 80px; height: 80px; display: grid; place-items: center; border-radius: 50%; background: #eaf0e8; font-size: 28px; font-weight: 700; }
+.profile-hero h1 { font-size: clamp(28px, 5vw, 40px); }
+.profile-headline { font-size: 20px; line-height: 1.5; }
+.profile-view { overflow-wrap: anywhere; }
+.profile-prose { white-space: pre-wrap; line-height: 1.7; }
+.profile-tags { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; }
+.profile-tags li { background: #eaf0e8; padding: 7px 12px; border-radius: 20px; font-size: 14px; }
+.profile-detail + .profile-detail { margin-top: 22px; padding-top: 22px; border-top: 1px solid #edf0e9; }
+.profile-detail h3 { margin: 0 0 8px; font-size: 17px; }
+.profile-detail p { margin: 8px 0; }
+.profile-preferences { margin-bottom: 0; }
+.profile-preferences dd { text-align: right; max-width: 60%; }
+.profile-links { padding-left: 20px; line-height: 2; }
+@media (max-width: 600px) { .profile-hero { align-items: flex-start; flex-direction: column; gap: 8px; } }

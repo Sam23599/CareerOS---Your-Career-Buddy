@@ -94,7 +94,7 @@ To check failure reporting, stop only this project's MongoDB with `docker compos
 
 ## Current scope
 
-Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Profiles, resumes, jobs, and Cady remain future work. See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
+Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Private career profiles are implemented at `/profile`, including skills, experience, education, certifications, preferences, and professional links. Resumes, jobs, and Cady remain future work. See the [profile API](api/profiles.md). See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
 
 ## Foundation verification (previous batch)
 
@@ -113,3 +113,11 @@ Registration, JWT login/refresh/logout, protected dashboard/current-user API, US
 - Nine MongoDB integration tests passed against an isolated database, including role enforcement, duplicate registration, refresh replay revocation, logout, CSRF guards, and one-time OAuth callbacks.
 - Two Chromium browser tests passed: registration/login, protected routing, session restoration, cross-tab logout, and automatic access-token refresh.
 - The three local containers are healthy. Google/GitHub app credentials are not configured; live provider consent/token exchange has not been tested.
+
+
+## Career profile verification
+
+- Lint, TypeScript checks, and both application builds passed in the Node 24 image.
+- All 16 unit/API tests and 13 MongoDB integration tests passed, including profile validation, owner-only access (also for ADMIN), partial updates, removals, and concurrent first-save/update conflicts.
+- All three Chromium browser tests passed. Profile coverage includes the complete editor, persistence after reload, entry removal, and retaining an unsaved draft after a conflicting save.
+- Docker Compose rebuilt successfully and all three services are healthy. Browser checks leave randomly named test accounts/profile data in the local application database; integration databases are deleted by the suite.
