@@ -78,3 +78,6 @@ textarea:focus-visible, select:focus-visible { outline: 3px solid #83ad91; outli
 .profile-preferences dd { text-align: right; max-width: 60%; }
 .profile-links { padding-left: 20px; line-height: 2; }
 @media (max-width: 600px) { .profile-hero { align-items: flex-start; flex-direction: column; gap: 8px; } }
+
+.resume-card { margin-top: 20px; overflow-wrap: anywhere; }
+.resume-card .actions, .profile-nav { flex-wrap: wrap; }

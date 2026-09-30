@@ -33,7 +33,7 @@ export function ProfileView() {
   const salary = p.salaryMin !== null && p.salaryMax !== null ? `${p.salaryMin.toLocaleString()} – ${p.salaryMax.toLocaleString()}`
     : p.salaryMin !== null ? `From ${p.salaryMin.toLocaleString()}` : p.salaryMax !== null ? `Up to ${p.salaryMax.toLocaleString()}` : '';
   return <div className="profile-page profile-view">
-    <nav className="profile-nav" aria-label="Profile navigation"><Link to="/dashboard">← Dashboard</Link><Link className="profile-edit-link" to="/profile/edit">Edit profile</Link></nav>
+    <nav className="profile-nav" aria-label="Profile navigation"><Link to="/dashboard">← Dashboard</Link><Link to="/resumes">Manage resumes</Link><Link className="profile-edit-link" to="/profile/edit">Edit profile</Link></nav>
     <section className="panel profile-section profile-hero">
       <div className="profile-avatar" aria-hidden="true">{profile.fullName.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()}</div>
       <div><p className="eyebrow">Your career profile · Private</p><h1>{profile.fullName}</h1>

@@ -29,7 +29,7 @@ export function useSession() { return useSyncExternalStore(subscribe, () => snap
 export class RequestError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
-async function request(path: string, options: RequestInit = {}) {
+async function request(path: string, options: RequestInit = {}, binary = false) {
   let response: Response;
   try {
     response = await fetch(`/api/v1${path}`, {
@@ -41,7 +41,7 @@ async function request(path: string, options: RequestInit = {}) {
     const body = await response.json().catch(() => null);
     throw new RequestError(response.status, body?.error?.message ?? 'The request failed. Please try again.');
   }
-  return response.status === 204 ? null : response.json();
+  return binary ? response.blob() : response.status === 204 ? null : response.json();
 }
 // Single-tab requests share a promise; Web Locks also serialize cookie rotation across tabs.
 async function sessionLock<T>(work: () => Promise<T>): Promise<T> {
@@ -75,18 +75,18 @@ export async function signOut() {
     channel?.postMessage('signed-out');
   });
 }
-export async function authenticatedRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function authenticatedRequest<T>(path: string, options: RequestInit = {}, binary = false): Promise<T> {
   if (!accessToken || expiresAt <= Date.now() + 30_000) await refreshSession();
   if (!accessToken) throw new RequestError(401, 'Please sign in again.');
   const attemptedToken = accessToken;
   try {
-    return await request(path, { ...options, headers: { ...options.headers, Authorization: `Bearer ${attemptedToken}` } });
+    return await request(path, { ...options, headers: { ...options.headers, Authorization: `Bearer ${attemptedToken}` } }, binary);
   } catch (error) {
     if (!(error instanceof RequestError) || error.status !== 401) throw error;
     if (accessToken === attemptedToken) await refreshSession();
     if (!accessToken) throw new RequestError(401, 'Please sign in again.');
     try {
-      return await request(path, { ...options, headers: { ...options.headers, Authorization: `Bearer ${accessToken}` } });
+      return await request(path, { ...options, headers: { ...options.headers, Authorization: `Bearer ${accessToken}` } }, binary);
     } catch (retryError) {
       if (retryError instanceof RequestError && retryError.status === 401) publish({ state: 'anonymous', user: null });
       throw retryError;

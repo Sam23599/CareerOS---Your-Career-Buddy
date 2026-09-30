@@ -30,11 +30,13 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       WEB_PORT: ${WEB_PORT:-5173}
+      RESUME_STORAGE_DIR: /data/resumes
       MONGODB_URI: mongodb://mongodb:27017/careeros
     ports:
       - "127.0.0.1:${API_PORT:-3000}:3000"
     volumes:
       - ./backend/platform/src:/app/backend/platform/src
+      - resume_data:/data/resumes
     depends_on:
       mongodb:
         condition: service_healthy
@@ -70,3 +72,4 @@ services:
 
 volumes:
   mongodb_data:
+  resume_data:

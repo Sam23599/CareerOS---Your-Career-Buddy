@@ -1,3 +1,5 @@
+import { resumeRouter } from './resumes/routes.js';
+import { type ResumeStore } from './resumes/store.js';
 import { randomUUID } from 'node:crypto';
 import express from 'express';
 import { handleError } from './errors.js';
@@ -5,7 +7,7 @@ import { profileRouter } from './profiles/routes.js';
 import { type ProfileStore } from './profiles/store.js';
 import { authenticate, authRouter, requireRoles, type AuthOptions } from './auth/routes.js';
 
-export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore) {
+export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -44,6 +46,7 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
 
   if (auth) {
     app.use('/api/v1/auth', authRouter(auth));
+    if (resumes) app.use('/api/v1/resumes', resumeRouter(auth.service, resumes));
     if (profiles) app.use('/api/v1/profiles', profileRouter(auth.service, profiles));
     app.get('/api/v1/users/me', authenticate(auth.service), requireRoles('USER', 'ADMIN'), (_req, res) => {
       res.json({ user: res.locals.user });

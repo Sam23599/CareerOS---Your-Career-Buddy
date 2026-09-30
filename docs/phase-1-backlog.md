@@ -159,18 +159,18 @@ See [profile API and validation rules](api/profiles.md).
 
 ---
 
-# 5. Milestone 5 — Resume Management
+# 5. Milestone 5 — Resume Management — Implemented
 
 ### Backend
 
 Implement:
 
-* [ ] Resume upload
-* [ ] Resume metadata
-* [ ] Multiple resume versions
-* [ ] Active resume
-* [ ] Delete resume
-* [ ] Download resume
+* [x] Resume upload
+* [x] Resume metadata
+* [x] Multiple resume versions
+* [x] Active resume
+* [x] Delete resume
+* [x] Download resume
 
 Storage:
 
@@ -179,7 +179,7 @@ Local → MinIO / filesystem
 Production → S3
 ```
 
-No complex AI processing yet.
+PDF uploads up to 5 MiB, private downloads, and persistent local storage are implemented. See [resume API](api/resumes.md). No complex AI processing yet.
 
 ---
 
@@ -427,7 +427,7 @@ Phase 1 is complete when:
 
 * [x] JWT user authentication works (live OAuth requires provider credentials).
 * [x] A complete career profile can be maintained.
-* [ ] A resume can be uploaded and managed.
+* [x] A resume can be uploaded and managed.
 * [ ] Jobs can be ingested and normalized.
 * [ ] Jobs can be searched and filtered.
 * [ ] Jobs can be saved.

@@ -1,3 +1,4 @@
+import { ResumesPage } from './resumes/ResumesPage';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router';
 import { AuthPage } from './auth/AuthPage';
@@ -25,6 +26,7 @@ function AccountRoutes() {
   return <Routes>
     <Route path="/login" element={<AuthPage key="login" mode="login" />} />
     <Route path="/register" element={<AuthPage key="register" mode="register" />} />
+    <Route path="/resumes" element={session.state === 'authenticated' ? <ResumesPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/profile" element={session.state === 'authenticated' ? <ProfileView key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/profile/edit" element={session.state === 'authenticated' ? <ProfilePage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/dashboard" element={session.state === 'authenticated' ? <Dashboard key={session.user?.id} /> : <Navigate to="/login" replace />} />

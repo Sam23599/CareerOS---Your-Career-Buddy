@@ -1,3 +1,5 @@
+import { ResumeStore } from './resumes/store.js';
+import { LocalResumeStorage } from './resumes/storage.js';
 import { MongoClient } from 'mongodb';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
@@ -18,7 +20,7 @@ const service = new AuthService(store, new Tokens(config.authSecret));
 const app = createApp(async () => {
   await store.initialize();
   await client.db().command({ ping: 1 }, { timeoutMS: 2000 });
-}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()));
+}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes')));
 const server = app.listen(config.port, config.host, () => {
   console.info(JSON.stringify({ event: 'server_started', host: config.host, port: config.port }));
 });

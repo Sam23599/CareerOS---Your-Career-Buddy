@@ -8,3 +8,5 @@ coverage
 *.log
 test-results/
 playwright-report/
+
+**/data/resumes/

@@ -94,7 +94,7 @@ To check failure reporting, stop only this project's MongoDB with `docker compos
 
 ## Current scope
 
-Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Private career profiles are implemented at `/profile`, including skills, experience, education, certifications, preferences, and professional links. Resumes, jobs, and Cady remain future work. See the [profile API](api/profiles.md). See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
+Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Private career profiles are implemented at `/profile`, including skills, experience, education, certifications, preferences, and professional links. Resume management is implemented at `/resumes` with PDF uploads up to 5 MiB. Jobs and Cady remain future work. See the [profile API](api/profiles.md). See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
 
 ## Foundation verification (previous batch)
 
@@ -121,3 +121,15 @@ Registration, JWT login/refresh/logout, protected dashboard/current-user API, US
 - All 16 unit/API tests and 13 MongoDB integration tests passed, including profile validation, owner-only access (also for ADMIN), partial updates, removals, and concurrent first-save/update conflicts.
 - All three Chromium browser tests passed. Profile coverage includes the complete editor, persistence after reload, entry removal, and retaining an unsaved draft after a conflicting save.
 - Docker Compose rebuilt successfully and all three services are healthy. Browser checks leave randomly named test accounts/profile data in the local application database; integration databases are deleted by the suite.
+
+
+## Resume file storage
+
+Docker stores uploaded bytes in `careeros_resume_data`, mounted at `/data/resumes` in the API container. MongoDB stores private version metadata in `resume_libraries`. Both volumes persist across ordinary container recreation. Host development can set `RESUME_STORAGE_DIR` (default `./data/resumes` relative to the API directory); uploaded files are ignored by Git and Docker builds. See [resume API and failure behavior](api/resumes.md).
+
+## Resume management verification
+
+- Lint, TypeScript checks, and both builds passed.
+- All 16 unit/API tests and 19 MongoDB integration tests passed. Resume checks include invalid/oversized uploads, exact download bytes, owner isolation including ADMIN, version allocation under concurrent uploads, active selection, deletion, and retry after storage failure.
+- All four Chromium browser tests passed, including upload, reload, active selection, authenticated download, and deletion through the resume page.
+- Docker Compose rebuilt and all services became healthy with the persistent resume volume mounted. Integration files/databases are removed after tests; the resume browser test deletes its uploaded files.

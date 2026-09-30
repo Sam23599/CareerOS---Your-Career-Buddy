@@ -30,6 +30,7 @@ export function Dashboard() {
       <p>Add your skills, experience, and career preferences to your profile.</p>
       {error && <p className="form-error" role="alert">{error}</p>}
       <p><Link to="/profile">View career profile</Link></p>
+      <p><Link to="/resumes">Manage resumes</Link></p>
       <div className="actions">
         {error && <button className="secondary" onClick={() => { setError(''); setAttempt(value => value + 1); }}>Retry account</button>}
         <button onClick={logout} disabled={busy}>{busy ? 'Signing out…' : 'Sign out'}</button>
