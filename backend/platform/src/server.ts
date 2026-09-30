@@ -1,15 +1,23 @@
 import { MongoClient } from 'mongodb';
 import { createApp } from './app.js';
 import { readConfig } from './config.js';
+import { AuthStore } from './auth/store.js';
+import { AuthService } from './auth/service.js';
+import { Tokens } from './auth/tokens.js';
+import { createOAuthProviders } from './auth/oauth-providers.js';
 
 const config = readConfig();
 const client = new MongoClient(config.mongoUri, {
   serverSelectionTimeoutMS: 2000,
   connectTimeoutMS: 2000,
+  timeoutMS: 5000,
 });
+const store = new AuthStore(client.db());
+const service = new AuthService(store, new Tokens(config.authSecret));
 const app = createApp(async () => {
+  await store.initialize();
   await client.db().command({ ping: 1 }, { timeoutMS: 2000 });
-});
+}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } });
 const server = app.listen(config.port, config.host, () => {
   console.info(JSON.stringify({ event: 'server_started', host: config.host, port: config.port }));
 });

@@ -1,19 +1,22 @@
 import { randomUUID } from 'node:crypto';
-import express, { type ErrorRequestHandler } from 'express';
+import express from 'express';
+import { handleError } from './errors.js';
+import { authenticate, authRouter, requireRoles, type AuthOptions } from './auth/routes.js';
 
-export function createApp(checkDatabase: () => Promise<void>) {
+export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions) {
   const app = express();
   app.disable('x-powered-by');
 
   app.use((req, res, next) => {
     const requestId = randomUUID();
     const startedAt = Date.now();
+    const path = req.path;
     res.locals.requestId = requestId;
     res.setHeader('X-Request-Id', requestId);
     res.setHeader('Cache-Control', 'no-store');
     res.on('finish', () => {
       console.info(JSON.stringify({
-        event: 'http_request', requestId, method: req.method, path: req.path,
+        event: 'http_request', requestId, method: req.method, path,
         status: res.statusCode, durationMs: Date.now() - startedAt,
       }));
     });
@@ -37,20 +40,19 @@ export function createApp(checkDatabase: () => Promise<void>) {
     }
   });
 
+  if (auth) {
+    app.use('/api/v1/auth', authRouter(auth));
+    app.get('/api/v1/users/me', authenticate(auth.service), requireRoles('USER', 'ADMIN'), (_req, res) => {
+      res.json({ user: res.locals.user });
+    });
+  }
+
   app.use((_req, res) => {
     res.status(404).json({ error: {
       code: 'NOT_FOUND', message: 'Route not found.', requestId: res.locals.requestId,
     } });
   });
 
-  const handleError: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
-    const type = typeof error === 'object' && error !== null && 'type' in error ? error.type : undefined;
-    const status = type === 'entity.parse.failed' ? 400 : type === 'entity.too.large' ? 413 : 500;
-    const code = status === 400 ? 'INVALID_JSON' : status === 413 ? 'PAYLOAD_TOO_LARGE' : 'INTERNAL_ERROR';
-    const message = status === 400 ? 'Request body must be valid JSON.'
-      : status === 413 ? 'Request body is too large.' : 'An unexpected error occurred.';
-    res.status(status).json({ error: { code, message, requestId: res.locals.requestId } });
-  };
   app.use(handleError);
   return app;
 }

@@ -61,16 +61,16 @@ A clean repository that any developer can clone and start locally.
 ### Tasks
 
 * [x] Create React application
-* [ ] Configure routing
-* [ ] Create application shell
-* [ ] Create authentication pages
-* [ ] Create dashboard layout
+* [x] Configure routing
+* [x] Create application shell
+* [x] Create authentication pages
+* [x] Create dashboard layout
 * [ ] Create reusable UI components
-* [ ] Configure API client
+* [x] Configure API client
 * [x] Configure error handling
-* [ ] Configure authentication state
+* [x] Configure authentication state
 
-The current frontend is a connection-status page. Routing, authentication, and the product dashboard remain future work.
+Login, registration, and a protected account dashboard are implemented. `/status` retains the connection diagnostic. Career profile and job pages remain future work.
 
 ### Initial pages
 
@@ -93,26 +93,28 @@ The current frontend is a connection-status page. Routing, authentication, and t
 
 Implement:
 
-* [ ] Registration
-* [ ] Login
-* [ ] Password hashing
-* [ ] JWT access token
-* [ ] Refresh token
-* [ ] Logout
-* [ ] Authentication middleware
-* [ ] Basic RBAC middleware
+* [x] Registration
+* [x] Login
+* [x] Password hashing
+* [x] JWT access token
+* [x] Refresh token
+* [x] Logout
+* [x] Authentication middleware
+* [x] Basic RBAC middleware
 
 ### Frontend
 
-* [ ] Login
-* [ ] Register
-* [ ] Protected routes
-* [ ] Token handling
-* [ ] Logout
+* [x] Login
+* [x] Register
+* [x] Protected routes
+* [x] Token handling
+* [x] Logout
 
 ### Acceptance
 
 An unauthenticated user cannot access protected application features.
+
+JWT sessions and Google/GitHub OAuth flows share the same authorization model. Provider credentials are required for live OAuth sign-in; see [setup and API contracts](api/authentication.md). Email verification, password recovery, and account linking remain later work.
 
 ---
 
@@ -419,7 +421,7 @@ Save Job
 
 Phase 1 is complete when:
 
-* [ ] User authentication works.
+* [x] JWT user authentication works (live OAuth requires provider credentials).
 * [ ] A complete career profile can be maintained.
 * [ ] A resume can be uploaded and managed.
 * [ ] Jobs can be ingested and normalized.

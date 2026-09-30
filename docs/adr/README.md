@@ -5,3 +5,4 @@ Record meaningful decisions as implementation reaches them. Assign each new deci
 | ID | Decision | Status |
 | --- | --- | --- |
 | [001](001-local-platform-foundation.md) | Local React, Express, and MongoDB foundation | Accepted |
+| [002](002-authentication.md) | JWT sessions and Google/GitHub OAuth sign-in | Accepted |

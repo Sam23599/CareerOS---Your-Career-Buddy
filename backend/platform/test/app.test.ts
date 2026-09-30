@@ -69,5 +69,5 @@ test('configuration requires MongoDB and rejects invalid ports', () => {
   for (const port of ['0', '65536', 'abc', '1.5', '']) {
     assert.throws(() => readConfig({ API_PORT: port, MONGODB_URI: 'mongodb://localhost/careeros' }), /API_PORT/);
   }
-  assert.equal(readConfig({ MONGODB_URI: 'mongodb://localhost/careeros' }).port, 3000);
+  assert.equal(readConfig({ MONGODB_URI: 'mongodb://localhost/careeros', AUTH_SECRET: 'ab'.repeat(32) }).port, 3000);
 });
