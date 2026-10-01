@@ -17,7 +17,12 @@ One ongoing notebook for the whole project: bugs, rough ideas, UX observations, 
 Add entries below. Dates, screenshots/paths, expected behavior, and examples help, but are optional. If you change your mind, append a follow-up referencing the earlier note.
 
 <!-- Write freely below this line. The reviewer will add IDs without changing your words. -->
+Jobs and ingestion:
 proper separator in jobs section for different jobs platforms that'll be added in future, along with the user custom career pages. and note, user may be adding a lot of dream companies so we need a proper platform and interface for that. 
+
+Saved jobs:
+more filters by location, date post range, new apply/already applied to that company (this checks and allow the user if he is applying for the first time or not: this is because, a person would be ok to apply casually and be added in company's data records (company he is applying to), and also he might would like to be prepared for some specific ones first then only apply so his record stays fresh and new the company.) 
+one more filter for if the user has applied to the job, application in progress, being interviewed, etc status. this will then later help to track its appliation. (this can be in saved jobs as well or in a better suited place in future)
 
 ## Refined notes
 
