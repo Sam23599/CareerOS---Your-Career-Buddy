@@ -30,6 +30,7 @@ export function Dashboard() {
       <p>Add your skills, experience, and career preferences to your profile.</p>
       {error && <p className="form-error" role="alert">{error}</p>}
       <p><Link to="/profile">View career profile</Link></p>
+      <p><Link to="/saved-jobs">Saved jobs</Link></p>
       <p><Link to="/jobs">Find jobs</Link></p>
       <p><Link to="/resumes">Manage resumes</Link></p>
       <div className="actions">

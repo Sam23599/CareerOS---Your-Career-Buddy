@@ -155,3 +155,17 @@ Run `docker compose exec -T api npm run jobs:ingest -- remotive` once to populat
 - All 23 unit/API tests and 25 MongoDB integration tests passed, including four-hour scheduling with a simulated clock, persisted cooldowns, migration from six-hour intervals, non-overlapping runs, and shutdown behavior.
 - The resume browser flow covers the authenticated in-page preview, Close/Escape, preview fetch errors, and existing upload/download/delete behavior. Preview object URLs are released on close/unmount.
 - Scheduled refresh runs inside the API process. When the computer/API is stopped it cannot fetch; overdue imports are checked when the API starts again. Source feeds still retain their own publication delay.
+
+
+## Saved jobs
+
+Save a listing from `/jobs` or its detail page after signing in, then manage notes, interest status, and priority at `/saved-jobs`. Saved data is private per account. See the [API contract](api/saved-jobs.md).
+
+The saved-job browser test temporarily inserts a uniquely identified fixture job into the local application's database and removes that record and its saved entries after the test. It reads `MONGODB_URI` from the local `.env`, or `E2E_MONGODB_URI` when supplied. That URI must point to the same database used by the browser test app. It never calls a live provider.
+
+## Saved-jobs verification
+
+- Lint, TypeScript checks, both builds, and whitespace checks passed.
+- All 25 unit/API tests and 30 MongoDB integration tests passed. Saved-job checks cover concurrent/idempotent saves, private ownership including ADMIN, notes/status/priority persistence, filters, stale revisions, source updates/removal, and unsave/re-save behavior.
+- All seven browser flows passed across the full run and the corrected saved-job rerun. The saved-job flow verifies saving from search, editing and reloading metadata, conflicting edits in two tabs, priority filtering, and unsaving from job details. Its initial failure was an overly strict dropdown locator, corrected before the passing rerun.
+- The local Docker stack is running with saved-job APIs enabled. Browser fixture jobs and their saved entries are cleaned up after the test.

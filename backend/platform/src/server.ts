@@ -1,3 +1,4 @@
+import { SavedJobStore } from './saved-jobs/store.js';
 import { startJobScheduler } from './jobs/scheduler.js';
 import { JobStore } from './jobs/store.js';
 import { RemotiveSource } from './jobs/sources.js';
@@ -18,6 +19,7 @@ const client = new MongoClient(config.mongoUri, {
   connectTimeoutMS: 2000,
   timeoutMS: 5000,
 });
+const savedJobs = new SavedJobStore(client.db());
 const jobs = new JobStore(client.db());
 const jobSources = [new RemotiveSource()];
 const store = new AuthStore(client.db());
@@ -25,8 +27,9 @@ const service = new AuthService(store, new Tokens(config.authSecret));
 const app = createApp(async () => {
   await store.initialize();
   await jobs.initialize();
+  await savedJobs.initialize();
   await client.db().command({ ping: 1 }, { timeoutMS: 2000 });
-}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes')), { store: jobs, sources: jobSources });
+}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes')), { store: jobs, sources: jobSources }, savedJobs);
 const server = app.listen(config.port, config.host, () => {
   console.info(JSON.stringify({ event: 'server_started', host: config.host, port: config.port }));
 });

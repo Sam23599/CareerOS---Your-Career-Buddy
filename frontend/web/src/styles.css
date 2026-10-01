@@ -93,3 +93,7 @@ nav.actions { align-items: center; flex-wrap: wrap; }
 .preview-heading h2 { overflow-wrap: anywhere; min-width: 0; }
 .preview-heading button { flex-shrink: 0; }
 .resume-preview iframe { width: 100%; flex: 1; min-height: 0; border: 1px solid #dce3db; border-radius: 8px; }
+
+.save-job-action { margin: 16px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.saved-job-card { overflow-wrap: anywhere; }
+.saved-job-card .actions { flex-wrap: wrap; }

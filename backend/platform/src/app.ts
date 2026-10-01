@@ -1,3 +1,5 @@
+import { savedJobRouter } from './saved-jobs/routes.js';
+import { type SavedJobStore } from './saved-jobs/store.js';
 import { jobRouter } from './jobs/routes.js';
 import { type JobStore } from './jobs/store.js';
 import { type JobSource } from './jobs/model.js';
@@ -10,7 +12,7 @@ import { profileRouter } from './profiles/routes.js';
 import { type ProfileStore } from './profiles/store.js';
 import { authenticate, authRouter, requireRoles, type AuthOptions } from './auth/routes.js';
 
-export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }) {
+export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -48,6 +50,7 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
   });
 
   if (auth) {
+    if (savedJobs) app.use('/api/v1/saved-jobs', savedJobRouter(auth.service, savedJobs));
     if (jobs) app.use('/api/v1/jobs', jobRouter(jobs.store, auth.service, jobs.sources));
     app.use('/api/v1/auth', authRouter(auth));
     if (resumes) app.use('/api/v1/resumes', resumeRouter(auth.service, resumes));

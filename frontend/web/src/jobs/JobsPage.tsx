@@ -1,3 +1,4 @@
+import { SaveJobButton } from '../saved-jobs/SaveJobButton';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
@@ -55,6 +56,7 @@ function JobResults() {
       {!data.jobs.length && <p>No jobs match this search. Try broader filters or check again after the next import.</p>}
       {data.jobs.map(job => <article className="panel profile-section" key={job.id}>
         <h2><Link to={`/jobs/${job.id}?${params.toString()}`}>{job.title}</Link></h2><JobFacts job={job} />
+        <SaveJobButton jobId={job.id} />
         {job.skills.length > 0 && <ul className="profile-tags">{job.skills.slice(0, 8).map(skill => <li key={skill}>{skill}</li>)}</ul>}
         <p className="muted">Source: <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer">{sourceName(job.source)}</a></p>
       </article>)}
@@ -77,6 +79,7 @@ function JobDetail({ id }: { id: string }) {
         {job.metadata.category && <p>Category: {job.metadata.category}</p>}
         <p>Source: {sourceName(job.source)} · Last imported {new Date(job.updatedAt).toLocaleDateString()}</p>
         <a className="profile-edit-link" href={job.sourceUrl} target="_blank" rel="noopener noreferrer">View original listing on {sourceName(job.source)}</a>
+        <SaveJobButton jobId={job.id} />
       </section>
       {job.skills.length > 0 && <section className="panel profile-section"><h2>Skills</h2><ul className="profile-tags">{job.skills.map(skill => <li key={skill}>{skill}</li>)}</ul></section>}
       <section className="panel profile-section"><h2>About the role</h2><p className="profile-prose">{job.description || 'See the original listing for the full description.'}</p></section>

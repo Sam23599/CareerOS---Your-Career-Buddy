@@ -1,3 +1,4 @@
+import { SavedJobsPage } from './saved-jobs/SavedJobsPage';
 import { JobsPage, JobDetailPage } from './jobs/JobsPage';
 import { ResumesPage } from './resumes/ResumesPage';
 import { useEffect, useState } from 'react';
@@ -27,6 +28,7 @@ function AccountRoutes() {
   return <Routes>
     <Route path="/login" element={<AuthPage key="login" mode="login" />} />
     <Route path="/register" element={<AuthPage key="register" mode="register" />} />
+    <Route path="/saved-jobs" element={session.state === 'authenticated' ? <SavedJobsPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/resumes" element={session.state === 'authenticated' ? <ResumesPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/profile" element={session.state === 'authenticated' ? <ProfileView key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/profile/edit" element={session.state === 'authenticated' ? <ProfilePage key={session.user?.id} /> : <Navigate to="/login" replace />} />

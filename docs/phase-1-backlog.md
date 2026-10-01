@@ -222,16 +222,16 @@ updatedAt
 
 ---
 
-# 7. Milestone 7 — Saved Jobs
+# 7. Milestone 7 — Saved Jobs — Implemented
 
 ### Tasks
 
-* [ ] Save job
-* [ ] Unsave job
-* [ ] Saved jobs page
-* [ ] Notes
-* [ ] Priority
-* [ ] Job status
+* [x] Save job
+* [x] Unsave job
+* [x] Saved jobs page
+* [x] Notes
+* [x] Priority
+* [x] Job status
 
 Initial internal statuses:
 
@@ -241,7 +241,7 @@ INTERESTED
 NOT_INTERESTED
 ```
 
-Application statuses belong to Java later.
+Private notes, LOW/MEDIUM/HIGH priority, idempotent saves, and conflict-protected edits are implemented. See [saved-jobs API](api/saved-jobs.md). Application statuses belong to Java later.
 
 ---
 
@@ -431,7 +431,7 @@ Phase 1 is complete when:
 * [x] A resume can be uploaded and managed.
 * [x] Jobs can be ingested and normalized.
 * [x] Jobs can be searched and filtered.
-* [ ] Jobs can be saved.
+* [x] Jobs can be saved.
 * [ ] Companies/career pages can be configured.
 * [ ] Basic notifications work.
 * [ ] APIs have documentation.
