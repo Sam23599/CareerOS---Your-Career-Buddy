@@ -12,6 +12,8 @@ import { AuthService } from './auth/service.js';
 import { Tokens } from './auth/tokens.js';
 import { ProfileStore } from './profiles/store.js';
 import { createOAuthProviders } from './auth/oauth-providers.js';
+import { CareerSourceStore } from './career-sources/store.js';
+import { NotificationService, NotificationStore } from './notifications/store.js';
 
 const config = readConfig();
 const client = new MongoClient(config.mongoUri, {
@@ -21,6 +23,8 @@ const client = new MongoClient(config.mongoUri, {
 });
 const savedJobs = new SavedJobStore(client.db());
 const jobs = new JobStore(client.db());
+const notifications = new NotificationStore(client.db());
+const careerSources = new CareerSourceStore(client.db(), jobs, new NotificationService(notifications));
 const jobSources = [new RemotiveSource()];
 const store = new AuthStore(client.db());
 const service = new AuthService(store, new Tokens(config.authSecret));
@@ -28,12 +32,14 @@ const app = createApp(async () => {
   await store.initialize();
   await jobs.initialize();
   await savedJobs.initialize();
+  await careerSources.initialize();
+  await notifications.initialize();
   await client.db().command({ ping: 1 }, { timeoutMS: 2000 });
-}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes')), { store: jobs, sources: jobSources }, savedJobs);
+}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes')), { store: jobs, sources: jobSources }, savedJobs, { careerSources, notifications });
 const server = app.listen(config.port, config.host, () => {
   console.info(JSON.stringify({ event: 'server_started', host: config.host, port: config.port }));
 });
-const stopJobScheduler = startJobScheduler(jobs, jobSources);
+const stopJobScheduler = startJobScheduler(jobs, jobSources, () => careerSources.refreshDue());
 server.on('error', async (error: NodeJS.ErrnoException) => {
   console.error(JSON.stringify({ event: 'server_error', code: error.code }));
   await stopJobScheduler();

@@ -96,6 +96,8 @@ To check failure reporting, stop only this project's MongoDB with `docker compos
 
 Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Private career profiles are implemented at `/profile`, including skills, experience, education, certifications, preferences, and professional links. Resume management is implemented at `/resumes` with PDF uploads up to 5 MiB. Public job search/details and explicit Remotive imports are implemented; Cady remains future work. See the [profile API](api/profiles.md). See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
 
+Private saved jobs, [career sources](api/career-sources.md), and [in-app notifications](api/notifications.md) are implemented. Watch Greenhouse boards manually or every 4/12/24 hours while the API runs; other career URLs remain saved links. No additional secrets or Docker services are needed. MongoDB persists `career_sources`, `notifications`, and `notification_preferences` in the existing database volume.
+
 ## Foundation verification (previous batch)
 
 - Docker stack healthy with Node 24.21.0 and MongoDB 7.0.
@@ -169,3 +171,14 @@ The saved-job browser test temporarily inserts a uniquely identified fixture job
 - All 25 unit/API tests and 30 MongoDB integration tests passed. Saved-job checks cover concurrent/idempotent saves, private ownership including ADMIN, notes/status/priority persistence, filters, stale revisions, source updates/removal, and unsave/re-save behavior.
 - All seven browser flows passed across the full run and the corrected saved-job rerun. The saved-job flow verifies saving from search, editing and reloading metadata, conflicting edits in two tabs, priority filtering, and unsaving from job details. Its initial failure was an overly strict dropdown locator, corrected before the passing rerun.
 - The local Docker stack is running with saved-job APIs enabled. Browser fixture jobs and their saved entries are cleaned up after the test.
+
+## Career sources and notifications verification
+
+Verified on 2026-10-01:
+
+- Lint, TypeScript checks, both production builds, and 30 unit/API tests passed.
+- All MongoDB integration suites passed (39 tests), followed by all 10 source/notification integration cases after adding shared-failure coverage and tightening filter edits. Coverage includes ownership, duplicate URLs, stale revisions, literal matching, provider caching, missing-job expiry, failure transitions, preferences, retrying persisted notifications after a service restart, scheduling, and overlapping checks. Temporary test databases are deleted.
+- Eight browser flows passed across the full run and the corrected source/notification rerun. The new flow verifies source creation/edit/search/removal, unsupported link labels, cached matching, saving a matched job, public source filtering, read/unread and read-all actions, and persisted preferences. Initial browser failures exposed a field label that included helper text and an overly strict dropdown locator; both were corrected before the passing rerun.
+- A complete live Greenhouse check imported 15 YugabyteDB published listings, produced one matching-job summary, and used the cached import on repeat. This verification used a temporary database that was deleted afterward; it did not add entries to the user's watchlist. Feed size is a snapshot, not a promised count.
+- The three local Docker services are healthy and readiness reports MongoDB up. The browser test uses unique cached fixture jobs and removes its sources, notifications, preferences, saved entries, jobs, and ingestion record afterward; randomly named test accounts remain as with the existing browser suites.
+- The next roadmap step is Phase 1 release verification. Live Google/GitHub consent still needs provider credentials; email/push providers and additional career-page adapters remain future work.

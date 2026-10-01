@@ -249,16 +249,14 @@ Private notes, LOW/MEDIUM/HIGH priority, idempotent saves, and conflict-protecte
 
 ### Tasks
 
-* [ ] Add company
-* [ ] Add career page URL
-* [ ] Define search keywords
-* [ ] Define locations
-* [ ] Define scan frequency
-* [ ] Store source configuration
+* [x] Add company
+* [x] Add career page URL
+* [x] Define search keywords
+* [x] Define locations
+* [x] Define scan frequency
+* [x] Store source configuration
 
-Initial implementation may support manual triggering.
-
-Scheduled automation can follow after the source adapter architecture is stable.
+Implemented with private searchable/paginated watchlists, manual or scheduled Greenhouse board checks, and labeled links for unsupported pages. Supported checks run while the API is running; broader automation remains in Phase 6. See [the API contract](api/career-sources.md).
 
 ---
 
@@ -329,13 +327,15 @@ Notification Service
 
 Initial scope:
 
-* [ ] Notification model
-* [ ] In-app notifications
-* [ ] Read/unread state
-* [ ] Notification preferences
-* [ ] Provider interface
+* [x] Notification model
+* [x] In-app notifications
+* [x] Read/unread state
+* [x] Notification preferences
+* [x] Provider interface
 
 Do not tightly couple the domain to AWS SNS, Firebase, or OneSignal at this stage.
+
+Implemented with matching-job summaries, source-failure alerts, preferences, idempotent in-app delivery, and a retryable pending notice. See [the API contract](api/notifications.md).
 
 ---
 
@@ -432,8 +432,8 @@ Phase 1 is complete when:
 * [x] Jobs can be ingested and normalized.
 * [x] Jobs can be searched and filtered.
 * [x] Jobs can be saved.
-* [ ] Companies/career pages can be configured.
-* [ ] Basic notifications work.
+* [x] Companies/career pages can be configured.
+* [x] Basic notifications work.
 * [ ] APIs have documentation.
 * [ ] Critical workflows have tests.
 * [x] Local foundation setup works through Docker.

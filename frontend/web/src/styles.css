@@ -97,3 +97,8 @@ nav.actions { align-items: center; flex-wrap: wrap; }
 .save-job-action { margin: 16px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .saved-job-card { overflow-wrap: anywhere; }
 .saved-job-card .actions { flex-wrap: wrap; }
+.source-search { margin-top: 24px; }
+.career-source-card, .notification-card { overflow-wrap: anywhere; }
+.career-source-card .actions, .notification-card .actions { flex-wrap: wrap; align-items: center; }
+.notification-card.unread { border-left: 5px solid #83ad91; }
+header { flex-wrap: wrap; }

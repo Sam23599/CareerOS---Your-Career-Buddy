@@ -6,7 +6,7 @@ export type JobInput = {
   sourceUrl: string; postedAt: Date | null; expiresAt: Date | null; metadata: { category?: string; salary?: string };
 };
 export type Job = JobInput & { _id: string; source: string; createdAt: Date; updatedAt: Date };
-export interface JobSource { id: string; name: string; cooldownMs: number; fetchJobs(): Promise<JobInput[]> }
+export interface JobSource { id: string; name: string; cooldownMs: number; reconcileMissing?: boolean; fetchJobs(): Promise<JobInput[]> }
 
 export function validateJob(job: JobInput): void {
   for (const field of ['sourceId', 'title', 'company', 'description', 'location', 'sourceUrl'] as const) {

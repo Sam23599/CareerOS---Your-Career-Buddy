@@ -32,6 +32,8 @@ export function Dashboard() {
       <p><Link to="/profile">View career profile</Link></p>
       <p><Link to="/saved-jobs">Saved jobs</Link></p>
       <p><Link to="/jobs">Find jobs</Link></p>
+      <p><Link to="/career-sources">Career sources</Link></p>
+      <p><Link to="/notifications">Notifications</Link></p>
       <p><Link to="/resumes">Manage resumes</Link></p>
       <div className="actions">
         {error && <button className="secondary" onClick={() => { setError(''); setAttempt(value => value + 1); }}>Retry account</button>}

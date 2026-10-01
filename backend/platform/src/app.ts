@@ -11,8 +11,12 @@ import { handleError } from './errors.js';
 import { profileRouter } from './profiles/routes.js';
 import { type ProfileStore } from './profiles/store.js';
 import { authenticate, authRouter, requireRoles, type AuthOptions } from './auth/routes.js';
+import { careerSourceRouter } from './career-sources/routes.js';
+import { type CareerSourceStore } from './career-sources/store.js';
+import { notificationRouter } from './notifications/routes.js';
+import { type NotificationStore } from './notifications/store.js';
 
-export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore) {
+export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore, features?: { careerSources: CareerSourceStore; notifications: NotificationStore }) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -50,6 +54,10 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
   });
 
   if (auth) {
+    if (features) {
+      app.use('/api/v1/career-sources', careerSourceRouter(auth.service, features.careerSources));
+      app.use('/api/v1/notifications', notificationRouter(auth.service, features.notifications));
+    }
     if (savedJobs) app.use('/api/v1/saved-jobs', savedJobRouter(auth.service, savedJobs));
     if (jobs) app.use('/api/v1/jobs', jobRouter(jobs.store, auth.service, jobs.sources));
     app.use('/api/v1/auth', authRouter(auth));

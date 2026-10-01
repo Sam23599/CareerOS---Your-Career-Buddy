@@ -24,6 +24,9 @@ Saved jobs:
 more filters by location, date post range, new apply/already applied to that company (this checks and allow the user if he is applying for the first time or not: this is because, a person would be ok to apply casually and be added in company's data records (company he is applying to), and also he might would like to be prepared for some specific ones first then only apply so his record stays fresh and new the company.) 
 one more filter for if the user has applied to the job, application in progress, being interviewed, etc status. this will then later help to track its appliation. (this can be in saved jobs as well or in a better suited place in future)
 
+custom career sources and notifications:
+functionality vise it works perfect. just some ui/ux improvements are needed for much cleaner ui and flow.
+
 ## Refined notes
 
 No observations submitted yet. Each reviewed item will use this compact format:

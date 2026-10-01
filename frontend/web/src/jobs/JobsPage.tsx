@@ -2,14 +2,14 @@ import { SaveJobButton } from '../saved-jobs/SaveJobButton';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
-type Job = {
+export type Job = {
   id: string; title: string; company: string; description: string; location: string; employmentType: string; remoteType: string;
   skills: string[]; source: string; sourceUrl: string; postedAt: string | null; expiresAt: string | null; updatedAt: string;
   metadata: { salary?: string; category?: string };
 };
 type Results = { jobs: Job[]; total: number; page: number; limit: number };
 const label = (value: string) => value === 'UNKNOWN' ? 'Not specified' : value.toLowerCase().replaceAll('_', ' ');
-function sourceName(source: string) { return source === 'remotive' ? 'Remotive' : source === 'fixture' ? 'Demo fixtures' : source; }
+function sourceName(source: string) { return source === 'remotive' ? 'Remotive' : source === 'fixture' ? 'Demo fixtures' : source.startsWith('greenhouse:') ? `Greenhouse · ${source.slice(11)}` : source; }
 function useJobsData<T>(path: string) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState('');
@@ -33,6 +33,8 @@ function JobFacts({ job }: { job: Job }) {
 function JobResults() {
   const [params, setParams] = useSearchParams();
   const { data, error, retry } = useJobsData<Results>(`?${params.toString()}`);
+  const { data: sourceData } = useJobsData<{ sources: string[] }>('/sources');
+  const sources = [...new Set(['remotive', ...(sourceData?.sources ?? []), ...(params.get('source') ? [params.get('source')!] : [])])];
   function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const next = new URLSearchParams();
     for (const [key, value] of new FormData(event.currentTarget)) if (typeof value === 'string' && value.trim()) next.set(key, value.trim());
@@ -40,7 +42,7 @@ function JobResults() {
   }
   function page(number: number) { const next = new URLSearchParams(params); next.set('page', String(number)); setParams(next); }
   return <div className="profile-page">
-    <Link to="/dashboard">Your workspace</Link><h1>Find your next role</h1>
+    <nav className="profile-nav"><Link to="/dashboard">Your workspace</Link><Link to="/career-sources">Your career sources</Link></nav><h1>Find your next role</h1>
     <p className="description">Explore opportunities and check location requirements on the original listing. Remote does not always mean worldwide.</p>
     <form className="panel profile-section" onSubmit={search} aria-label="Job search"><div className="profile-grid">
       <label>Search jobs<input name="q" defaultValue={params.get('q') ?? ''} maxLength={100} placeholder="Title, company, keyword…" /></label>
@@ -49,7 +51,7 @@ function JobResults() {
       <label>Skill<input name="skill" defaultValue={params.get('skill') ?? ''} maxLength={100} /></label>
       <label>Employment type<select name="employmentType" defaultValue={params.get('employmentType') ?? ''}><option value="">Any type</option>{['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY', 'OTHER', 'UNKNOWN'].map(type => <option key={type} value={type}>{label(type)}</option>)}</select></label>
       <label>Work mode<select name="remoteType" defaultValue={params.get('remoteType') ?? ''}><option value="">Any work mode</option>{['REMOTE', 'HYBRID', 'ONSITE', 'UNKNOWN'].map(type => <option key={type} value={type}>{label(type)}</option>)}</select></label>
-      <label>Source<select name="source" defaultValue={params.get('source') ?? ''}><option value="">All sources</option><option value="remotive">Remotive</option><option value="fixture">Demo fixtures</option></select></label>
+      <label>Source<select name="source" defaultValue={params.get('source') ?? ''}><option value="">All sources</option>{sources.map(source => <option key={source} value={source}>{sourceName(source)}</option>)}</select></label>
     </div><div className="actions"><button>Search</button><button className="secondary" type="button" onClick={() => setParams({})}>Clear filters</button></div></form>
     {!data ? <Loading error={error} retry={retry} /> : <>
       <p role="status">{data.total} {data.total === 1 ? 'job' : 'jobs'} found</p>

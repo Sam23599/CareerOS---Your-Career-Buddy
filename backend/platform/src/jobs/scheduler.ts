@@ -17,13 +17,15 @@ export async function refreshDueJobs(store: Store, sources: JobSource[]) {
     }
   }
 }
-export function startJobScheduler(store: Store, sources: JobSource[]) {
+export function startJobScheduler(store: Store, sources: JobSource[], refreshCareerSources?: () => Promise<void>) {
   let stopped = false;
   let pending: Promise<void> | undefined;
   function tick() {
     if (stopped || pending) return;
     pending = refreshDueJobs(store, sources)
       .catch(() => console.error(JSON.stringify({ event: 'job_scheduler_unavailable' })))
+      .then(() => refreshCareerSources?.())
+      .catch(() => console.error(JSON.stringify({ event: 'career_source_scheduler_unavailable' })))
       .finally(() => { pending = undefined; });
   }
   // Check persisted due times so restarts and manual imports do not reset the schedule.

@@ -33,7 +33,7 @@ async function request(path: string, options: RequestInit = {}, binary = false) 
   let response: Response;
   try {
     response = await fetch(`/api/v1${path}`, {
-      ...options, credentials: 'same-origin', signal: AbortSignal.timeout(10_000),
+      ...options, credentials: 'same-origin', signal: options.signal ?? AbortSignal.timeout(10_000),
       headers: { 'Content-Type': 'application/json', 'X-CareerOS-Client': 'web', ...options.headers },
     });
   } catch { throw new RequestError(0, 'Cannot reach CareerOS. Please try again.'); }

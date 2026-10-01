@@ -30,3 +30,8 @@ test('scheduler does not overlap slow refreshes and shutdown waits for the runni
   let stopped = false; const stopping = stop().then(() => { stopped = true; });
   await flush(); assert.equal(stopped, false); release(); await stopping; assert.equal(stopped, true);
 });
+test('custom-source checks still run when the global source store is temporarily unavailable', async () => {
+  let checks = 0;
+  const stop = startJobScheduler({ initialize: async () => { throw new Error('Unavailable'); }, nextRefreshAt: async () => new Date(0), ingest: async () => ({ source: 'unused', imported: 0 }) }, [], async () => { checks++; });
+  await flush(); await stop(); assert.equal(checks, 1);
+});

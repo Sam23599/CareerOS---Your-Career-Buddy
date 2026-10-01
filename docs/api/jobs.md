@@ -5,6 +5,7 @@
 ## Read APIs
 
 - `GET /api/v1/jobs`: `{ jobs, total, page, limit }`.
+- `GET /api/v1/jobs/sources`: `{ sources }`, the distinct active catalog source IDs used by the search dropdown. Includes imported Greenhouse boards without any user's private settings.
 - `GET /api/v1/jobs/:id`: `{ job }`; unknown IDs return 404.
 
 Filters: `q` (title, company, description or skills), `location`, `company`, `skill`, `source`, `employmentType`, `remoteType`, `page` (1–1000), `limit` (1–50; default 20). Text filters are case-insensitive literal substrings, not regular expressions. `source` is an exact source identifier. Text inputs allow 100 characters. Repeated values and invalid pagination/enums return 400.
@@ -31,8 +32,8 @@ Host equivalent: `npm run jobs:ingest -- remotive` using the local `.env` connec
 
 Remotive calls use a fixed HTTPS endpoint, a 20-second timeout, and a 20 MiB response limit. A MongoDB source record enforces a four-hour refresh interval across API/CLI instances (409 on cooldown). The API checks due times on startup and every minute, fetching every four hours while running (up to one minute of scheduling delay). Restarts preserve the schedule; overdue work runs on startup. Manual refreshes use the same cooldown. This user-requested schedule makes up to six calls daily; Remotive recommends at most four. Failed imports keep their cooldown and stored jobs. Scheduler errors are logged and subsequent checks continue.
 
-Each job uses a deterministic ID from `(source, sourceId)` and a unique compound index. Reimport updates mutable data while preserving `createdAt`. Duplicate IDs, malformed rows and invalid source responses reject the feed before any job writes. Empty feeds do not remove records. Missing jobs are not automatically deleted or expired. Fetch failures preserve stored jobs; a database failure during a bulk write may leave a partially refreshed batch, recoverable through an idempotent retry after cooldown.
+Each job uses a deterministic ID from `(source, sourceId)` and a unique compound index. Reimport updates mutable data while preserving `createdAt`. Duplicate IDs, malformed rows and invalid source responses reject the feed before any job writes. Remotive and fixture imports retain missing jobs, including on empty feeds. Complete successful Greenhouse board imports expire missing jobs; see [career sources](career-sources.md). Fetch failures preserve stored jobs; a database failure during a bulk write may leave a partially refreshed batch, recoverable through an idempotent retry after cooldown.
 
-`job_ingestion_runs` records the source status, timestamps, imported count and next allowed refresh; `jobs` stores normalized records. The fixture adapter exists for tests and explicit demos only. Refresh is admin/CLI controlled; user-managed source configuration is a later milestone. Manual editing/deletion of provider-owned jobs is not exposed in this batch.
+`job_ingestion_runs` records the source status, timestamps, imported count and next allowed refresh; `jobs` stores normalized records. The fixture adapter exists for tests and explicit demos only. Remotive refresh is admin/CLI/scheduler controlled. Users can manage and check their own [career sources](career-sources.md). Manual editing/deletion of provider-owned jobs is not exposed.
 
 Provider contract: [Remotive API documentation](https://github.com/remotive-com/remote-jobs-api) and [source terms](https://remotive.com/remote-jobs/api). Listings are delayed 24 hours; attribution, original links, and ungated listing access are retained. Do not redistribute this feed to third-party job boards.

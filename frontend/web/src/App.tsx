@@ -9,6 +9,10 @@ import { initializeSession, refreshSession, useSession } from './auth/session';
 import { ProfileView } from './profiles/ProfileView';
 import { ProfilePage } from './profiles/ProfilePage';
 import { ConnectionStatus } from './ConnectionStatus';
+import { CareerSourcesPage } from './career-sources/CareerSourcesPage';
+import { SourceJobsPage } from './career-sources/SourceJobsPage';
+import { NotificationsPage } from './notifications/NotificationsPage';
+import { NotificationLink } from './notifications/NotificationLink';
 
 function AccountRoutes() {
   const session = useSession();
@@ -28,6 +32,9 @@ function AccountRoutes() {
   return <Routes>
     <Route path="/login" element={<AuthPage key="login" mode="login" />} />
     <Route path="/register" element={<AuthPage key="register" mode="register" />} />
+    <Route path="/career-sources" element={session.state === 'authenticated' ? <CareerSourcesPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
+    <Route path="/career-sources/:id/jobs" element={session.state === 'authenticated' ? <SourceJobsPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
+    <Route path="/notifications" element={session.state === 'authenticated' ? <NotificationsPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/saved-jobs" element={session.state === 'authenticated' ? <SavedJobsPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/resumes" element={session.state === 'authenticated' ? <ResumesPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/profile" element={session.state === 'authenticated' ? <ProfileView key={session.user?.id} /> : <Navigate to="/login" replace />} />
@@ -41,7 +48,7 @@ function AccountRoutes() {
 export function App() {
   useEffect(() => { void initializeSession(); }, []);
   return <BrowserRouter><main>
-    <header><Link className="brand" to="/"><span className="logo" aria-hidden="true">C</span><strong>CareerOS</strong></Link><Link to="/jobs">Jobs</Link><span className="badge">Your career buddy</span></header>
+    <header><Link className="brand" to="/"><span className="logo" aria-hidden="true">C</span><strong>CareerOS</strong></Link><Link to="/jobs">Jobs</Link><NotificationLink /><span className="badge">Your career buddy</span></header>
     <Routes>
       <Route path="/jobs" element={<JobsPage />} />
       <Route path="/jobs/:id" element={<JobDetailPage />} />

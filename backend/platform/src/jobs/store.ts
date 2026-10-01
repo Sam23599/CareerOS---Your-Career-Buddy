@@ -24,6 +24,8 @@ export class JobStore {
     await this.jobs.createIndex({ source: 1, sourceId: 1 }, { unique: true });
     await this.jobs.createIndex({ postedAt: -1, _id: 1 });
   }
+  async refreshState(source: string) { const run = await this.runs.findOne({ _id: source }); return run ? { status: run.status, finishedAt: run.finishedAt ?? null } : null; }
+  async sources() { return (await this.jobs.distinct('source', { $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] })).sort(); }
   async nextRefreshAt(source: JobSource) {
     const run = await this.runs.findOne({ _id: source.id });
     if (!run) return new Date(0);
@@ -47,6 +49,7 @@ export class JobStore {
         filter: { _id: createHash('sha256').update(`${source.id}\0${job.sourceId}`).digest('hex') },
         update: { $set: { ...job, source: source.id, updatedAt: now }, $setOnInsert: { createdAt: now } }, upsert: true,
       } })));
+      if (source.reconcileMissing) await this.jobs.updateMany({ source: source.id, sourceId: { $nin: [...seen] }, expiresAt: null }, { $set: { expiresAt: now, updatedAt: now } });
       await this.runs.updateOne({ _id: source.id }, { $set: { status: 'success', finishedAt: new Date(), imported: incoming.length, nextAllowedAt: new Date(now.getTime() + source.cooldownMs) } });
       return { source: source.id, imported: incoming.length };
     } catch (error) {
