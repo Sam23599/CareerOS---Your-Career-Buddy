@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect } from '@playwright/test';
 
-test('upload, select, download and delete private resume versions', async ({ page }) => {
+test('upload, preview, select, download and delete private resume versions', async ({ page }) => {
   await page.goto('/resumes'); await expect(page).toHaveURL(/\/login$/);
   await page.goto('/register');
   await page.getByLabel('Your name').fill('Resume Tester');
@@ -10,7 +10,10 @@ test('upload, select, download and delete private resume versions', async ({ pag
   await page.getByRole('button', { name: 'Create account', exact: true }).click();
   await page.getByRole('link', { name: 'Manage resumes' }).click();
   await expect(page.getByText('No resumes uploaded yet.')).toBeVisible();
-  const buffer = Buffer.from('%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF');
+  const document = await page.context().newPage();
+  await document.setContent('<h1>Resume Tester</h1><p>Software engineer — TypeScript and MongoDB.</p>');
+  const buffer = await document.pdf();
+  await document.close();
   for (const name of ['first.pdf', 'second.pdf']) {
     await page.getByLabel('Resume file').setInputFiles({ name, mimeType: 'application/pdf', buffer });
     await page.getByRole('button', { name: 'Upload resume' }).click();
@@ -20,6 +23,22 @@ test('upload, select, download and delete private resume versions', async ({ pag
   const second = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'second.pdf' }) });
   await second.getByRole('button', { name: 'Make active' }).click();
   await expect(second).toContainText('Active resume');
+  await second.getByRole('button', { name: 'View', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'second.pdf' });
+  await expect(preview).toBeVisible();
+  await expect(preview.locator('iframe')).toHaveAttribute('src', /^blob:/);
+  await expect(page).toHaveURL(/\/resumes$/);
+  await page.getByRole('button', { name: 'Close preview' }).click();
+  await expect(preview).toHaveCount(0);
+  await second.getByRole('button', { name: 'View', exact: true }).click();
+  await expect(preview).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(preview).toHaveCount(0);
+  await page.route('**/api/v1/resumes/*/download', route => route.fulfill({ status: 503, json: { error: { message: 'Preview temporarily unavailable.' } } }));
+  await second.getByRole('button', { name: 'View', exact: true }).click();
+  await expect(preview.getByRole('alert')).toHaveText('Preview temporarily unavailable.');
+  await page.getByRole('button', { name: 'Close preview' }).click();
+  await page.unroute('**/api/v1/resumes/*/download');
   const pending = page.waitForEvent('download');
   await second.getByRole('button', { name: 'Download' }).click();
   expect((await pending).suggestedFilename()).toBe('second.pdf');

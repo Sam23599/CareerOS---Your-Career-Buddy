@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "start": "node --env-file-if-exists=../../.env dist/server.js",
     "test": "node --import tsx --test test/*.test.ts",
-    "test:integration": "node --import tsx --test test/*.integration.ts"
+    "test:integration": "node --import tsx --test test/*.integration.ts",
+    "jobs:ingest": "node --env-file-if-exists=../../.env --import tsx src/jobs/ingest.ts"
   },
   "dependencies": {
     "cookie": "^1.1.1",

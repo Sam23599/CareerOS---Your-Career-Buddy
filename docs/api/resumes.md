@@ -12,7 +12,7 @@ Open `/resumes` from the dashboard or profile. All endpoints below require a JWT
 
 Metadata includes `id`, `name`, `size` in bytes, monotonic `version`, `uploadedAt`, and `active`. A failed deletion also exposes `deleting: true` so the UI can retry cleanup. No filesystem paths are exposed.
 
-PDF only, nonempty, maximum 5 MiB (5,242,880 bytes). Filenames must end in `.pdf`, be at most 200 characters, and contain no path separators/control characters. The API checks the PDF header and end marker; this is basic format validation, not parsing or malware scanning. Files are downloaded as attachments, not rendered inline.
+PDF only, nonempty, maximum 5 MiB (5,242,880 bytes). Filenames must end in `.pdf`, be at most 200 characters, and contain no path separators/control characters. The API checks the PDF header and end marker; this is basic format validation, not parsing or malware scanning. The download API returns attachments. The View button fetches the same private bytes using JWT authentication and displays a temporary blob URL in an in-page PDF dialog. Closing the dialog or leaving the page releases that URL; unsupported browsers have a download fallback.
 
 Every upload is an immutable version. Version numbers are never reused and may have gaps after failures. An upload becomes active if no active version is selected; otherwise it preserves the selection. Deleting the active version leaves none active. There is no automatic fallback to an older file. Concurrent active selections are last-write-wins, with one active pointer per owner.
 

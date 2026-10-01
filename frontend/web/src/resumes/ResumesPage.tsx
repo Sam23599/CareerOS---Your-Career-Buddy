@@ -1,3 +1,4 @@
+import { ResumePreview } from './ResumePreview';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
@@ -5,6 +6,7 @@ import { authenticatedRequest } from '../auth/session';
 type Resume = { id: string; name: string; size: number; version: number; uploadedAt: string; active: boolean; deleting?: boolean };
 type Library = { resumes: Resume[] };
 export function ResumesPage() {
+  const [preview, setPreview] = useState<Resume | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,7 @@ export function ResumesPage() {
       {resume.deleting && <p className="form-error">Deletion is incomplete. Click Delete to retry cleanup.</p>}
       <p className="muted">{Math.ceil(resume.size / 1024)} KB · Uploaded {new Date(resume.uploadedAt).toLocaleDateString()}</p>
       <div className="actions">
+        <button className="secondary" disabled={busy || loading || resume.deleting} onClick={() => setPreview(resume)}>View</button>
         <button disabled={busy || loading || resume.deleting} onClick={() => void action(async () => {
           const blob = await authenticatedRequest<Blob>(`/resumes/${resume.id}/download`, {}, true);
           const url = URL.createObjectURL(blob); const link = document.createElement('a');
@@ -66,5 +69,6 @@ export function ResumesPage() {
         }}>Delete</button>
       </div>
     </article>)}
+    {preview && <ResumePreview key={preview.id} resume={preview} onClose={() => setPreview(null)} />}
   </div>;
 }

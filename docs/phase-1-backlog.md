@@ -70,7 +70,7 @@ A clean repository that any developer can clone and start locally.
 * [x] Configure error handling
 * [x] Configure authentication state
 
-Login, registration, and a protected account dashboard are implemented. `/status` retains the connection diagnostic. The protected career profile editor is implemented; job pages remain future work.
+Login, registration, and a protected account dashboard are implemented. `/status` retains the connection diagnostic. The protected career profile editor is implemented; public job search and details are implemented.
 
 ### Initial pages
 
@@ -209,15 +209,16 @@ updatedAt
 
 ### Tasks
 
-* [ ] Job schema
-* [ ] Job CRUD
-* [ ] Source abstraction
-* [ ] First source adapter
-* [ ] Job normalization
-* [ ] Duplicate detection
-* [ ] Job search
-* [ ] Filtering
-* [ ] Pagination
+* [x] Job schema
+* [x] Import/upsert and job read APIs
+* [ ] Manual job editing/deletion (deferred; listings remain provider-owned)
+* [x] Source abstraction
+* [x] First source adapter
+* [x] Job normalization
+* [x] Duplicate detection
+* [x] Job search
+* [x] Filtering
+* [x] Pagination
 
 ---
 
@@ -366,7 +367,7 @@ Minimum baseline:
 * [ ] API tests
 * [ ] Authentication tests
 * [ ] RBAC tests
-* [ ] Job normalization tests
+* [x] Job normalization tests
 * Community permission tests are deferred to Phase 5.
 
 ### Frontend
@@ -428,8 +429,8 @@ Phase 1 is complete when:
 * [x] JWT user authentication works (live OAuth requires provider credentials).
 * [x] A complete career profile can be maintained.
 * [x] A resume can be uploaded and managed.
-* [ ] Jobs can be ingested and normalized.
-* [ ] Jobs can be searched and filtered.
+* [x] Jobs can be ingested and normalized.
+* [x] Jobs can be searched and filtered.
 * [ ] Jobs can be saved.
 * [ ] Companies/career pages can be configured.
 * [ ] Basic notifications work.

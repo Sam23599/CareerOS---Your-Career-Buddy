@@ -12,6 +12,10 @@ Cady is designed to understand a user's profile, skills, experience, career goal
 
 ---
 
+## Project notebook
+
+Add observations, change requests, and future ideas to [project notes](docs/project-notes.md). Your raw notes, refined proposals, decisions, and review history stay in that one file.
+
 ## Run locally
 
 The implemented foundation is React + TypeScript, Express + TypeScript, and MongoDB. The rest of this README describes the planned product.
@@ -21,7 +25,7 @@ npm run setup
 docker compose up --build -d --wait
 ```
 
-Open http://localhost:5173 to register or sign in. JWT sessions, protected pages, and configurable Google/GitHub OAuth are implemented. Career profiles are available at `/profile` after signing in; see the [profile API](docs/api/profiles.md). Private PDF resume uploads, versions, downloads, and active selection are available at `/resumes`; see the [resume API](docs/api/resumes.md). The connection diagnostic is at `/status`. Docker must be running; `npm run setup` creates a local signing secret without replacing existing settings.
+Open http://localhost:5173 to register or sign in. JWT sessions, protected pages, and configurable Google/GitHub OAuth are implemented. Career profiles are available at `/profile` after signing in; see the [profile API](docs/api/profiles.md). Private PDF resume uploads, versions, in-page previews, downloads, and active selection are available at `/resumes`; see the [resume API](docs/api/resumes.md). Public job search and details are available at `/jobs`; listings refresh automatically every four hours while the API runs. See [job ingestion commands](docs/api/jobs.md). The connection diagnostic is at `/status`. Docker must be running; `npm run setup` creates a local signing secret without replacing existing settings.
 
 See [local development](docs/local-development.md) for host development, checks, ports, and persistence, and [ADR-001](docs/adr/001-local-platform-foundation.md) for the setup decisions. See [authentication and OAuth setup](docs/api/authentication.md) to configure Google/GitHub credentials.
 

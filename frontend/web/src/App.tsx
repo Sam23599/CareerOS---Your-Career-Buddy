@@ -1,3 +1,4 @@
+import { JobsPage, JobDetailPage } from './jobs/JobsPage';
 import { ResumesPage } from './resumes/ResumesPage';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router';
@@ -38,8 +39,10 @@ function AccountRoutes() {
 export function App() {
   useEffect(() => { void initializeSession(); }, []);
   return <BrowserRouter><main>
-    <header><Link className="brand" to="/"><span className="logo" aria-hidden="true">C</span><strong>CareerOS</strong></Link><span className="badge">Your career buddy</span></header>
+    <header><Link className="brand" to="/"><span className="logo" aria-hidden="true">C</span><strong>CareerOS</strong></Link><Link to="/jobs">Jobs</Link><span className="badge">Your career buddy</span></header>
     <Routes>
+      <Route path="/jobs" element={<JobsPage />} />
+      <Route path="/jobs/:id" element={<JobDetailPage />} />
       <Route path="/status" element={<ConnectionStatus />} />
       <Route path="*" element={<AccountRoutes />} />
     </Routes>

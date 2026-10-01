@@ -94,7 +94,7 @@ To check failure reporting, stop only this project's MongoDB with `docker compos
 
 ## Current scope
 
-Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Private career profiles are implemented at `/profile`, including skills, experience, education, certifications, preferences, and professional links. Resume management is implemented at `/resumes` with PDF uploads up to 5 MiB. Jobs and Cady remain future work. See the [profile API](api/profiles.md). See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
+Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Private career profiles are implemented at `/profile`, including skills, experience, education, certifications, preferences, and professional links. Resume management is implemented at `/resumes` with PDF uploads up to 5 MiB. Public job search/details and explicit Remotive imports are implemented; Cady remains future work. See the [profile API](api/profiles.md). See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
 
 ## Foundation verification (previous batch)
 
@@ -133,3 +133,25 @@ Docker stores uploaded bytes in `careeros_resume_data`, mounted at `/data/resume
 - All 16 unit/API tests and 19 MongoDB integration tests passed. Resume checks include invalid/oversized uploads, exact download bytes, owner isolation including ADMIN, version allocation under concurrent uploads, active selection, deletion, and retry after storage failure.
 - All four Chromium browser tests passed, including upload, reload, active selection, authenticated download, and deletion through the resume page.
 - Docker Compose rebuilt and all services became healthy with the persistent resume volume mounted. Integration files/databases are removed after tests; the resume browser test deletes its uploaded files.
+
+
+## Job ingestion
+
+Run `docker compose exec -T api npm run jobs:ingest -- remotive` once to populate live jobs, then open `/jobs`. The API automatically refreshes every four hours while running, checking persisted due times every minute and at startup. Manual imports share that cooldown. Demo data requires an explicit `fixture` import and is labeled separately. See [job API and source behavior](api/jobs.md).
+
+
+## Jobs and ingestion verification
+
+- Lint, TypeScript checks, both builds, and whitespace checks passed.
+- All 20 unit/API tests and 24 MongoDB integration tests passed, including source normalization, invalid-feed rejection, stable upserts, source failure retention, literal search/filtering, expiry, pagination, ADMIN-only ingestion, and database-backed cooldown.
+- Existing four browser flows and both new jobs flows passed. The retry simulation was corrected to remain unavailable until Retry, because development StrictMode can issue an aborted initial fetch.
+- A real Remotive import saved 16 listings on 2026-10-01. A separate Chromium check opened the live job list and one real detail page with its source link. This count is a verification snapshot, not a guaranteed feed size.
+- Job search uses cached MongoDB records; visits do not call the external provider. No fixture jobs were added to the application database.
+
+
+## Scheduled refresh and resume preview verification
+
+- Lint, type checks, both builds, and whitespace checks passed.
+- All 23 unit/API tests and 25 MongoDB integration tests passed, including four-hour scheduling with a simulated clock, persisted cooldowns, migration from six-hour intervals, non-overlapping runs, and shutdown behavior.
+- The resume browser flow covers the authenticated in-page preview, Close/Escape, preview fetch errors, and existing upload/download/delete behavior. Preview object URLs are released on close/unmount.
+- Scheduled refresh runs inside the API process. When the computer/API is stopped it cannot fetch; overdue imports are checked when the API starts again. Source feeds still retain their own publication delay.

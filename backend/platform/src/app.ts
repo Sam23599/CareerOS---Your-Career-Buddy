@@ -1,3 +1,6 @@
+import { jobRouter } from './jobs/routes.js';
+import { type JobStore } from './jobs/store.js';
+import { type JobSource } from './jobs/model.js';
 import { resumeRouter } from './resumes/routes.js';
 import { type ResumeStore } from './resumes/store.js';
 import { randomUUID } from 'node:crypto';
@@ -7,7 +10,7 @@ import { profileRouter } from './profiles/routes.js';
 import { type ProfileStore } from './profiles/store.js';
 import { authenticate, authRouter, requireRoles, type AuthOptions } from './auth/routes.js';
 
-export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore) {
+export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -45,6 +48,7 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
   });
 
   if (auth) {
+    if (jobs) app.use('/api/v1/jobs', jobRouter(jobs.store, auth.service, jobs.sources));
     app.use('/api/v1/auth', authRouter(auth));
     if (resumes) app.use('/api/v1/resumes', resumeRouter(auth.service, resumes));
     if (profiles) app.use('/api/v1/profiles', profileRouter(auth.service, profiles));

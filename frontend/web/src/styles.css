@@ -81,3 +81,15 @@ textarea:focus-visible, select:focus-visible { outline: 3px solid #83ad91; outli
 
 .resume-card { margin-top: 20px; overflow-wrap: anywhere; }
 .resume-card .actions, .profile-nav { flex-wrap: wrap; }
+
+.job-detail { overflow-wrap: anywhere; }
+.job-detail .profile-edit-link { display: inline-block; line-height: 1.5; }
+nav.actions { align-items: center; flex-wrap: wrap; }
+
+.resume-preview { width: min(1000px, 95vw); height: 90vh; max-height: 90dvh; padding: 20px; border: 1px solid #dce3db; border-radius: 16px; color: #183c34; background: white; }
+.resume-preview::backdrop { background: rgb(15 30 25 / 65%); }
+.resume-preview[open] { display: flex; flex-direction: column; }
+.preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.preview-heading h2 { overflow-wrap: anywhere; min-width: 0; }
+.preview-heading button { flex-shrink: 0; }
+.resume-preview iframe { width: 100%; flex: 1; min-height: 0; border: 1px solid #dce3db; border-radius: 8px; }
