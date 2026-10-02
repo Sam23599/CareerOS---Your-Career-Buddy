@@ -1,15 +1,16 @@
 import { SaveJobButton } from '../saved-jobs/SaveJobButton';
+import { limitedCoverageMessage } from '../career-sources/types';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
 export type Job = {
   id: string; title: string; company: string; description: string; location: string; employmentType: string; remoteType: string;
   skills: string[]; source: string; sourceUrl: string; postedAt: string | null; expiresAt: string | null; updatedAt: string;
-  metadata: { salary?: string; category?: string };
+  metadata: { salary?: string; category?: string; coverage?: 'limited' };
 };
 type Results = { jobs: Job[]; total: number; page: number; limit: number };
 const label = (value: string) => value === 'UNKNOWN' ? 'Not specified' : value.toLowerCase().replaceAll('_', ' ');
-function sourceName(source: string) { return source === 'remotive' ? 'Remotive' : source === 'fixture' ? 'Demo fixtures' : source.startsWith('greenhouse:') ? `Greenhouse · ${source.slice(11)}` : source; }
+function sourceName(source: string) { return source === 'remotive' ? 'Remotive' : source === 'google-careers' ? 'Google Careers' : source === 'fixture' ? 'Demo fixtures' : source.startsWith('greenhouse:') ? `Greenhouse · ${source.slice(11)}` : source; }
 function useJobsData<T>(path: string) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState('');
@@ -28,7 +29,7 @@ function Loading({ error, retry }: { error: string; retry: () => void }) {
   return error ? <><p role="alert" className="form-error">{error}</p><button onClick={retry}>Retry</button></> : <p role="status">Loading jobs…</p>;
 }
 function JobFacts({ job }: { job: Job }) {
-  return <><p>{job.company} · {job.location || 'Location not specified'}</p><p className="muted">{label(job.remoteType)} · {label(job.employmentType)}{job.postedAt && ` · Posted ${new Date(job.postedAt).toLocaleDateString()}`}</p></>;
+  return <><p>{job.company} · {job.location || 'Location not specified'}</p><p className="muted">{label(job.remoteType)} · {label(job.employmentType)}{job.postedAt && ` · Posted ${new Date(job.postedAt).toLocaleDateString()}`}</p>{job.metadata.coverage === 'limited' && <p className="muted">{limitedCoverageMessage}</p>}</>;
 }
 function JobResults() {
   const [params, setParams] = useSearchParams();

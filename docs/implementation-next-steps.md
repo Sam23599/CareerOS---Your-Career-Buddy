@@ -1,6 +1,6 @@
 # CareerOS — Review and Next Implementation Steps
 
-Updated: 2026-10-01. Status: local foundation, JWT authentication, career profiles, resume management, jobs/ingestion, saved jobs, custom career sources, and in-app notifications implemented; release verification is next. OAuth flows need provider credentials; core workflow first and community in Phase 5 confirmed by the user.
+Updated: 2026-10-02. Status: local foundation, JWT authentication, career profiles, resume management, jobs/ingestion, saved jobs, custom career sources, and in-app notifications implemented; release verification is next. OAuth flows need provider credentials; core workflow first and community in Phase 5 confirmed by the user.
 
 ## 1. Current position
 
@@ -45,7 +45,7 @@ Each step depends on the preceding foundation. Add relevant tests alongside beha
 | 4. Resume management — implemented | Upload, metadata, versions, active selection, authenticated download, and deletion; storage abstraction with a local implementation | Supported uploads work; invalid/oversized files fail; access is owner-only; active-resume and deletion behavior are defined and verified |
 | 5. Jobs and ingestion — implemented | Normalized schema, fixture adapter, then one verified accessible external source; normalization, idempotent ingestion, search/filter/pagination, and job detail UI | Reimporting a source job updates it without duplication; filters match stored fields; failed fetches do not erase existing jobs; one real source works before aggregation is considered complete |
 | 6. Saved jobs — implemented | Save/unsave, notes, priority, and SAVED/INTERESTED/NOT_INTERESTED states | Repeated saves do not duplicate records; data is private per user; the complete core journey works |
-| 7. Complete Phase 1 scope — implemented | Private searchable company/source configuration, manual and scheduled Greenhouse checks, and in-app notifications with read/unread state and preferences | Greenhouse boards refresh; other URLs are clearly labeled links; users see only their configuration and notifications; community remains in Phase 5 |
+| 7. Complete Phase 1 scope — implemented | Private searchable job sources and career bookmarks, registry-based Greenhouse and limited Google checks, and in-app notifications with read/unread state and preferences | Coverage and bookmark intent are explicit; enabling bookmark tracking requires user setup; users see only their configuration and notifications; community remains in Phase 5 |
 | 8. Release verification | Critical API/UI journey checks, access-control checks, fresh-checkout setup, API documentation, and status updates | The agreed Phase 1 definition of done is demonstrated locally; future capabilities remain explicitly planned |
 
 ## 5. First implementation batch
@@ -70,6 +70,10 @@ Before scaffolding, record the language choice (the README currently allows Java
 For authentication, write down token transport, refresh rotation/revocation, session expiry, password-management scope, and resource ownership before Step 2. For resumes, decide supported formats, size limits, active-version behavior, and local storage before Step 4. For jobs, choose the target geography/source and verify actual integration access before committing to a live adapter in Step 5.
 
 ## 6. Documentation approach
+
+Google Careers and the provider registry were authorized before release verification. See [ADR-008](adr/008-career-source-registry.md) and the [source integration plan](architecture/career-source-integration.md). Further ATS adapters and company-page discovery are proposals; release verification remains the next roadmap step.
+
+Separate career bookmarks and explicit tracking activation are implemented in [ADR-009](adr/009-career-bookmarks.md). On-demand browsing tools remain planned for a later release and are not implemented by this batch.
 
 Keep `development-plan.md` as the overall roadmap, `phase-1-backlog.md` as the executable release checklist, and architecture documents as domain boundaries. This review is a proposed bridge into implementation, not a replacement roadmap.
 

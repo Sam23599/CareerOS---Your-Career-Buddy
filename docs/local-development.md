@@ -182,3 +182,31 @@ Verified on 2026-10-01:
 - A complete live Greenhouse check imported 15 YugabyteDB published listings, produced one matching-job summary, and used the cached import on repeat. This verification used a temporary database that was deleted afterward; it did not add entries to the user's watchlist. Feed size is a snapshot, not a promised count.
 - The three local Docker services are healthy and readiness reports MongoDB up. The browser test uses unique cached fixture jobs and removes its sources, notifications, preferences, saved entries, jobs, and ingestion record afterward; randomly named test accounts remain as with the existing browser suites.
 - The next roadmap step is Phase 1 release verification. Live Google/GitHub consent still needs provider credentials; email/push providers and additional career-page adapters remain future work.
+
+## Source registry and Google Careers verification
+
+Verified across 2026-10-01–02 (Asia/Kolkata):
+
+- Lint, TypeScript checks, both builds, 33 unit/API tests and 42 MongoDB integration tests passed. The 12 source integration cases also passed after refining migration handling for existing URL aliases. Coverage includes Google detection, fixed unpaginated fetching, malformed/oversized responses, partial-feed retention, scheduling, owner isolation and legacy migration without losing Greenhouse history.
+- The career-source browser flow passed with Google detection before Save, enabled refresh controls, limited-coverage notices and generic matching-page labels, alongside existing Greenhouse matching, saved jobs and notifications. It makes no live provider calls and cleans up its source records and cached Greenhouse fixtures.
+- A live refresh of the existing Google watchlist entry imported 20 public listings and found 4 matches for its saved Python keyword. Its label, filters and manual-only schedule were preserved. This import populated the application's real catalog; counts are a snapshot, not a guaranteed feed size.
+- A separate Chromium check verified those 20 live jobs in the public Google source filter, the limited-coverage warning, job details and original Google listing links. Google reads only the first unfiltered results page and never expires missing listings; see the [integration plan](architecture/career-source-integration.md).
+- Whitespace checks for this batch pass when excluding the pre-existing user notebook edit; `docs/project-notes.md` was left untouched.
+
+## Career bookmarks verification
+
+Verified on 2026-10-02 (Asia/Kolkata):
+
+- Lint, TypeScript checks, both builds, 34 unit/API tests and all 13 source/notification MongoDB integration cases passed. Coverage includes strict bookmark input, private ownership, kind filtering, migration without automatic activation, preserving working-source history and legacy filters, stale-edit rejection, and skipping bookmarks even when stale scheduling/pending-delivery fields exist.
+- The updated source browser flow passed. It checks both views, unsupported-page Save as bookmark, the simple bookmark form, editing/reloading, cancellation of tracking setup, explicit activation with manual frequency, cached job matching, removal, and existing saved jobs/notification/Google coverage behavior. It uses uniquely identified cached Greenhouse fixtures rather than calling live providers.
+- The running app migrated its two existing native connections as job sources. The user's Google entry retained its Python filter, successful check, 4 matches, enabled state and manual schedule. Supported bookmarks require a saved tracking setup; recognition upgrades alone cannot start imports or alerts.
+- On-demand career-page browsing remains future work, documented in [ADR-009](adr/009-career-bookmarks.md).
+
+## Optional Check now filters verification
+
+Verified on 2026-10-02 (Asia/Kolkata):
+
+- Lint, TypeScript checks, both production builds, 35 unit/API tests and all 14 source/notification MongoDB integration cases passed. Temporary checks cover partial overrides, explicit clearing, literal matching, shared imports, private ownership, invalid inputs, failed imports and edits during a check. Saved settings, history, schedules and notifications remain intact.
+- The career-source Chromium flow passed with inline keyword/location defaults, one-time checks, reset, filtered result links, pagination/reload and returning to saved filters. Existing source/bookmark editing, saved jobs and notification behavior also passed in that flow. Tests use cached fixture jobs without contacting live providers.
+- The [career-source API contract](api/career-sources.md#optional-filters-for-check-now) documents temporary filters and inline saving. Edit source continues to include saved filters for scheduled checks and alerts.
+- Follow-up: Update saved filters passed lint, TypeScript checks, the web production build and the expanded source browser flow. Coverage includes saving both inline fields, clearing restrictions, persistence after reload, matching saved values, resetting to updated defaults, retaining invalid drafts and preserving other source settings. A test expectation was corrected to use Greenhouse's existing canonical URL.

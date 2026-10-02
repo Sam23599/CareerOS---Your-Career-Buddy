@@ -17,6 +17,8 @@ One ongoing notebook for the whole project: bugs, rough ideas, UX observations, 
 Add entries below. Dates, screenshots/paths, expected behavior, and examples help, but are optional. If you change your mind, append a follow-up referencing the earlier note.
 
 <!-- Write freely below this line. The reviewer will add IDs without changing your words. -->
+improve the main header bar sections and overall feel of the app. (just the ui/ux and frontend changes needed mainly) to give a modern fresh and user friendly look.
+
 Jobs and ingestion:
 proper separator in jobs section for different jobs platforms that'll be added in future, along with the user custom career pages. and note, user may be adding a lot of dream companies so we need a proper platform and interface for that. 
 
@@ -26,6 +28,8 @@ one more filter for if the user has applied to the job, application in progress,
 
 custom career sources and notifications:
 functionality vise it works perfect. just some ui/ux improvements are needed for much cleaner ui and flow.
+add linkedln jobs as well for common job sources. my R&D suggests linkedln supports public job search (for example: https://www.linkedin.com/jobs/jobs-in-pune-division?trk=homepage-jobseeker_brand-discovery_intent-module-secondBtn&position=1&pageNum=0), but for easy apply or more diverse search, a linkedln account sign-in is required.So we'll support both. default public search that linkedln allows, then for advance search ask user to sign-in to linkedln through our platform and allow the access to their linkedln, then use it for search and list available jobs. note, for sensitive platforms like this, we'll give user a specific guideline and prompt if they want a more faster scheduled search like every hour or every 30 mins with a warning that that particular platform might limit this feature or is against this type of heavy crawling. 
+the newly added jobs should be at the top of the list on '/career-sources/{id}' page. also add sorting and filter as you type on that page
 
 ## Refined notes
 

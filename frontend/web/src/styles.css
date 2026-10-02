@@ -98,7 +98,12 @@ nav.actions { align-items: center; flex-wrap: wrap; }
 .saved-job-card { overflow-wrap: anywhere; }
 .saved-job-card .actions { flex-wrap: wrap; }
 .source-search { margin-top: 24px; }
+.career-source-tabs { justify-content: flex-start; border-bottom: 1px solid #dce3db; }
+.career-source-tabs a { padding: 10px 4px; text-decoration: none; }
+.career-source-tabs a[aria-current="page"] { border-bottom: 3px solid #183c34; font-weight: 700; }
 .career-source-card, .notification-card { overflow-wrap: anywhere; }
 .career-source-card .actions, .notification-card .actions { flex-wrap: wrap; align-items: center; }
+.quick-check-filters { margin: 18px 0; padding: 14px; border: 1px solid #dce3db; border-radius: 8px; }
+.quick-check-filters legend { padding: 0 6px; font-weight: 600; }
 .notification-card.unread { border-left: 5px solid #83ad91; }
 header { flex-wrap: wrap; }

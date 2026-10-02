@@ -10,6 +10,8 @@ import { AuthStore } from '../src/auth/store.js';
 import { AuthService } from '../src/auth/service.js';
 import { Tokens } from '../src/auth/tokens.js';
 import { CareerSourceStore, parseSource } from '../src/career-sources/store.js';
+import { type SourceDefinition } from '../src/career-sources/registry.js';
+import { googleCareersUrl } from '../src/career-sources/google.js';
 import { JobStore } from '../src/jobs/store.js';
 import { type JobInput, type JobSource } from '../src/jobs/model.js';
 import { type Notice, NotificationService, NotificationStore } from '../src/notifications/store.js';
@@ -24,10 +26,10 @@ let deliveryFails = false;
 const service = new NotificationService(notifications, { deliver: async (owner, notice) => { if (deliveryFails) throw new Error('Delivery unavailable'); await notifications.deliver(owner, notice); } });
 const feeds = new Map<string, JobInput[]>(), failed = new Set<string>(), calls = new Map<string, number>();
 let gate: Promise<void> | undefined;
-const adapter = (board: string): JobSource => ({ id: `greenhouse:${board}`, name: 'Test board', cooldownMs: ['cached', 'shared-failure'].includes(board) ? 3_600_000 : 0, reconcileMissing: true, fetchJobs: async () => {
+const adapter = (definition: SourceDefinition): JobSource => { const board = definition.key; return { id: definition.sourceId, name: 'Test board', cooldownMs: ['cached', 'shared-failure'].includes(board) ? 3_600_000 : 0, reconcileMissing: definition.coverage === 'complete', fetchJobs: async () => {
   calls.set(board, (calls.get(board) ?? 0) + 1); if (board.startsWith('slow')) await gate;
   if (failed.has(board)) throw new Error('Provider unavailable'); return feeds.get(board) ?? [];
-} });
+} }; };
 const sources = new CareerSourceStore(db, jobs, service, adapter);
 let first: Awaited<ReturnType<AuthService['register']>>, second: typeof first, server: Server, base: string;
 before(async () => {
@@ -39,11 +41,15 @@ before(async () => {
 });
 after(async () => { if (server) await new Promise<void>(resolve => { server.close(() => resolve()); server.closeAllConnections(); }); await db.dropDatabase(); await client.close(); });
 function request(path: string, token = first.accessToken, method = 'GET', body?: unknown) { return fetch(base + path, { method, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Content-Type': 'application/json' }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) }); }
-const sourceBody = (board: string, changes = {}) => ({ company: 'Dream Company', careerUrl: `https://boards.greenhouse.io/${board}`, keywords: ['C++'], locations: ['India'], scanHours: 0, enabled: true, ...changes });
+const sourceBody = (board: string, changes = {}) => ({ kind: 'job-source', company: 'Dream Company', careerUrl: `https://boards.greenhouse.io/${board}`, keywords: ['C++'], locations: ['India'], scanHours: 0, enabled: true, ...changes });
+const bookmarkBody = (url: string, changes = {}) => ({ kind: 'bookmark', company: 'Dream bookmark', careerUrl: url, ...changes });
 const settings = (board: string, changes = {}) => parseSource(sourceBody(board, changes));
 const job = (id: string, changes = {}): JobInput => ({ sourceId: id, title: 'C++ Engineer', company: 'Official Company', description: 'Work on the database.', location: 'India', remoteType: 'UNKNOWN', employmentType: 'UNKNOWN', skills: [], sourceUrl: `https://example.com/jobs/${id}`, postedAt: null, expiresAt: null, metadata: {}, ...changes });
 test('private source endpoints enforce ownership, validate input and prevent duplicate URLs', async () => {
   assert.equal((await request('/career-sources', '', 'GET')).status, 401);
+  assert.equal((await request('/career-sources/detect?url=https://careers.google.com/', '')).status, 401);
+  const support = await (await request(`/career-sources/detect?url=${encodeURIComponent(googleCareersUrl)}`)).json(); assert.equal(support.coverage, 'limited'); assert.equal(support.canRefresh, true);
+  assert.equal((await request('/career-sources/detect?url=javascript:alert(1)')).status, 400);
   assert.equal((await request('/notifications', '', 'GET')).status, 401);
   const result = await request('/career-sources', first.accessToken, 'POST', sourceBody('private')); assert.equal(result.status, 201);
   const { source } = await result.json(); assert.equal(source.ownerId, undefined); assert.equal(source.seenIds, undefined);
@@ -61,7 +67,7 @@ test('source edits use revisions and link-only pages cannot be fetched or schedu
   const source = await sources.create(first.user.id, settings('editing'));
   const edited = await sources.update(first.user.id, source.id, { ...settings('editing', { company: 'Edited' }), revision: source.revision }); assert.equal(edited.company, 'Edited');
   await assert.rejects(sources.update(first.user.id, source.id, { ...settings('editing'), revision: source.revision }), { status: 409 });
-  const link = await sources.create(first.user.id, settings('unused', { careerUrl: 'https://example.com/careers' }));
+  const link = await sources.create(first.user.id, parseSource(bookmarkBody('https://example.com/careers')));
   assert.equal(link.provider, null); await assert.rejects(sources.refresh(first.user.id, link.id), { status: 400 }); assert.equal(calls.get('unused'), undefined);
   const paused = await sources.create(first.user.id, settings('paused', { enabled: false })); await assert.rejects(sources.refresh(first.user.id, paused.id), { status: 400 });
   await sources.remove(first.user.id, link.id); assert.equal((await sources.list(first.user.id, { filter: 'reference' })).total, 0);
@@ -75,6 +81,30 @@ test('matching combines literal keyword and location groups, caches provider imp
   const again = await sources.refresh(first.user.id, source.id); assert.equal(again.cached, true); assert.equal(again.source.newCount, 0); assert.equal(calls.get('cached'), 1); assert.equal((await notifications.list(first.user.id, {})).total, firstCount);
   assert.equal((await jobs.list({ q: '', location: '', company: '', skill: '', source: 'greenhouse:cached', employmentType: '', remoteType: '', page: 1, limit: 20 })).total, 3);
   const publicSources = await (await request('/jobs/sources', '')).json(); assert.deepEqual(publicSources.sources, ['greenhouse:cached']);
+});
+test('one-time check filters share imports and keep saved filters, watch history, scheduling and alerts intact', async () => {
+  const records = db.collection<{ _id: string; [key: string]: unknown }>('career_sources');
+  const before = await records.findOne({ ownerId: first.user.id, 'connection.sourceId': 'greenhouse:cached' }); assert.ok(before);
+  const notices = (await notifications.list(first.user.id, {})).total;
+  const result = await request(`/career-sources/${before._id}/refresh`, first.accessToken, 'POST', { filters: { keywords: ['Designer'] } }); assert.equal(result.status, 200);
+  const checked = await result.json(); assert.equal(checked.temporary, true); assert.equal(checked.cached, true); assert.equal(checked.matchingCount, 1); assert.deepEqual(checked.filters, { keywords: ['Designer'], locations: ['India'] }); assert.deepEqual(checked.source.keywords, ['C++']); assert.equal(calls.get('cached'), 1);
+  assert.deepEqual(await records.findOne({ _id: before._id }), before); assert.equal((await notifications.list(first.user.id, {})).total, notices);
+  const query = new URLSearchParams({ keywords: JSON.stringify(['Designer']), locations: JSON.stringify(['India']) });
+  const matched = await (await request(`/career-sources/${before._id}/jobs?${query}`)).json(); assert.equal(matched.total, 1); assert.equal(matched.jobs[0].sourceId, 'two'); assert.equal(matched.temporary, true); assert.deepEqual(matched.filters, checked.filters);
+  query.set('keywords', '[]'); query.set('locations', '[]'); query.set('limit', '1');
+  const pageOne = await (await request(`/career-sources/${before._id}/jobs?${query}`)).json(); query.set('page', '2');
+  const pageTwo = await (await request(`/career-sources/${before._id}/jobs?${query}`)).json(); assert.equal(pageOne.total, 3); assert.equal(pageTwo.total, 3); assert.notEqual(pageOne.jobs[0].id, pageTwo.jobs[0].id); assert.deepEqual(pageTwo.filters, { keywords: [], locations: [] });
+  const regular = await (await request(`/career-sources/${before._id}/jobs`)).json(); assert.equal(regular.total, 1); assert.equal(regular.temporary, false); assert.deepEqual(regular.filters, { keywords: ['C++'], locations: ['India'] });
+  assert.equal((await request(`/career-sources/${before._id}/refresh`, second.accessToken, 'POST', { filters: { keywords: [] } })).status, 404);
+  assert.equal((await request(`/career-sources/${before._id}/jobs?${query}`, second.accessToken)).status, 404);
+  for (const body of [{ filters: { keywords: 'Engineer' } }, { filters: { ownerId: second.user.id } }, { enabled: false }]) assert.equal((await request(`/career-sources/${before._id}/refresh`, first.accessToken, 'POST', body)).status, 400);
+  for (const raw of ['not-json', '"Engineer"', '[""]']) assert.equal((await request(`/career-sources/${before._id}/jobs?keywords=${encodeURIComponent(raw)}`)).status, 400);
+  assert.equal((await request(`/career-sources/${before._id}/jobs?keywords=[]&keywords=[]`)).status, 400);
+  assert.equal((await (await request(`/career-sources/${before._id}/jobs?keywords=${encodeURIComponent('["C++|Designer"]')}`)).json()).total, 0);
+  const failure = await sources.create(first.user.id, settings('quick-failure')), initial = await records.findOne({ _id: failure.id }); failed.add('quick-failure');
+  const badCheck = await (await request(`/career-sources/${failure.id}/refresh`, first.accessToken, 'POST', { filters: { keywords: [] } })).json(); assert.equal(badCheck.failed, true); assert.equal(badCheck.matchingCount, null);
+  assert.deepEqual(await records.findOne({ _id: failure.id }), initial); assert.equal((await notifications.list(first.user.id, {})).total, notices);
+  await sources.remove(first.user.id, failure.id); failed.delete('quick-failure');
 });
 test('missing jobs expire only after complete successful imports, and restored jobs regain their identity', async () => {
   feeds.set('reconcile', [job('old'), job('kept')]); const source = await sources.create(first.user.id, settings('reconcile'));
@@ -140,4 +170,79 @@ test('per-source leases block overlapping checks and discard results for changed
   const newer = await sources.update(first.user.id, source.id, { ...settings('slow', { keywords: ['Designer'] }), revision: source.revision });
   const rejected = assert.rejects(started, { status: 409 }); release(); await rejected;
   assert.equal((await sources.matchingJobs(first.user.id, newer.id, {})).source.lastCheckedAt, null);
+  gate = new Promise<void>(resolve => { release = resolve; }); feeds.set('slow-quick', [job('quick')]);
+  const quick = await sources.create(first.user.id, settings('slow-quick')), checking = sources.refresh(first.user.id, quick.id, { keywords: [] });
+  for (let i = 0; i < 100; i++) { if (calls.get('slow-quick')) break; await new Promise(resolve => setTimeout(resolve, 5)); }
+  await assert.rejects(sources.refresh(first.user.id, quick.id), { status: 409 });
+  await sources.update(first.user.id, quick.id, { ...settings('slow-quick', { locations: ['UK'] }), revision: quick.revision });
+  const invalidated = assert.rejects(checking, { status: 409 }); release(); await invalidated;
+  assert.equal((await sources.matchingJobs(first.user.id, quick.id, {})).source.lastCheckedAt, null);
+});
+test('Google uses shared jobs and notifications while keeping missing jobs from limited snapshots', async () => {
+  const body = settings('unused', { company: 'My Google label', careerUrl: googleCareersUrl });
+  const source = await sources.create(first.user.id, body);
+  assert.equal(source.providerName, 'Google Careers'); assert.equal(source.coverage, 'limited'); assert.equal(source.canRefresh, true);
+  assert.equal('connection' in source, false);
+  await assert.rejects(sources.create(first.user.id, { ...body, careerUrl: 'https://careers.google.com/' }), { status: 409 });
+  feeds.set('google', [job('google-old'), job('google-kept')]);
+  const count = (await notifications.list(first.user.id, {})).total;
+  assert.equal((await sources.refresh(first.user.id, source.id)).source.newCount, 2);
+  assert.equal((await notifications.list(first.user.id, {})).total, count + 1);
+  assert.equal((await request(`/career-sources/${source.id}/jobs`, second.accessToken)).status, 404);
+  const previous = await sources.matchingJobs(first.user.id, source.id, {});
+  feeds.set('google', [job('google-kept')]); await sources.refresh(first.user.id, source.id);
+  assert.equal((await sources.matchingJobs(first.user.id, source.id, {})).total, 2);
+  assert.equal((await jobs.get(previous.jobs[0].id)).expiresAt, null);
+  const scheduled = await sources.update(first.user.id, source.id, { ...body, scanHours: 4, revision: source.revision });
+  const beforeCalls = calls.get('google')!; await sources.refreshDue(); assert.equal(calls.get('google'), beforeCalls + 1); assert.ok(scheduled.nextScanAt);
+  await sources.remove(first.user.id, source.id);
+});
+test('migration preserves working sources and discovers support without activating bookmarks', async () => {
+  const rows = db.collection<{ _id: string; [key: string]: unknown }>('career_sources'), now = new Date();
+  const legacy = (id: string, url: string, board: string | null) => ({ _id: id, ownerId: 'legacy-owner', company: 'Legacy label', careerUrl: url, board, keywords: ['Engineer'], locations: ['India'], scanHours: board ? 4 : 0, enabled: false, revision: randomUUID(), createdAt: now, updatedAt: now, status: 'success', lastCheckedAt: now, importedAt: now, matchingCount: 1, newCount: 0, nextScanAt: now, seenIds: ['stable-job-id'] });
+  const greenhouse = legacy('legacy-greenhouse', 'https://job-boards.greenhouse.io/legacy', 'legacy');
+  const legacyGoogle = legacy('legacy-google', 'https://careers.google.com/', null);
+  const active = { ...legacy('legacy-active-google', googleCareersUrl, null), ownerId: 'active-owner', connection: settings('unused', { careerUrl: googleCareersUrl }).connection, registryVersion: 1, enabled: true, scanHours: 4 };
+  const future = { ...legacy('future-bookmark', 'https://boards.greenhouse.io/future', null), ownerId: 'future-owner', kind: 'bookmark', connection: null, registryVersion: 1 };
+  await rows.insertMany([greenhouse, legacyGoogle, legacy('legacy-google-alias', googleCareersUrl, null), legacy('legacy-link', 'https://example.com/legacy', null), active, future]);
+  const restarted = new CareerSourceStore(db, jobs, service, adapter);
+  const list = await restarted.list('legacy-owner', {}), google = list.sources.find(source => source.id === 'legacy-google')!;
+  assert.equal(list.total, 4); assert.equal(google.provider, 'google-careers'); assert.equal(google.coverage, 'limited'); assert.equal(google.scanHours, 0); assert.equal(google.enabled, false); assert.deepEqual(google.keywords, ['Engineer']); assert.equal(google.company, 'Legacy label');
+  assert.equal(google.kind, 'bookmark'); assert.equal(google.canRefresh, false); assert.equal(google.canEnableTracking, true);
+  assert.equal(google.careerUrl, 'https://careers.google.com/'); assert.notEqual(google.revision, legacyGoogle.revision); assert.equal(google.lastCheckedAt, null);
+  const kept = await rows.findOne({ _id: greenhouse._id }); assert.equal(kept?.revision, greenhouse.revision); assert.deepEqual(kept?.seenIds, ['stable-job-id']); assert.deepEqual(kept?.lastCheckedAt, now); assert.equal((kept?.connection as SourceDefinition).sourceId, 'greenhouse:legacy');
+  await assert.rejects(restarted.create('legacy-owner', settings('unused', { careerUrl: googleCareersUrl })), { status: 409 });
+  const edited = await restarted.update('legacy-owner', google.id, parseSource(bookmarkBody(google.careerUrl, { company: 'Updated legacy', revision: google.revision })));
+  assert.equal(edited.company, 'Updated legacy'); assert.equal(edited.careerUrl, 'https://careers.google.com/');
+  assert.deepEqual(edited.keywords, ['Engineer']); assert.deepEqual(edited.locations, ['India']);
+  assert.equal((await restarted.list('legacy-owner', { kind: 'job-source' })).total, 1); assert.equal((await restarted.list('legacy-owner', { kind: 'bookmark' })).total, 3);
+  const keptActive = (await restarted.list('active-owner', {})).sources[0]; assert.equal(keptActive.kind, 'job-source'); assert.equal(keptActive.scanHours, 4); assert.equal(keptActive.enabled, true); assert.equal(keptActive.revision, active.revision); assert.deepEqual(keptActive.lastCheckedAt, now);
+  const discovered = (await restarted.list('future-owner', {})).sources[0]; assert.equal(discovered.kind, 'bookmark'); assert.equal(discovered.canEnableTracking, true); assert.equal(discovered.canRefresh, false); await assert.rejects(restarted.refresh('future-owner', discovered.id), { status: 400 }); assert.equal(calls.get('future'), undefined);
+  await restarted.initialize(); assert.equal((await rows.findOne({ _id: greenhouse._id }))?.revision, greenhouse.revision);
+});
+test('native bookmarks stay private and idle until a revision-protected tracking setup is saved', async () => {
+  const result = await request('/career-sources', first.accessToken, 'POST', bookmarkBody('https://boards.greenhouse.io/bookmark-tracking'));
+  assert.equal(result.status, 201); const { source } = await result.json();
+  assert.equal(source.kind, 'bookmark'); assert.equal(source.canRefresh, false); assert.equal(source.canEnableTracking, true); assert.equal(source.nextScanAt, null);
+  assert.equal((await request(`/career-sources/${source.id}/refresh`, first.accessToken, 'POST', {})).status, 400);
+  assert.equal((await request(`/career-sources/${source.id}/jobs`)).status, 400);
+  assert.equal((await request('/career-sources?kind=unexpected')).status, 400);
+  assert.equal((await request('/career-sources', first.accessToken, 'POST', bookmarkBody('https://example.com/extra', { scanHours: 4 }))).status, 400);
+  assert.equal((await request(`/career-sources/${source.id}`, second.accessToken, 'PATCH', { ...sourceBody('bookmark-tracking'), revision: source.revision })).status, 404);
+  const bookmarks = await (await request('/career-sources?kind=bookmark')).json(); assert.ok(bookmarks.sources.some((row: { id: string }) => row.id === source.id));
+  const tracked = await (await request('/career-sources?kind=job-source')).json(); assert.ok(!tracked.sources.some((row: { id: string }) => row.id === source.id));
+  // Even stale/corrupt scheduling and pending delivery fields must not make a bookmark active.
+  const records = db.collection<{ _id: string; [key: string]: unknown }>('career_sources');
+  await records.updateOne({ _id: source.id }, { $set: { enabled: true, scanHours: 4, nextScanAt: new Date(0), pendingNotice: { key: 'bookmark-idle', type: 'NEW_JOBS', title: 'Do not deliver', message: 'Bookmark', href: '/career-sources' } } });
+  const count = (await notifications.list(first.user.id, {})).total;
+  await sources.refreshDue(); assert.equal(calls.get('bookmark-tracking'), undefined); assert.equal((await notifications.list(first.user.id, {})).total, count);
+  const edit = await request(`/career-sources/${source.id}`, first.accessToken, 'PATCH', bookmarkBody(source.careerUrl, { company: 'Edited bookmark', revision: source.revision }));
+  assert.equal(edit.status, 200); const { source: edited } = await edit.json(); assert.equal(edited.enabled, false); assert.equal(edited.scanHours, 0);
+  assert.equal((await request(`/career-sources/${source.id}`, first.accessToken, 'PATCH', { ...sourceBody('bookmark-tracking'), revision: source.revision })).status, 409);
+  const enabled = await request(`/career-sources/${source.id}`, first.accessToken, 'PATCH', { ...sourceBody('bookmark-tracking'), revision: edited.revision });
+  assert.equal(enabled.status, 200); const { source: tracking } = await enabled.json(); assert.equal(tracking.id, source.id); assert.equal(tracking.createdAt, source.createdAt); assert.equal(tracking.kind, 'job-source'); assert.equal(tracking.canRefresh, true); assert.equal(tracking.enabled, true); assert.equal(tracking.scanHours, 0);
+  assert.equal(calls.get('bookmark-tracking'), undefined);
+  feeds.set('bookmark-tracking', [job('from-bookmark')]);
+  const refreshed = await (await request(`/career-sources/${source.id}/refresh`, first.accessToken, 'POST', {})).json(); assert.equal(refreshed.source.newCount, 1); assert.equal(calls.get('bookmark-tracking'), 1);
+  await sources.remove(first.user.id, source.id);
 });
