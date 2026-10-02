@@ -2,6 +2,8 @@
 
 Updated: 2026-10-02. Status: Phase 1 local core and hardening checks verified; interrupted restoration and GitHub issuer validation are fixed and standalone component tests are implemented. JWT authentication, profiles, resumes, jobs/ingestion, saved jobs, career sources/bookmarks and in-app notifications are implemented. Live GitHub sign-in/logout/returning-account checks pass. Google verification is deferred and community remains in Phase 5. See the [release verification report](phase-1-release-verification.md).
 
+Phase 2 planning is complete. [The executable backlog](phase-2-backlog.md), [ADR-010](adr/010-resume-intelligence-foundation.md) and [planned API contract](api/intelligence.md) define the first PDF text-extraction batch. Python/analysis runtime is not implemented yet.
+
 ## 1. Current position
 
 CareerOS combines job discovery, career profiles, preparation, application tracking, and community. Cady connects these capabilities through personalized career intelligence. The project also deliberately develops engineering experience across Node.js, Python, Java, and distributed systems.
@@ -40,7 +42,7 @@ Each step depends on the preceding foundation. Add relevant tests alongside beha
 | --- | --- | --- |
 | 0. Align the plan | Record initial architecture/repository decisions; release naming, community scope, and roadmap alignment are resolved by this review | One consistent release checklist and ADR index, with proposals distinguished from accepted decisions |
 | 1. Runnable foundation — complete | Scaffold React and one Express application; configure MongoDB, environment examples, ignore rules, lint/build commands, Docker Compose, API prefix, structured errors, request IDs, and health/readiness checks | A clean checkout starts using documented commands; frontend reaches the API; readiness reflects database availability; data survives restart |
-| 2. Authentication — implemented; live OAuth needs credentials | Registration, login, JWT access/refresh handling, logout, USER/ADMIN enforcement, protected UI routes, and current-user API | A user can register, log in, refresh, and log out; invalid/revoked refresh tokens fail; protected APIs reject unauthenticated access and unauthorized actions |
+| 2. Authentication — implemented; live GitHub verified | Registration, email/optional username login, optional OAuth-account password setup, remembered-account continuation, JWT access/refresh handling, logout and USER/ADMIN enforcement | The same account works through password/provider sign-in; valid browser sessions restore; revoked tokens fail; Google live verification remains deferred |
 | 3. Career profile — implemented | Skills, experience, education, preferences, and professional-profile links, with validated read/update APIs and UI | Profile changes persist; one user cannot read or edit another user's private profile |
 | 4. Resume management — implemented | Upload, metadata, versions, active selection, authenticated download, and deletion; storage abstraction with a local implementation | Supported uploads work; invalid/oversized files fail; access is owner-only; active-resume and deletion behavior are defined and verified |
 | 5. Jobs and ingestion — implemented | Normalized schema, fixture adapter, then one verified accessible external source; normalization, idempotent ingestion, search/filter/pagination, and job detail UI | Reimporting a source job updates it without duplication; filters match stored fields; failed fetches do not erase existing jobs; one real source works before aggregation is considered complete |
@@ -80,3 +82,14 @@ Keep `development-plan.md` as the overall roadmap, `phase-1-backlog.md` as the e
 Record decisions when needed rather than writing every future ADR up front. Add API contracts with each feature. Update status from working behavior and validation evidence, not from scaffolding alone.
 
 The initial review changed documentation only. The subsequently authorized foundation batch now includes React, Express, MongoDB Compose configuration, API checks, and ADR-001. See [local development](local-development.md) for commands and [the foundation decision](adr/001-local-platform-foundation.md) for accepted choices. JWT authentication and configurable Google/GitHub OAuth flows are implemented. Career profiles are implemented; see [ADR-003](adr/003-career-profiles.md) and the [profile API](api/profiles.md). Resume management is implemented; see [ADR-004](adr/004-resume-storage.md). Jobs and ingestion are implemented with Remotive as the first live source; see [ADR-005](adr/005-jobs-ingestion.md). Saved jobs are implemented with private notes, priorities, and interest statuses; see [ADR-006](adr/006-saved-jobs.md). Custom career sources and in-app notifications are implemented; see [ADR-007](adr/007-career-sources-notifications.md). The [release report](phase-1-release-verification.md) records the passing checks and remaining sign-off work. See [ADR-002](adr/002-authentication.md) for session and provider decisions.
+
+## 7. Next coding batch — Phase 2 resume text extraction
+
+Implement batch 1 from [the Phase 2 backlog](phase-2-backlog.md#batch-1--concrete-work):
+
+1. Add the private Python/FastAPI parser service and its bounded PDF worker.
+2. Connect Node's authenticated gateway to the owned resume bytes and validate the parser response.
+3. Add an Extract text action and page-text preview on the resume page.
+4. Verify ownership, invalid/scanned PDFs, processing limits, cancellation and service outage behavior.
+
+This establishes a reviewable text result before structured profile extraction, persisted analysis, job matching or Cady. Node remains the data/authentication owner; Python's first endpoint is stateless. Later derived analysis belongs to Python-owned storage. The complete later sequence and outstanding provider/retention choices are recorded in the backlog.

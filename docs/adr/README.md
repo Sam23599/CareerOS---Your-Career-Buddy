@@ -13,3 +13,4 @@ Record meaningful decisions as implementation reaches them. Assign each new deci
 | [007](007-career-sources-notifications.md) | Custom career sources and in-app notifications | Accepted |
 | [008](008-career-source-registry.md) | Provider registry, Google Careers and explicit source coverage | Accepted |
 | [009](009-career-bookmarks.md) | Explicit career bookmarks and opt-in job tracking | Accepted |
+| [010](010-resume-intelligence-foundation.md) | Private resume text extraction through a Python service | Accepted design; runtime not implemented |
