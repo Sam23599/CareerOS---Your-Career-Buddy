@@ -2,7 +2,7 @@
 
 Updated: 2026-10-02. Status: Phase 1 local core and hardening checks verified; interrupted restoration and GitHub issuer validation are fixed and standalone component tests are implemented. JWT authentication, profiles, resumes, jobs/ingestion, saved jobs, career sources/bookmarks and in-app notifications are implemented. Live GitHub sign-in/logout/returning-account checks pass. Google verification is deferred and community remains in Phase 5. See the [release verification report](phase-1-release-verification.md).
 
-Phase 2 planning is complete. [The executable backlog](phase-2-backlog.md), [ADR-010](adr/010-resume-intelligence-foundation.md) and [planned API contract](api/intelligence.md) define the first PDF text-extraction batch. Python/analysis runtime is not implemented yet.
+Phase 2 batch 1 is implemented: private PDF text extraction through Python/FastAPI, an owner-checked Node gateway and a transient page-text preview. See [the executable backlog](phase-2-backlog.md), [ADR-010](adr/010-resume-intelligence-foundation.md) and [API contract](api/intelligence.md). Structured analysis, matching and Cady remain planned.
 
 ## 1. Current position
 
@@ -83,9 +83,9 @@ Record decisions when needed rather than writing every future ADR up front. Add 
 
 The initial review changed documentation only. The subsequently authorized foundation batch now includes React, Express, MongoDB Compose configuration, API checks, and ADR-001. See [local development](local-development.md) for commands and [the foundation decision](adr/001-local-platform-foundation.md) for accepted choices. JWT authentication and configurable Google/GitHub OAuth flows are implemented. Career profiles are implemented; see [ADR-003](adr/003-career-profiles.md) and the [profile API](api/profiles.md). Resume management is implemented; see [ADR-004](adr/004-resume-storage.md). Jobs and ingestion are implemented with Remotive as the first live source; see [ADR-005](adr/005-jobs-ingestion.md). Saved jobs are implemented with private notes, priorities, and interest statuses; see [ADR-006](adr/006-saved-jobs.md). Custom career sources and in-app notifications are implemented; see [ADR-007](adr/007-career-sources-notifications.md). The [release report](phase-1-release-verification.md) records the passing checks and remaining sign-off work. See [ADR-002](adr/002-authentication.md) for session and provider decisions.
 
-## 7. Next coding batch — Phase 2 resume text extraction
+## 7. Phase 2 first batch — resume text extraction implemented
 
-Implement batch 1 from [the Phase 2 backlog](phase-2-backlog.md#batch-1--concrete-work):
+Completed batch 1 from [the Phase 2 backlog](phase-2-backlog.md#batch-1--concrete-work):
 
 1. Add the private Python/FastAPI parser service and its bounded PDF worker.
 2. Connect Node's authenticated gateway to the owned resume bytes and validate the parser response.
@@ -93,3 +93,5 @@ Implement batch 1 from [the Phase 2 backlog](phase-2-backlog.md#batch-1--concret
 4. Verify ownership, invalid/scanned PDFs, processing limits, cancellation and service outage behavior.
 
 This establishes a reviewable text result before structured profile extraction, persisted analysis, job matching or Cady. Node remains the data/authentication owner; Python's first endpoint is stateless. Later derived analysis belongs to Python-owned storage. The complete later sequence and outstanding provider/retention choices are recorded in the backlog.
+
+The next coding batch is structured resume drafts and explicit profile import. Before persistence or model calls, resolve the storage lifecycle and extraction/provider choices in [batch 2](phase-2-backlog.md#storage-and-review-in-batch-2). See [local extraction setup and verification](intelligence-development.md).

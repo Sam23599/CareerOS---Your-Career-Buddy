@@ -15,8 +15,10 @@ import { careerSourceRouter } from './career-sources/routes.js';
 import { type CareerSourceStore } from './career-sources/store.js';
 import { notificationRouter } from './notifications/routes.js';
 import { type NotificationStore } from './notifications/store.js';
+import { intelligenceRouter } from './intelligence/routes.js';
+import { IntelligenceClient } from './intelligence/client.js';
 
-export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore, features?: { careerSources: CareerSourceStore; notifications: NotificationStore }) {
+export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore, features?: { careerSources: CareerSourceStore; notifications: NotificationStore }, intelligence = new IntelligenceClient({})) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -31,6 +33,7 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
       console.info(JSON.stringify({
         event: 'http_request', requestId, method: req.method, path,
         status: res.statusCode, durationMs: Date.now() - startedAt,
+        ...(res.locals.errorCode ? { code: res.locals.errorCode } : {}),
       }));
     });
     next();
@@ -61,7 +64,10 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
     if (savedJobs) app.use('/api/v1/saved-jobs', savedJobRouter(auth.service, savedJobs));
     if (jobs) app.use('/api/v1/jobs', jobRouter(jobs.store, auth.service, jobs.sources));
     app.use('/api/v1/auth', authRouter(auth));
-    if (resumes) app.use('/api/v1/resumes', resumeRouter(auth.service, resumes));
+    if (resumes) {
+      app.use('/api/v1/resumes', resumeRouter(auth.service, resumes));
+      app.use('/api/v1/intelligence', intelligenceRouter(auth.service, resumes, intelligence));
+    }
     if (profiles) app.use('/api/v1/profiles', profileRouter(auth.service, profiles));
     app.get('/api/v1/users/me', authenticate(auth.service), requireRoles('USER', 'ADMIN'), (_req, res) => {
       res.json({ user: res.locals.user });

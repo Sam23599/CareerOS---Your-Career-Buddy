@@ -102,6 +102,8 @@ To check failure reporting, stop only this project's MongoDB with `docker compos
 
 ## Current scope
 
+Private PDF text extraction is implemented as the first Phase 2 batch. **Extract text** on `/resumes` opens a transient page-text preview. See [Python service setup, limits and checks](intelligence-development.md); OCR, structured analysis, matching and Cady remain planned.
+
 Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Private career profiles are implemented at `/profile`, including skills, experience, education, certifications, preferences, and professional links. Resume management is implemented at `/resumes` with PDF uploads up to 5 MiB. Public job search/details and explicit Remotive imports are implemented; Cady remains future work. See the [profile API](api/profiles.md). See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
 
 Private saved jobs, [career sources](api/career-sources.md), and [in-app notifications](api/notifications.md) are implemented. Watch Greenhouse boards and limited Google Careers results manually or every 4/12/24 hours while the API runs; other career URLs can be saved as separate bookmarks. No additional secrets or Docker services are needed. MongoDB persists `career_sources`, `notifications`, and `notification_preferences` in the existing database volume.

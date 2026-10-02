@@ -5,10 +5,14 @@ import { fileURLToPath } from 'node:url';
 const root = new URL('../', import.meta.url);
 const path = fileURLToPath(new URL('.env', root));
 let content = readFileSync(existsSync(path) ? path : new URL('.env.example', root), 'utf8');
-if (!/^AUTH_SECRET=.+$/m.test(content)) {
-  const setting = `AUTH_SECRET=${randomBytes(32).toString('hex')}`;
-  content = /^AUTH_SECRET=.*$/m.test(content) ? content.replace(/^AUTH_SECRET=.*$/m, setting) : `${content.trimEnd()}\n${setting}\n`;
+for (const key of ['AUTH_SECRET', 'INTELLIGENCE_SERVICE_TOKEN']) {
+  if (!new RegExp(`^${key}=.+$`, 'm').test(content)) {
+    const setting = `${key}=${randomBytes(32).toString('hex')}`;
+    const line = new RegExp(`^${key}=.*$`, 'm');
+    content = line.test(content) ? content.replace(line, setting) : `${content.trimEnd()}\n${setting}\n`;
+  }
 }
+if (!/^INTELLIGENCE_SERVICE_URL=/m.test(content)) content += 'INTELLIGENCE_SERVICE_URL=http://127.0.0.1:8000\n';
 writeFileSync(path, content, { mode: 0o600 });
 chmodSync(path, 0o600);
 console.info('Local .env is ready. Existing settings and signing secrets were preserved.');

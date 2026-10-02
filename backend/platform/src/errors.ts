@@ -15,6 +15,7 @@ export const handleError: ErrorRequestHandler = (error: unknown, _req, res, _nex
     : error instanceof MongoNetworkError || error instanceof MongoServerSelectionError || error instanceof MongoOperationTimeoutError
       ? new ApiError(503, 'DATABASE_UNAVAILABLE', 'Service temporarily unavailable. Please try again.')
     : new ApiError(500, 'INTERNAL_ERROR', 'An unexpected error occurred.');
+  res.locals.errorCode = known.code;
   res.status(known.status).json({ error: {
     code: known.code, message: known.message, requestId: res.locals.requestId,
   } });

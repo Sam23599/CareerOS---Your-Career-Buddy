@@ -21,6 +21,7 @@
     "test:integration": "npm run test:integration -w @careeros/platform",
     "test:e2e": "playwright test",
     "test:components": "playwright test --config playwright.components.config.ts",
+    "test:intelligence": "sh scripts/test-intelligence.sh",
     "jobs:ingest": "npm run jobs:ingest -w @careeros/platform --"
   },
   "devDependencies": {

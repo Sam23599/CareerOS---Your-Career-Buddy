@@ -341,7 +341,7 @@ At this point, CareerOS should already be usable without AI.
 
 # 5. Phase 2 — Intelligence & AI
 
-The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Its first batch is private PDF text extraction through Python, with [ADR-010](adr/010-resume-intelligence-foundation.md) and a [planned API contract](api/intelligence.md). Planning is recorded; the Python runtime is not implemented yet.
+The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Its first batch is private PDF text extraction through Python, with [ADR-010](adr/010-resume-intelligence-foundation.md) and an [API contract](api/intelligence.md). Batch 1 is implemented locally; structured analysis, matching and Cady remain planned.
 
 ## Technology
 

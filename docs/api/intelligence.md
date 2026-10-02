@@ -1,12 +1,12 @@
-# Intelligence API — planned first batch
+# Intelligence API — PDF text extraction
 
-Status: Design only, 2026-10-02. **These endpoints are not implemented yet.** See [ADR-010](../adr/010-resume-intelligence-foundation.md) and the [Phase 2 backlog](../phase-2-backlog.md).
+Status: Implemented locally, 2026-10-02. Extraction is transient and does not update profiles. See [ADR-010](../adr/010-resume-intelligence-foundation.md) and the [Phase 2 backlog](../phase-2-backlog.md).
 
 ## Browser gateway
 
 Both routes require the normal CareerOS Bearer access token and USER/ADMIN role. ADMIN does not bypass resume ownership. Responses use `Cache-Control: no-store`; errors use the [existing envelope](health.md).
 
-| Endpoint | Request | Planned result |
+| Endpoint | Request | Result |
 | --- | --- | --- |
 | `GET /api/v1/intelligence/status` | None | `{ "resumeExtraction": { "configured": true, "available": true } }`; expose no internal URL/token |
 | `POST /api/v1/intelligence/resumes/:id/extract` | `Content-Type: application/json`, body `{}` | Owner-checked text preview, status 200 |
@@ -36,6 +36,8 @@ The extraction route accepts only a resume ID and empty body. Reject owner IDs, 
 
 Warnings have `{ "code", "message" }`. A completely empty extraction uses `NO_EXTRACTABLE_TEXT`, explaining that a scanned or blank PDF may contain no readable text. Empty pages in an otherwise readable document use `PAGES_WITHOUT_TEXT`; do not imply all resume content was recovered. A general layout caveat belongs in the preview UI, since correct reading order cannot be guaranteed.
 
+Known structural repairs add `PDF_STRUCTURE_REPAIRED`: “Minor PDF structure issues were corrected during extraction. Review the text against your original PDF.” The pinned parser currently allows only nonzero xref indexing and extra object-header whitespace. Repeated repair warnings become one fixed message, without document values or exception details. It can accompany either empty-text warning; responses contain at most two distinct warnings. Unknown warnings or warnings about unreadable/skipped content still fail with `INVALID_PDF`. The preview displays these warnings above the page text.
+
 Results are transient, not analysis records. Render text safely. No public PDF URLs, storage paths or service credentials appear in the result.
 
 ## Internal Python contract
@@ -44,7 +46,7 @@ Results are transient, not analysis records. Render text safely. No public PDF U
 
 Python reads at most 5 MiB and enforces ADR-010's page, character, output, concurrency, time and memory limits. Parse only after service authentication. Reject remote-URL/path/body metadata inputs. On timeout, disconnect or shutdown, stop and reap the parser process and discard in-memory bytes/output. Do not log PDF text or raw parser exception contents.
 
-Python liveness is `GET /internal/v1/health`; service-authenticated readiness is `GET /internal/v1/ready`. Readiness checks configured credentials, parser availability and enforceable worker bounds. They have no database dependency in this first batch.
+Readiness has a two-second gateway budget. Python liveness is `GET /internal/v1/health`; service-authenticated readiness is `GET /internal/v1/ready`. Readiness checks configured credentials, parser availability and enforceable worker bounds. They have no database dependency in this first batch.
 
 ## Error mapping
 
@@ -69,3 +71,7 @@ Node attaches its request ID and safe message. Do not proxy Python response bodi
 Python uses the corresponding parser/input codes, with 401 for bad service credentials and 415 for non-PDF input. Node should never send those requests; translate those internal failures to `INTELLIGENCE_UNAVAILABLE` or `INTELLIGENCE_RESPONSE_INVALID` as appropriate. A valid `no_text` response is 200, not a parser exception.
 
 Service responses must have the expected schema/parser/status, bounded strings, consecutive page numbers and a consistent page count/combined text. Unknown fields or inconsistent output are rejected. Repeated extraction requests do no persistent writes and receive no automatic retry or cache in batch 1.
+
+## Local setup and checks
+
+See [resume intelligence development](../intelligence-development.md). The supported parser runs in Linux Docker; the default Compose service has no published host port. fontTools supports embedded CFF Type1 font encodings and is checked during readiness. pypdf warnings indicating skipped or damaged content reject the entire result rather than returning a partial success. Library decompression limits also map to `EXTRACTION_LIMIT`.

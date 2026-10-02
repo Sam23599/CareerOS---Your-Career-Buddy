@@ -1,0 +1,5 @@
+# Use only when Node runs on the host; the default parser has no published port.
+services:
+  intelligence:
+    ports:
+      - "127.0.0.1:8000:8000"

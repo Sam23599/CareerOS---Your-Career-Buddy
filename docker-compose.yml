@@ -30,6 +30,8 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       WEB_PORT: ${WEB_PORT:-5173}
+      INTELLIGENCE_SERVICE_URL: http://intelligence:8000
+      INTELLIGENCE_SERVICE_TOKEN: ${INTELLIGENCE_SERVICE_TOKEN:-}
       RESUME_STORAGE_DIR: /data/resumes
       MONGODB_URI: mongodb://mongodb:27017/careeros
     ports:
@@ -42,6 +44,27 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/v1/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  intelligence:
+    build:
+      context: ./backend/intelligence
+      target: runtime
+    init: true
+    mem_limit: 512m
+    pids_limit: 32
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      INTELLIGENCE_SERVICE_TOKEN: ${INTELLIGENCE_SERVICE_TOKEN:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/internal/v1/health', timeout=2)"]
       interval: 5s
       timeout: 5s
       retries: 12

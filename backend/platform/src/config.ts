@@ -36,5 +36,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     return clientId && clientSecret ? { clientId, clientSecret } : undefined;
   };
   const oauth: OAuthSettings = { publicOrigin, google: provider('GOOGLE'), github: provider('GITHUB') };
-  return { oauth, port, host: env.API_HOST ?? '127.0.0.1', mongoUri, authSecret, allowedOrigins, secureCookie };
+  const intelligence = { url: env.INTELLIGENCE_SERVICE_URL, token: env.INTELLIGENCE_SERVICE_TOKEN };
+  return { intelligence, oauth, port, host: env.API_HOST ?? '127.0.0.1', mongoUri, authSecret, allowedOrigins, secureCookie };
 }

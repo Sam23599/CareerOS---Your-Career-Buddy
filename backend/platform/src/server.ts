@@ -14,6 +14,7 @@ import { ProfileStore } from './profiles/store.js';
 import { createOAuthProviders } from './auth/oauth-providers.js';
 import { CareerSourceStore } from './career-sources/store.js';
 import { NotificationService, NotificationStore } from './notifications/store.js';
+import { IntelligenceClient } from './intelligence/client.js';
 
 const config = readConfig();
 const client = new MongoClient(config.mongoUri, {
@@ -35,7 +36,7 @@ const app = createApp(async () => {
   await careerSources.initialize();
   await notifications.initialize();
   await client.db().command({ ping: 1 }, { timeoutMS: 2000 });
-}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes')), { store: jobs, sources: jobSources }, savedJobs, { careerSources, notifications });
+}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes')), { store: jobs, sources: jobSources }, savedJobs, { careerSources, notifications }, new IntelligenceClient(config.intelligence));
 const server = app.listen(config.port, config.host, () => {
   console.info(JSON.stringify({ event: 'server_started', host: config.host, port: config.port }));
 });

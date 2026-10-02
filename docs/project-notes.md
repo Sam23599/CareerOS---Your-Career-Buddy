@@ -22,9 +22,13 @@ improve the main header bar sections and overall feel of the app. (just the ui/u
 auth:
 add cache for continued session scheck if security-vise applicable.
 google auth proper addition still remains.
+current card for 'continue as' still require password. we should be able to to sign-in directly in that case, like upto 7 days. in this case, user will be asked for password only when he hasnt logged in since last 7 days.
 
 Jobs and ingestion:
 proper separator in jobs section for different jobs platforms that'll be added in future, along with the user custom career pages. and note, user may be adding a lot of dream companies so we need a proper platform and interface for that. 
+filters on main job page like skills, employment type, work mode, etc doesnt exactly work. or you may say, they cant filter properly because the original jobs fetched were parsed or structured improperly for filters to apply. maybe using llms to structure it properly would be better.(lets discuss it first with brain bombarding) 
+improve job's detail properly with divided sections of like role, responsibility, skills, experience/education, company, employee reviews (use glassdoor, ambitionbox, 6figures, etc).
+MAJOR: add a major feature to find emails of the HR or recuiters or of the people (may try linkedln and apollo extension feature) from those companies to show in the job-detail section. may require R&D here as where and how can we fetch those details.
 
 Saved jobs:
 more filters by location, date post range, new apply/already applied to that company (this checks and allow the user if he is applying for the first time or not: this is because, a person would be ok to apply casually and be added in company's data records (company he is applying to), and also he might would like to be prepared for some specific ones first then only apply so his record stays fresh and new the company.) 
