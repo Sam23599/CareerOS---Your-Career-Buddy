@@ -28,7 +28,7 @@ export function oauthRouter(options: {
     const state = randomBytes(32).toString('base64url');
     const binding = randomBytes(32).toString('base64url');
     const attempt = { state, verifier: randomBytes(32).toString('base64url'), nonce: randomBytes(32).toString('base64url') };
-    const url = await provider.authorizationUrl(attempt);
+    const url = await provider.authorizationUrl(attempt, req.query.select_account === 'true');
     await service.store.oauthAttempts.insertOne({
       _id: tokenHash(state), provider: provider.id, bindingHash: tokenHash(binding),
       verifier: attempt.verifier, nonce: attempt.nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
@@ -42,22 +42,28 @@ export function oauthRouter(options: {
     const state = typeof req.query.state === 'string' ? req.query.state : '';
     const binding = parse(req.headers.cookie ?? '')[cookie] ?? '';
     res.clearCookie(cookie, bindingOptions);
+    let stage = 'binding';
     try {
       if (!state || !binding || state.length > 200 || binding.length > 200) throw new Error('Missing OAuth state');
+      stage = 'state';
       const attempt = await service.store.oauthAttempts.findOneAndDelete({
         _id: tokenHash(state), provider: provider.id, bindingHash: tokenHash(binding), expiresAt: { $gt: new Date() },
       });
       if (!attempt) throw new Error('Invalid or consumed OAuth state');
       const callback = new URL(`${publicOrigin}/api/v1/auth/oauth/${provider.id}/callback`);
       callback.search = new URL(req.originalUrl, publicOrigin).search;
+      stage = 'exchange';
       const profile = await provider.exchange(callback, { state, verifier: attempt.verifier, nonce: attempt.nonce });
       if (profile.provider !== provider.id) throw new Error('Provider mismatch');
+      stage = 'session';
       const result = await service.oauthSignIn(profile);
       setSessionCookie(res, result);
       res.redirect(`${publicOrigin}/dashboard`);
     } catch (error) {
       const reason = error instanceof ApiError && error.code === 'OAUTH_ACCOUNT_EXISTS' ? 'account_exists' : 'failed';
       // Provider tokens, authorization codes, and raw errors must not enter logs or redirects.
+      console.warn(JSON.stringify({ event: 'oauth_sign_in_failed', provider: provider.id, stage,
+        code: error instanceof ApiError ? error.code : 'OAUTH_FAILED', requestId: res.locals.requestId }));
       res.redirect(`${publicOrigin}/login?oauth=${reason}`);
     }
   });

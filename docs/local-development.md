@@ -77,6 +77,14 @@ npm run test:e2e
 
 Set `E2E_BASE_URL` if the frontend uses another address. Browser tests create accounts with random `e2e-...@example.com` addresses in the local application database and sign them out; they do not contact Google or GitHub.
 
+For standalone component checks, use the same installed Chromium browser:
+
+```bash
+npm run test:components
+```
+
+This starts a test-only Vite gallery on port 5183 and exercises shared components in Chromium with mocked requests. No API, MongoDB or OAuth credentials are needed. The gallery is outside the application entry point and is not included in its production build. See [Playwright component testing](https://playwright.dev/docs/test-components). GitHub live setup/checks are in the [authentication guide](api/authentication.md#github-first-local-verification).
+
 ## Verify live connections and persistence
 
 ```bash
@@ -96,7 +104,7 @@ To check failure reporting, stop only this project's MongoDB with `docker compos
 
 Registration, JWT login/refresh/logout, protected dashboard/current-user API, USER/ADMIN middleware, and configurable Google/GitHub OAuth flows are implemented. Private career profiles are implemented at `/profile`, including skills, experience, education, certifications, preferences, and professional links. Resume management is implemented at `/resumes` with PDF uploads up to 5 MiB. Public job search/details and explicit Remotive imports are implemented; Cady remains future work. See the [profile API](api/profiles.md). See [the next steps](implementation-next-steps.md), [ADR-002](adr/002-authentication.md), and the [authentication API](api/authentication.md).
 
-Private saved jobs, [career sources](api/career-sources.md), and [in-app notifications](api/notifications.md) are implemented. Watch Greenhouse boards manually or every 4/12/24 hours while the API runs; other career URLs remain saved links. No additional secrets or Docker services are needed. MongoDB persists `career_sources`, `notifications`, and `notification_preferences` in the existing database volume.
+Private saved jobs, [career sources](api/career-sources.md), and [in-app notifications](api/notifications.md) are implemented. Watch Greenhouse boards and limited Google Careers results manually or every 4/12/24 hours while the API runs; other career URLs can be saved as separate bookmarks. No additional secrets or Docker services are needed. MongoDB persists `career_sources`, `notifications`, and `notification_preferences` in the existing database volume.
 
 ## Foundation verification (previous batch)
 
@@ -210,3 +218,26 @@ Verified on 2026-10-02 (Asia/Kolkata):
 - The career-source Chromium flow passed with inline keyword/location defaults, one-time checks, reset, filtered result links, pagination/reload and returning to saved filters. Existing source/bookmark editing, saved jobs and notification behavior also passed in that flow. Tests use cached fixture jobs without contacting live providers.
 - The [career-source API contract](api/career-sources.md#optional-filters-for-check-now) documents temporary filters and inline saving. Edit source continues to include saved filters for scheduled checks and alerts.
 - Follow-up: Update saved filters passed lint, TypeScript checks, the web production build and the expanded source browser flow. Coverage includes saving both inline fields, clearing restrictions, persistence after reload, matching saved values, resetting to updated defaults, retaining invalid drafts and preserving other source settings. A test expectation was corrected to use Greenhouse's existing canonical URL.
+
+## Phase 1 release verification
+
+Verified on 2026-10-02 (Asia/Kolkata):
+
+- Node 24 checks passed: lint, TypeScript, both builds, 35 unit/API tests and 44 MongoDB integration tests. All 9 browser journeys passed across the full run and the corrected combined-journey rerun. The new flow verifies the core journey with one account, including persisted profile/preferences, resume and saved-job metadata after signing in again.
+- A clean candidate copy started in a separate Compose project. Setup was idempotent with private `.env` permissions; fresh `npm ci` and builds passed, and the production dependency audit reported zero known vulnerabilities. Readiness/proxy headers, database outage/recovery and both data volumes were verified. The isolated startup imported 16 live Remotive jobs without changing the user's existing stack.
+- The combined test's strict preference-label and unscoped priority locators were corrected. This initial verification exposed interrupted session restoration, fixed in the follow-up below. See [the full report](phase-1-release-verification.md).
+
+## Authentication and component hardening
+
+Verified on 2026-10-02 (Asia/Kolkata), using Node 24.21.0 and an isolated application database:
+
+- Page-load restoration now validates the existing cookie without rotating it. Controlled reload/navigation interruptions, concurrent tabs, login/logout and expired access recovery pass; actual rotation still rejects/revokes replayed tokens and preserves absolute expiry.
+- Lint, both workspace type checks/builds, 35 unit/API tests, 47 MongoDB integration tests, all 11 browser journeys and 10 standalone Chromium component tests passed. Repeated preliminary browser runs exhausted the test API's registration throttle; the final full run used a fresh temporary API process. Production limits were unchanged.
+- Component tests exercise profile fields, OAuth availability/errors, resume preview cleanup/dismissal and saved-job interactions. They reuse existing packages and need no real API/database.
+- GitHub callback failure/conflict checks are covered with mocked provider responses. The later configuration/live-handoff check is recorded below; Google live verification is deferred.
+
+## GitHub configuration and live handoff
+
+Checked on 2026-10-02 after credentials were added: configuration validation passed, the API was recreated and all three local services remain healthy. Chromium reached GitHub's actual login page from the enabled button, checked the callback/scopes/PKCE and binding cookie, and verified safe handling of simulated cancellation and callback replay. A deliberately invalid-code token probe returned `bad_verification_code` and issued no token. The subsequent real sign-in and issuer fix are recorded below; see [the release evidence](phase-1-release-verification.md#github-configuration-and-live-handoff) and [checklist](api/authentication.md#github-first-local-verification).
+
+Follow-up: a real attempt returned `?oauth=failed`. Safe failure-stage logging isolated the exchange step. The regression reproduced rejection of GitHub's documented issuer by the old configuration; changing it to `https://github.com/login/oauth` fixes that validation failure and keeps foreign-issuer rejection. All 35 unit/API tests, backend lint/type checks/build and 12 auth integration cases pass, with no state/cookie/raw-error leakage in diagnostics. The user then confirmed the GitHub dashboard opens. Two real sign-ins reused one USER account; logout revoked the earlier session, the returning session is active, and restoration/current-user responses are 200. Actual consent cancellation and a live email-conflict scenario remain covered by mocks/simulation rather than manual provider checks. Google verification stays deferred.

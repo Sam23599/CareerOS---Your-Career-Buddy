@@ -1,4 +1,4 @@
-import { Router, type RequestHandler, type Response } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { parse } from 'cookie';
 import { rateLimit } from 'express-rate-limit';
 import { ApiError } from '../errors.js';
@@ -12,11 +12,14 @@ export type AuthOptions = { service: AuthService; allowedOrigins: string[]; secu
 export const REFRESH_COOKIE = 'careeros_refresh';
 const cookiePath = '/api/v1/auth';
 
+function bearerToken(req: Request) {
+  const value = req.headers.authorization;
+  if (!value?.startsWith('Bearer ')) throw unauthorized();
+  return value.slice(7);
+}
 export function authenticate(service: AuthService): RequestHandler {
   return async (req, res, next) => {
-    const value = req.headers.authorization;
-    if (!value?.startsWith('Bearer ')) throw unauthorized();
-    res.locals.user = await service.authenticate(value.slice(7));
+    res.locals.user = await service.authenticate(bearerToken(req));
     next();
   };
 }
@@ -37,9 +40,12 @@ export function authRouter(options: AuthOptions) {
   const setSessionCookie = (res: Response, result: Awaited<ReturnType<AuthService['login']>>) => {
     res.cookie(REFRESH_COOKIE, result.refreshToken, { ...cookieOptions, expires: result.sessionExpiresAt });
   };
+  const sendAccess = (res: Response, result: Awaited<ReturnType<AuthService['login']>>, status = 200) => {
+    res.status(status).json({ user: result.user, accessToken: result.accessToken, expiresAt: result.expiresAt });
+  };
   const complete = (res: Response, result: Awaited<ReturnType<AuthService['login']>>, status = 200) => {
     setSessionCookie(res, result);
-    res.status(status).json({ user: result.user, accessToken: result.accessToken, expiresAt: result.expiresAt });
+    sendAccess(res, result, status);
   };
   // Browser forms cannot set this custom header, and untrusted origins are rejected explicitly.
   router.use((req, _res, next) => {
@@ -61,6 +67,22 @@ export function authRouter(options: AuthOptions) {
   if (options.oauth) router.use('/oauth', oauthRouter({ ...options.oauth, service, secureCookie, setSessionCookie }));
   router.post('/register', limit(10), async (req, res) => complete(res, await service.register(req.body), 201));
   router.post('/login', limit(20, true), async (req, res) => complete(res, await service.login(req.body)));
+  router.post('/password', limit(10), async (req, res) => {
+    res.json({ user: await service.addPassword(bearerToken(req), req.body) });
+  });
+  router.post('/password-prompt/dismiss', authenticate(service), async (_req, res) => {
+    res.json({ user: await service.dismissPasswordPrompt(res.locals.user.id) });
+  });
+  router.post('/username', limit(20), authenticate(service), async (req, res) => {
+    res.json({ user: await service.setUsername(res.locals.user.id, req.body) });
+  });
+  router.post('/restore', limit(120), async (req, res) => {
+    try { sendAccess(res, await service.restore(parse(req.headers.cookie ?? '')[REFRESH_COOKIE] ?? '')); }
+    catch (error) {
+      if (error instanceof ApiError && error.status === 401) clear(res);
+      throw error;
+    }
+  });
   router.post('/refresh', limit(120), async (req, res) => {
     try { complete(res, await service.refresh(parse(req.headers.cookie ?? '')[REFRESH_COOKIE] ?? '')); }
     catch (error) {

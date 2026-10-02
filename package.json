@@ -20,6 +20,7 @@
     "setup": "node scripts/setup-env.mjs",
     "test:integration": "npm run test:integration -w @careeros/platform",
     "test:e2e": "playwright test",
+    "test:components": "playwright test --config playwright.components.config.ts",
     "jobs:ingest": "npm run jobs:ingest -w @careeros/platform --"
   },
   "devDependencies": {

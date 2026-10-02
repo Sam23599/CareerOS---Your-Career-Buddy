@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
 import { type CareerProfile } from './types';
+import { PasswordSettings } from '../auth/PasswordSettings';
+import { UsernameSettings } from '../auth/UsernameSettings';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return <section className="panel profile-section"><h2>{title}</h2>{children}</section>;
@@ -67,5 +69,7 @@ export function ProfileView() {
       <div><dt>Career interests</dt><dd>{p.interests.join(', ') || 'Not specified'}</dd></div>
     </dl></Section>
     <Section title="Professional links">{profile.links.length ? <ul className="profile-links">{profile.links.map((link, index) => <li key={index}><a href={link.url} target="_blank" rel="noopener noreferrer">{link.label}</a></li>)}</ul> : <p className="muted">No professional links added yet.</p>}</Section>
+    <UsernameSettings />
+    <PasswordSettings />
   </div>;
 }

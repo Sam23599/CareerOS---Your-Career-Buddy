@@ -1,5 +1,7 @@
 # CareerOS — Phase 1 Implementation Backlog
 
+Local core and hardening checks verified on 2026-10-02. Interrupted restoration and GitHub issuer validation are fixed; standalone component tests and live GitHub sign-in/logout/returning-account checks pass. Google verification is deferred. See the [verification report](phase-1-release-verification.md).
+
 ## Objective
 
 Build the first usable CareerOS platform using:
@@ -32,7 +34,7 @@ The goal is to establish a stable platform foundation that later phases can cons
 ### Tasks
 
 * [x] Initialize repository
-* [ ] Configure Git
+* [x] Configure Git
 * [x] Add README
 * [x] Add development plan
 * [x] Add `docs/`
@@ -65,7 +67,7 @@ A clean repository that any developer can clone and start locally.
 * [x] Create application shell
 * [x] Create authentication pages
 * [x] Create dashboard layout
-* [ ] Create reusable UI components
+* [x] Create reusable UI components
 * [x] Configure API client
 * [x] Configure error handling
 * [x] Configure authentication state
@@ -256,7 +258,7 @@ Private notes, LOW/MEDIUM/HIGH priority, idempotent saves, and conflict-protecte
 * [x] Define scan frequency
 * [x] Store source configuration
 
-Implemented with private searchable/paginated watchlists, manual or scheduled Greenhouse board checks, and labeled links for unsupported pages. Supported checks run while the API is running; broader automation remains in Phase 6. See [the API contract](api/career-sources.md).
+Implemented with private searchable/paginated watchlists, manual or scheduled Greenhouse and limited Google Careers checks, separate career bookmarks, and explicit tracking activation. Source cards support optional one-time filters and saving those filters as defaults. Supported checks run while the API is running; broader automation remains in Phase 6. See [the API contract](api/career-sources.md).
 
 ---
 
@@ -363,38 +365,41 @@ Minimum baseline:
 
 ### Backend
 
-* [ ] Unit tests
-* [ ] API tests
-* [ ] Authentication tests
-* [ ] RBAC tests
+* [x] Unit tests
+* [x] API tests
+* [x] Authentication tests
+* [x] RBAC tests
 * [x] Job normalization tests
 * Community permission tests are deferred to Phase 5.
 
 ### Frontend
 
-* [ ] Component tests
-* [ ] Authentication flow
-* [ ] Critical user journey tests
+* [x] Component tests
+* [x] Authentication flow
+* [x] Critical user journey tests
+
+35 unit/API tests, 47 MongoDB integration tests, all 11 browser journeys and 10 standalone component tests passed after hardening. The component gallery uses existing Playwright/Vite packages and mocked requests; run `npm run test:components` without an API or database. See the [verification results](phase-1-release-verification.md).
 
 ---
 
 # 14. Milestone 14 — Docker
 
-The complete Phase 1 local environment should eventually start with:
+The Phase 1 local environment starts after `npm run setup` with:
 
 ```bash
-docker compose up
+docker compose up --build -d --wait
 ```
 
-Expected components:
+Required components:
 
 ```text
 React
 Node.js
 MongoDB
-Redis
-Object Storage
+Persistent filesystem volume for resumes
 ```
+
+Redis and external object storage remain optional. MongoDB and resume bytes use separate persistent named volumes; the release verification checked both across container recreation.
 
 Kafka, Python, and Java are not required for the first Phase 1 environment.
 
@@ -434,9 +439,11 @@ Phase 1 is complete when:
 * [x] Jobs can be saved.
 * [x] Companies/career pages can be configured.
 * [x] Basic notifications work.
-* [ ] APIs have documentation.
-* [ ] Critical workflows have tests.
+* [x] APIs have documentation.
+* [x] Critical workflows have tests.
 * [x] Local foundation setup works through Docker.
+
+These checks demonstrate the local core workflow, including the [F-001 fix](phase-1-release-verification.md#resolved-finding-interrupted-session-restoration) and successful live GitHub sign-in/logout/returning-account checks after fixing F-002. Actual consent cancellation and a live email conflict retain automated coverage but have not been manually exercised. Google verification is deferred.
 
 ---
 

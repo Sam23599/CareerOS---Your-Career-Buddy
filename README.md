@@ -754,7 +754,7 @@ And at the center of that experience:
 
 ## Project Status
 
-**Status:** Local foundation and JWT authentication implemented. Google/GitHub OAuth flows are ready for provider credentials; career profiles are next.
+**Status:** Phase 1 core features are implemented and verified locally: JWT authentication, career profiles/preferences, PDF resumes, job ingestion/search, saved jobs, career sources/bookmarks and in-app notifications. Interrupted session restoration and GitHub issuer validation are fixed; standalone component tests and live GitHub sign-in/logout/returning-account checks pass. Google verification is deferred. See the [release verification report](docs/phase-1-release-verification.md).
 
 The architecture, service boundaries, technology choices, and feature set are expected to evolve as the project is implemented.
 

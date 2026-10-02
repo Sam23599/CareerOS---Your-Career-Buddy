@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, mock } from 'node:test';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { randomBytes } from 'node:crypto';
-import { credentials } from '../src/auth/validation.js';
+import { credentials, loginCredentials, newPassword, usernameInput } from '../src/auth/validation.js';
 import { hashPassword, verifyPassword } from '../src/auth/password.js';
 import { Tokens } from '../src/auth/tokens.js';
 import { readConfig } from '../src/config.js';
@@ -25,6 +25,22 @@ test('passwords are salted and verifiable without storing plaintext', async () =
   assert.equal(first.includes('a long test passphrase'), false);
   assert.equal(await verifyPassword('a long test passphrase', first), true);
   assert.equal(await verifyPassword('incorrect password', first), false);
+});
+
+test('password enrollment accepts only a password with the registration length limits', () => {
+  assert.equal(newPassword({ password: ' long passphrase ' }), ' long passphrase ');
+  for (const body of [null, [], {}, { password: 'short' }, { password: 'x'.repeat(129) }, { password: { $ne: null } }, { password: 'a valid passphrase', userId: 'other' }]) {
+    assert.throws(() => newPassword(body));
+  }
+});
+
+test('optional usernames and login identifiers normalize case and reject ambiguous or unsafe input', () => {
+  assert.equal(usernameInput({ username: ' Test_User ' }), 'test_user');
+  assert.equal(usernameInput({ username: ' ' }), '');
+  assert.deepEqual(loginCredentials({ identifier: ' TEST_USER ', password: ' untrimmed password ' }), { identifier: 'test_user', password: ' untrimmed password ' });
+  assert.equal(loginCredentials({ email: ' TEST@EXAMPLE.COM ', password: 'password' }).identifier, 'test@example.com');
+  for (const body of [null, { username: 'ab' }, { username: 'invalid-name' }, { username: 'a'.repeat(31) }, { username: 'test', roles: ['ADMIN'] }]) assert.throws(() => usernameInput(body));
+  for (const body of [{ identifier: { $ne: null }, password: 'password' }, { identifier: 'test', email: 'test@example.com', password: 'password' }, { identifier: 'invalid name', password: 'password' }, { identifier: 'test', password: '' }]) assert.throws(() => loginCredentials(body));
 });
 
 test('JWT verification rejects expiry, tampering, and the wrong token purpose', async () => {
@@ -67,6 +83,10 @@ test('both OAuth authorization URLs use PKCE and fixed callbacks; Google include
     assert.ok(url.searchParams.get('code_challenge'));
     assert.equal(url.searchParams.get('redirect_uri'), `http://localhost:5173/api/v1/auth/oauth/${provider.id}/callback`);
     assert.equal(url.searchParams.get('client_secret'), null);
+    assert.equal(url.searchParams.get('prompt'), null);
+    const selection = await provider.authorizationUrl({ state: 'random-state', nonce: 'random-nonce', verifier: 'a'.repeat(43) }, true);
+    assert.equal(selection.searchParams.get('prompt'), 'select_account');
+    assert.equal(selection.searchParams.get('state'), 'random-state');
     if (provider.id === 'google') assert.equal(url.searchParams.get('nonce'), 'random-nonce');
   }
 });
@@ -114,9 +134,16 @@ test('GitHub exchanges a PKCE code and fetches the verified primary email', asyn
   });
   try {
     const [provider] = createOAuthProviders({ publicOrigin: 'http://localhost:5173', github: { clientId: 'github-client', clientSecret: 'secret' } });
-    const identity = await provider.exchange(new URL('http://localhost:5173/api/v1/auth/oauth/github/callback?code=code&state=state'), {
-      verifier: 'a'.repeat(43), state: 'state', nonce: 'unused',
-    });
+    const callback = new URL('http://localhost:5173/api/v1/auth/oauth/github/callback?code=code&state=state');
+    callback.searchParams.set('iss', 'https://github.com/login/oauth');
+    const attempt = { verifier: 'a'.repeat(43), state: 'state', nonce: 'unused' };
+    const identity = await provider.exchange(callback, attempt);
     assert.deepEqual(identity, { provider: 'github', subject: '456', email: 'github@example.com', name: 'github-user' });
+    const requests = transport.mock.callCount();
+    callback.searchParams.set('iss', 'https://attacker.example');
+    await assert.rejects(provider.exchange(callback, attempt));
+    assert.equal(transport.mock.callCount(), requests);
+    callback.searchParams.delete('iss');
+    assert.equal((await provider.exchange(callback, attempt)).subject, '456');
   } finally { transport.mock.restore(); }
 });

@@ -4,6 +4,8 @@ import { type ProviderId } from './oauth-providers.js';
 export type Role = 'USER' | 'ADMIN';
 export type User = {
   _id: string; email: string; name: string; passwordHash?: string; oauth?: { provider: ProviderId; subject: string }; roles: Role[]; createdAt: Date;
+  passwordPromptPending?: boolean;
+  username?: string;
 };
 export type Session = {
   _id: string; userId: string; refreshHash: string; createdAt: Date; expiresAt: Date; revokedAt?: Date;
@@ -12,7 +14,9 @@ export type OAuthState = {
   _id: string; provider: ProviderId; bindingHash: string; verifier: string; nonce: string; expiresAt: Date;
 };
 export function publicUser(user: User) {
-  return { id: user._id, email: user.email, name: user.name, roles: user.roles };
+  return { id: user._id, email: user.email, name: user.name, roles: user.roles,
+    username: user.username ?? null, hasPassword: Boolean(user.passwordHash), oauthProvider: user.oauth?.provider ?? null,
+    passwordPromptPending: !user.passwordHash && user.passwordPromptPending === true };
 }
 
 export class AuthStore {
@@ -34,6 +38,7 @@ export class AuthStore {
   }
   private async createIndexes() {
     await this.users.createIndex({ email: 1 }, { unique: true });
+    await this.users.createIndex({ username: 1 }, { unique: true, partialFilterExpression: { username: { $exists: true } } });
     await this.sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
     await this.sessions.createIndex({ userId: 1 });
     await this.users.createIndex({ 'oauth.provider': 1, 'oauth.subject': 1 }, { unique: true, partialFilterExpression: { oauth: { $exists: true } } });

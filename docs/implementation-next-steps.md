@@ -1,6 +1,6 @@
 # CareerOS — Review and Next Implementation Steps
 
-Updated: 2026-10-02. Status: local foundation, JWT authentication, career profiles, resume management, jobs/ingestion, saved jobs, custom career sources, and in-app notifications implemented; release verification is next. OAuth flows need provider credentials; core workflow first and community in Phase 5 confirmed by the user.
+Updated: 2026-10-02. Status: Phase 1 local core and hardening checks verified; interrupted restoration and GitHub issuer validation are fixed and standalone component tests are implemented. JWT authentication, profiles, resumes, jobs/ingestion, saved jobs, career sources/bookmarks and in-app notifications are implemented. Live GitHub sign-in/logout/returning-account checks pass. Google verification is deferred and community remains in Phase 5. See the [release verification report](phase-1-release-verification.md).
 
 ## 1. Current position
 
@@ -46,11 +46,11 @@ Each step depends on the preceding foundation. Add relevant tests alongside beha
 | 5. Jobs and ingestion — implemented | Normalized schema, fixture adapter, then one verified accessible external source; normalization, idempotent ingestion, search/filter/pagination, and job detail UI | Reimporting a source job updates it without duplication; filters match stored fields; failed fetches do not erase existing jobs; one real source works before aggregation is considered complete |
 | 6. Saved jobs — implemented | Save/unsave, notes, priority, and SAVED/INTERESTED/NOT_INTERESTED states | Repeated saves do not duplicate records; data is private per user; the complete core journey works |
 | 7. Complete Phase 1 scope — implemented | Private searchable job sources and career bookmarks, registry-based Greenhouse and limited Google checks, and in-app notifications with read/unread state and preferences | Coverage and bookmark intent are explicit; enabling bookmark tracking requires user setup; users see only their configuration and notifications; community remains in Phase 5 |
-| 8. Release verification | Critical API/UI journey checks, access-control checks, fresh-checkout setup, API documentation, and status updates | The agreed Phase 1 definition of done is demonstrated locally; future capabilities remain explicitly planned |
+| 8. Release verification — local core and hardening verified | Critical API/UI journey checks, access-control checks, clean candidate setup, API documentation, and status updates | 35 unit/API tests, 47 integration tests, all 11 browser journeys and 10 component tests passed; interrupted restoration is fixed. Fresh setup, builds and persistence passed in the initial batch. GitHub's issuer mismatch is fixed and live sign-in/logout/returning-account checks pass. See the [report](phase-1-release-verification.md) |
 
 ## 5. First implementation batch
 
-Step 1 is implemented and verified. It is limited to a running web app, API, and database; see [verification evidence](local-development.md#verification-recorded-for-this-batch).
+Step 1 is implemented and verified. It is limited to a running web app, API, and database; see [verification evidence](local-development.md#foundation-verification-previous-batch).
 
 Proposed layout:
 
@@ -71,7 +71,7 @@ For authentication, write down token transport, refresh rotation/revocation, ses
 
 ## 6. Documentation approach
 
-Google Careers and the provider registry were authorized before release verification. See [ADR-008](adr/008-career-source-registry.md) and the [source integration plan](architecture/career-source-integration.md). Further ATS adapters and company-page discovery are proposals; release verification remains the next roadmap step.
+Google Careers and the provider registry were authorized before release verification. See [ADR-008](adr/008-career-source-registry.md) and the [source integration plan](architecture/career-source-integration.md). Further ATS adapters and company-page discovery are proposals. Release checks and authentication/component hardening have now run, including successful live GitHub sign-in/logout/returning-account checks. Google sign-in verification is deferred; remaining live OAuth scenarios are listed in the [report](phase-1-release-verification.md).
 
 Separate career bookmarks and explicit tracking activation are implemented in [ADR-009](adr/009-career-bookmarks.md). On-demand browsing tools remain planned for a later release and are not implemented by this batch.
 
@@ -79,4 +79,4 @@ Keep `development-plan.md` as the overall roadmap, `phase-1-backlog.md` as the e
 
 Record decisions when needed rather than writing every future ADR up front. Add API contracts with each feature. Update status from working behavior and validation evidence, not from scaffolding alone.
 
-The initial review changed documentation only. The subsequently authorized foundation batch now includes React, Express, MongoDB Compose configuration, API checks, and ADR-001. See [local development](local-development.md) for commands and [the foundation decision](adr/001-local-platform-foundation.md) for accepted choices. JWT authentication and configurable Google/GitHub OAuth flows are implemented. Career profiles are implemented; see [ADR-003](adr/003-career-profiles.md) and the [profile API](api/profiles.md). Resume management is implemented; see [ADR-004](adr/004-resume-storage.md). Jobs and ingestion are implemented with Remotive as the first live source; see [ADR-005](adr/005-jobs-ingestion.md). Saved jobs are implemented with private notes, priorities, and interest statuses; see [ADR-006](adr/006-saved-jobs.md). Custom career sources and in-app notifications are implemented; see [ADR-007](adr/007-career-sources-notifications.md). Release verification is next. See [ADR-002](adr/002-authentication.md) for session and provider decisions.
+The initial review changed documentation only. The subsequently authorized foundation batch now includes React, Express, MongoDB Compose configuration, API checks, and ADR-001. See [local development](local-development.md) for commands and [the foundation decision](adr/001-local-platform-foundation.md) for accepted choices. JWT authentication and configurable Google/GitHub OAuth flows are implemented. Career profiles are implemented; see [ADR-003](adr/003-career-profiles.md) and the [profile API](api/profiles.md). Resume management is implemented; see [ADR-004](adr/004-resume-storage.md). Jobs and ingestion are implemented with Remotive as the first live source; see [ADR-005](adr/005-jobs-ingestion.md). Saved jobs are implemented with private notes, priorities, and interest statuses; see [ADR-006](adr/006-saved-jobs.md). Custom career sources and in-app notifications are implemented; see [ADR-007](adr/007-career-sources-notifications.md). The [release report](phase-1-release-verification.md) records the passing checks and remaining sign-off work. See [ADR-002](adr/002-authentication.md) for session and provider decisions.

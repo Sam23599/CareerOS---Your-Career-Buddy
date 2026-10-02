@@ -6,7 +6,7 @@ export type OAuthIdentity = { provider: ProviderId; subject: string; email: stri
 export type OAuthAttempt = { state: string; nonce: string; verifier: string };
 export type OAuthProvider = {
   id: ProviderId; name: string;
-  authorizationUrl(attempt: OAuthAttempt): Promise<URL>;
+  authorizationUrl(attempt: OAuthAttempt, selectAccount?: boolean): Promise<URL>;
   exchange(url: URL, attempt: OAuthAttempt): Promise<OAuthIdentity>;
 };
 export type OAuthSettings = {
@@ -45,10 +45,11 @@ export function createOAuthProviders(settings: OAuthSettings): OAuthProvider[] {
     const redirect = `${settings.publicOrigin}/api/v1/auth/oauth/google/callback`;
     providers.push({
       id: 'google', name: 'Google',
-      async authorizationUrl(attempt) {
+      async authorizationUrl(attempt, selectAccount) {
         return oidc.buildAuthorizationUrl(config, {
           redirect_uri: redirect, scope: 'openid email profile', state: attempt.state, nonce: attempt.nonce,
           code_challenge: await oidc.calculatePKCECodeChallenge(attempt.verifier), code_challenge_method: 'S256',
+          ...(selectAccount ? { prompt: 'select_account' } : {}),
         });
       },
       async exchange(url, attempt) {
@@ -61,17 +62,18 @@ export function createOAuthProviders(settings: OAuthSettings): OAuthProvider[] {
   }
   if (settings.github) {
     const config = new oidc.Configuration({
-      issuer: 'https://github.com', authorization_endpoint: 'https://github.com/login/oauth/authorize',
+      issuer: 'https://github.com/login/oauth', authorization_endpoint: 'https://github.com/login/oauth/authorize',
       token_endpoint: 'https://github.com/login/oauth/access_token',
     }, settings.github.clientId, settings.github.clientSecret);
     config.timeout = 8;
     const redirect = `${settings.publicOrigin}/api/v1/auth/oauth/github/callback`;
     providers.push({
       id: 'github', name: 'GitHub',
-      async authorizationUrl(attempt) {
+      async authorizationUrl(attempt, selectAccount) {
         return oidc.buildAuthorizationUrl(config, {
           redirect_uri: redirect, scope: 'read:user user:email', state: attempt.state,
           code_challenge: await oidc.calculatePKCECodeChallenge(attempt.verifier), code_challenge_method: 'S256',
+          ...(selectAccount ? { prompt: 'select_account' } : {}),
         });
       },
       async exchange(url, attempt) {

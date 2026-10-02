@@ -43,6 +43,19 @@ fieldset:disabled { opacity: .65; }
 .oauth-button:hover { background: #f0f5ee; }
 .oauth-button:disabled { background: white; color: #637369; cursor: not-allowed; opacity: .7; }
 
+.remembered-account { display: flex; align-items: center; gap: 16px; width: 100%; padding: 18px; margin-top: 24px; border: 1px solid #bdcbbf; border-radius: 12px; background: white; color: inherit; text-align: left; font-size: 16px; }
+.remembered-account:hover { background: #f0f5ee; }
+.remembered-account > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.remembered-account .profile-avatar { width: 52px; height: 52px; font-size: 20px; }
+.account-email { display: block; margin-top: 6px; overflow-wrap: anywhere; }
+.text-button { padding: 0; background: none; color: #22604c; text-decoration: underline; text-underline-offset: 3px; }
+.password-heading { display: flex; align-items: center; gap: 12px; }
+.password-heading h2 { margin-bottom: 0; }
+.info-button { padding: 6px 10px; font-size: 18px; }
+.password-prompt { width: min(500px, 92vw); padding: 28px; border: 1px solid #dce3db; border-radius: 18px; color: #183c34; max-height: 90dvh; }
+.password-prompt::backdrop { background: rgb(15 30 25 / 65%); }
+.password-prompt .actions { flex-wrap: wrap; }
+
 .profile-page { margin-top: 40px; }
 .profile-section { max-width: none; margin-bottom: 20px; }
 .profile-section h2 { margin-bottom: 22px; }

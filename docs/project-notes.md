@@ -19,6 +19,10 @@ Add entries below. Dates, screenshots/paths, expected behavior, and examples hel
 <!-- Write freely below this line. The reviewer will add IDs without changing your words. -->
 improve the main header bar sections and overall feel of the app. (just the ui/ux and frontend changes needed mainly) to give a modern fresh and user friendly look.
 
+auth:
+add cache for continued session scheck if security-vise applicable.
+google auth proper addition still remains.
+
 Jobs and ingestion:
 proper separator in jobs section for different jobs platforms that'll be added in future, along with the user custom career pages. and note, user may be adding a lot of dream companies so we need a proper platform and interface for that. 
 

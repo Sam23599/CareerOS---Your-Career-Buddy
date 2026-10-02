@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router';
 import { AuthPage } from './auth/AuthPage';
 import { Dashboard } from './auth/Dashboard';
-import { initializeSession, refreshSession, useSession } from './auth/session';
+import { initializeSession, restoreSession, useSession } from './auth/session';
 import { ProfileView } from './profiles/ProfileView';
 import { ProfilePage } from './profiles/ProfilePage';
 import { ConnectionStatus } from './ConnectionStatus';
@@ -24,7 +24,7 @@ function AccountRoutes() {
       <p role="alert">Check your connection and try again.</p>
       <button disabled={retrying} onClick={() => {
         setRetrying(true);
-        void refreshSession().catch(() => {}).finally(() => setRetrying(false));
+        void restoreSession().catch(() => {}).finally(() => setRetrying(false));
       }}>{retrying ? 'Checking…' : 'Try again'}</button>
     </section>
   );
