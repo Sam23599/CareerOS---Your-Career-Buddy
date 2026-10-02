@@ -2,7 +2,7 @@
 
 Updated: 2026-10-02. Status: Phase 1 local core and hardening checks verified; interrupted restoration and GitHub issuer validation are fixed and standalone component tests are implemented. JWT authentication, profiles, resumes, jobs/ingestion, saved jobs, career sources/bookmarks and in-app notifications are implemented. Live GitHub sign-in/logout/returning-account checks pass. Google verification is deferred and community remains in Phase 5. See the [release verification report](phase-1-release-verification.md).
 
-Phase 2 batch 1 is implemented: private PDF text extraction through Python/FastAPI, an owner-checked Node gateway and a transient page-text preview. See [the executable backlog](phase-2-backlog.md), [ADR-010](adr/010-resume-intelligence-foundation.md) and [API contract](api/intelligence.md). Structured analysis, matching and Cady remain planned.
+Phase 2 batch 1 is implemented: private PDF text extraction through Python/FastAPI, an owner-checked Node gateway and a transient page-text preview. See [the executable backlog](phase-2-backlog.md), [ADR-010](adr/010-resume-intelligence-foundation.md) and [API contract](api/intelligence.md). Structured drafts and reviewed profile import are also implemented in [ADR-011](adr/011-structured-resume-drafts.md). JD analysis, matching and Cady remain planned.
 
 ## 1. Current position
 
@@ -94,4 +94,4 @@ Completed batch 1 from [the Phase 2 backlog](phase-2-backlog.md#batch-1--concret
 
 This establishes a reviewable text result before structured profile extraction, persisted analysis, job matching or Cady. Node remains the data/authentication owner; Python's first endpoint is stateless. Later derived analysis belongs to Python-owned storage. The complete later sequence and outstanding provider/retention choices are recorded in the backlog.
 
-The next coding batch is structured resume drafts and explicit profile import. Before persistence or model calls, resolve the storage lifecycle and extraction/provider choices in [batch 2](phase-2-backlog.md#storage-and-review-in-batch-2). See [local extraction setup and verification](intelligence-development.md).
+Batch 2 adds modular OOP services, shared OpenAI providers, rich evidence-backed drafts, Python-owned PostgreSQL, numbered saved analysis history and selected-field profile import. See [draft setup and review](resume-drafts.md). The next batch's [detailed job-description analysis plan](job-description-analysis-plan.md) covers source identity, requirements/evidence, shared AI limits, storage, APIs, UI and verification. Notify the user and settle its AI input/model/budget before implementation. Matching and Cady follow in the original order.

@@ -1,5 +1,6 @@
 import { ResumePreview } from './ResumePreview';
 import { ResumeTextPreview } from './ResumeTextPreview';
+import { ResumeDraftReview } from './ResumeDraftReview';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
@@ -9,6 +10,7 @@ type Library = { resumes: Resume[] };
 export function ResumesPage() {
   const [preview, setPreview] = useState<Resume | null>(null);
   const [textPreview, setTextPreview] = useState<Resume | null>(null);
+  const [draftReview, setDraftReview] = useState<Resume | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,7 @@ export function ResumesPage() {
       <div className="actions">
         <button className="secondary" disabled={busy || loading || resume.deleting} onClick={() => setPreview(resume)}>View</button>
         <button className="secondary" disabled={busy || loading || resume.deleting} onClick={() => setTextPreview(resume)}>Extract text</button>
+        <button className="secondary" disabled={busy || loading || resume.deleting} onClick={() => setDraftReview(resume)}>Resume draft</button>
         <button disabled={busy || loading || resume.deleting} onClick={() => void action(async () => {
           const blob = await authenticatedRequest<Blob>(`/resumes/${resume.id}/download`, {}, true);
           const url = URL.createObjectURL(blob); const link = document.createElement('a');
@@ -74,5 +77,6 @@ export function ResumesPage() {
     </article>)}
     {preview && <ResumePreview key={preview.id} resume={preview} onClose={() => setPreview(null)} />}
     {textPreview && <ResumeTextPreview key={textPreview.id} resume={textPreview} onClose={() => setTextPreview(null)} />}
+    {draftReview && <ResumeDraftReview key={draftReview.id} resume={draftReview} onClose={() => setDraftReview(null)} />}
   </div>;
 }

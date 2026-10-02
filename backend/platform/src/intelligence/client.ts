@@ -1,5 +1,6 @@
 import { ApiError } from '../errors.js';
 import { MAX_RESUME_BYTES } from '../resumes/store.js';
+import { validateDraft, validateHistory, type Source } from './drafts.js';
 
 const MAX_OUTPUT = 2 * 1024 * 1024;
 const MAX_CHARACTERS = 200_000;
@@ -19,6 +20,16 @@ const upstreamErrors: Record<string, [number, string]> = {
   PARSER_RESOURCE_LIMIT: [503, 'This PDF exceeded the parser memory limit. Try a simpler version.'],
   INTELLIGENCE_TIMEOUT: [504, 'Extraction took too long. Try a simpler PDF.'],
   INTELLIGENCE_UNAVAILABLE: [503, 'Resume text extraction is temporarily unavailable.'],
+  INVALID_INPUT: [400, 'The analysis request is invalid.'],
+  ANALYSIS_UNAVAILABLE: [503, 'Resume analysis is temporarily unavailable. Check AI and analysis storage configuration.'],
+  ANALYSIS_NOT_FOUND: [404, 'No saved draft is available for this resume.'],
+  RESUME_NOT_FOUND: [404, 'Resume not found.'],
+  NO_EXTRACTABLE_TEXT: [422, 'No readable text was found. Upload a text-based PDF.'],
+  LLM_TIMEOUT: [504, 'Resume analysis took too long. Please retry.'],
+  LLM_RATE_LIMITED: [429, 'The AI provider is busy. Please try again later.'],
+  LLM_BUDGET_LIMIT: [413, 'This resume exceeds the configured AI input or output limit. Try a shorter version.'],
+  LLM_RESPONSE_INVALID: [502, 'The AI draft could not be validated. Please retry.'],
+  LLM_REFUSED: [422, 'The AI provider could not create a draft from this document.'],
 };
 
 function fields(value: unknown, names: string[]): value is Record<string, unknown> {
@@ -129,5 +140,50 @@ export class IntelligenceClient {
     return validateExtraction(await this.request('/internal/v1/resumes/extract', {
       method: 'POST', headers: { 'Content-Type': 'application/pdf', 'X-Request-Id': requestId }, body: new Uint8Array(data),
     }, signal));
+  }
+  async capabilities(signal?: AbortSignal) {
+    const body = await this.request('/internal/v1/capabilities', {}, signal, 2000);
+    if (!fields(body, ['available', 'provider', 'models', 'defaultModel', 'defaultReasoning', 'limits'])
+      || typeof body.available !== 'boolean' || body.provider !== 'openai' || !Array.isArray(body.models)
+      || body.models.length !== 3 || typeof body.defaultModel !== 'string'
+      || (body.defaultReasoning !== null && typeof body.defaultReasoning !== 'string')
+      || !fields(body.limits, ['inputBytes', 'outputTokens', 'timeoutSeconds'])
+      || body.limits.inputBytes !== 60_000 || body.limits.outputTokens !== 16_384 || body.limits.timeoutSeconds !== 90) throw invalid();
+    // Never expose arbitrary provider URLs, tokens or provider-supplied configuration.
+    const { modelOptions } = await import('./drafts.js');
+    if (body.models.some((item: unknown) => !fields(item, ['id', 'reasoningOptions'])
+      || typeof item.id !== 'string' || !Object.hasOwn(modelOptions, item.id)
+      || JSON.stringify(item.reasoningOptions) !== JSON.stringify(modelOptions[item.id]))) throw invalid();
+    return body;
+  }
+  private sourceHeaders(owner: string, source: Source) {
+    return { 'X-Owner-Id': owner, 'X-Resume-Id': source.resumeId, 'X-Resume-Version': String(source.resumeVersion), 'X-Source-Sha256': source.sha256 };
+  }
+  async analyze(owner: string, source: Source, data: Buffer, options: { model: string; reasoning: string | null }, signal: AbortSignal, requestId?: string) {
+    return validateDraft(await this.request('/internal/v1/resumes/analyze', {
+      method: 'POST', headers: { ...this.sourceHeaders(owner, source), 'Content-Type': 'application/pdf',
+        'X-LLM-Model': options.model, ...(options.reasoning === null ? {} : { 'X-LLM-Reasoning': options.reasoning }),
+        ...(requestId ? { 'X-Request-Id': requestId } : {}) },
+      body: new Uint8Array(data),
+    }, signal, 140_000), source);
+  }
+  async draft(owner: string, source: Source, signal?: AbortSignal, analysisId?: string) {
+    const record = validateDraft(await this.request(`/internal/v1/resumes/${source.resumeId}/draft`, {
+      headers: { ...this.sourceHeaders(owner, source), ...(analysisId ? { 'X-Analysis-Id': analysisId } : {}) },
+    }, signal), source);
+    if (analysisId !== undefined && record.id !== analysisId) throw invalid();
+    return record;
+  }
+  async deleteDrafts(owner: string, resumeId: string) {
+    const body = await this.request(`/internal/v1/resumes/${resumeId}/draft`, {
+      method: 'DELETE', headers: { 'X-Owner-Id': owner },
+    });
+    if (!fields(body, ['status']) || body.status !== 'deleted') throw invalid();
+  }
+  async draftHistory(owner: string, source: Source, beforeVersion?: number, signal?: AbortSignal) {
+    const query = beforeVersion === undefined ? '' : `?beforeVersion=${beforeVersion}`;
+    return validateHistory(await this.request(`/internal/v1/resumes/${source.resumeId}/drafts${query}`, {
+      headers: this.sourceHeaders(owner, source),
+    }, signal), beforeVersion);
   }
 }

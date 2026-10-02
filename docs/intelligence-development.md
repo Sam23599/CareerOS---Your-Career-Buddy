@@ -15,7 +15,7 @@ docker compose up --build -d --wait
 
 Setup preserves existing settings, GitHub/Google credentials and JWT signing keys. It adds a separate random `INTELLIGENCE_SERVICE_TOKEN` if missing. The token stays in the ignored, private root `.env`; it is never a frontend variable. Compose sets Node's service URL to `http://intelligence:8000`.
 
-The default intelligence service has **no published port**, database connection or resume-storage mount. It runs as a non-root user with a read-only filesystem, a 512 MiB memory budget and one active parser job. Each disposable Linux worker has a 256 MiB address-space limit and ten-second deadline. Node has a fifteen-second upstream budget. Rebuild intelligence after Python/dependency changes; web/API source changes still reload automatically.
+The default intelligence service has **no published port** or original-resume storage mount. Batch 2 adds its own private PostgreSQL connection for drafts; extraction itself remains stateless. It runs as a non-root user with a read-only filesystem, a 512 MiB memory budget and one active parser job. Each disposable Linux worker has a 256 MiB address-space limit and ten-second deadline. Node has a fifteen-second upstream budget. Rebuild intelligence after Python/dependency changes; web/API source changes still reload automatically.
 
 Liveness checks whether the service is running. Authenticated readiness also checks the parser and enforceable worker bounds. Unconfigured/unavailable intelligence does not fail ordinary Node/MongoDB readiness; extraction returns a feature-specific error. `GET /api/v1/intelligence/status` requires a CareerOS access token and reveals only configured/available flags.
 
@@ -65,4 +65,4 @@ Verified on 2026-10-02:
 - The previously rejected local 10-page PDF was retried through the rebuilt parser and Node response validator: extraction completed in about one second with one safe structural-repair warning. Original bytes were unchanged, confirmed by hashes before and after. Only counts and fixed warnings were printed; the original file was retained.
 - All four local services are healthy; authenticated parser readiness returns 200. The parser has no published host port in the ordinary Docker stack, and existing application data/settings were retained. Generated browser PDFs and temporary integration data were removed.
 
-Structured resume drafts, persistent analysis, profile import, job matching and Cady remain later batches in [the Phase 2 backlog](phase-2-backlog.md).
+Structured resume drafts, persisted analysis and reviewed profile import are implemented in batch 2; see [setup/review](resume-drafts.md) and [ADR-011](adr/011-structured-resume-drafts.md). JD analysis, job matching and Cady remain later batches in [the Phase 2 backlog](phase-2-backlog.md).

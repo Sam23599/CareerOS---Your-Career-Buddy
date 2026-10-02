@@ -9,7 +9,7 @@ export const MAX_RESUME_BYTES = 5 * 1024 * 1024;
 const missing = () => new ApiError(404, 'RESUME_NOT_FOUND', 'Resume not found.');
 export class ResumeStore {
   private libraries;
-  constructor(db: Db, private storage: ResumeStorage) { this.libraries = db.collection<Library>('resume_libraries'); }
+  constructor(db: Db, private storage: ResumeStorage, private cleanup?: { enqueue(owner: string, resumeId: string): Promise<void> }) { this.libraries = db.collection<Library>('resume_libraries'); }
   async list(owner: string) {
     const library = await this.libraries.findOne({ _id: owner });
     return { resumes: (library?.items ?? []).map(item => ({ ...item, active: !item.deleting && item.id === library?.activeId })).sort((a, b) => b.version - a.version) };
@@ -46,6 +46,7 @@ export class ResumeStore {
   async remove(owner: string, id: string) {
     const result = await this.libraries.updateOne({ _id: owner, 'items.id': id }, { $set: { 'items.$.deleting': true } });
     if (!result.matchedCount) throw missing();
+    await this.cleanup?.enqueue(owner, id);
     await this.storage.remove(id);
     await this.libraries.updateOne({ _id: owner }, [{ $set: {
       items: { $filter: { input: '$items', as: 'item', cond: { $ne: ['$$item.id', id] } } },

@@ -1,6 +1,6 @@
-# Intelligence API — PDF text extraction
+# Intelligence API — PDF extraction and structured drafts
 
-Status: Implemented locally, 2026-10-02. Extraction is transient and does not update profiles. See [ADR-010](../adr/010-resume-intelligence-foundation.md) and the [Phase 2 backlog](../phase-2-backlog.md).
+Status: Batches 1–2 implemented locally, 2026-10-03. Extraction is transient; saved structured drafts require explicit review before profile updates. See [ADR-010](../adr/010-resume-intelligence-foundation.md) and the [Phase 2 backlog](../phase-2-backlog.md).
 
 ## Browser gateway
 
@@ -75,3 +75,38 @@ Service responses must have the expected schema/parser/status, bounded strings, 
 ## Local setup and checks
 
 See [resume intelligence development](../intelligence-development.md). The supported parser runs in Linux Docker; the default Compose service has no published host port. fontTools supports embedded CFF Type1 font encodings and is checked during readiness. pypdf warnings indicating skipped or damaged content reject the entire result rather than returning a partial success. Library decompression limits also map to `EXTRACTION_LIMIT`.
+
+## Structured resume drafts
+
+Implemented in batch 2; see [ADR-011](../adr/011-structured-resume-drafts.md). The extraction contract above remains stateless and unchanged.
+
+| Browser endpoint | Input/result |
+| --- | --- |
+| `GET /api/v1/intelligence/capabilities` | Safe availability, provider/model/reasoning choices, defaults and input/output/time limits; no secrets or internal endpoints |
+| `POST /api/v1/intelligence/resumes/:id/analyze` | JSON `{ "model": "gpt-6-luna", "reasoning": "medium" }`; validated saved `DraftRecord` |
+| `GET /api/v1/intelligence/resumes/:id/draft` | Latest draft for the owned available source/version/hash; no generation; 404 `ANALYSIS_NOT_FOUND` if absent |
+| `GET /api/v1/intelligence/resumes/:id/draft?analysisId=draft-uuid` | One owned saved version for the current source; no generation |
+| `GET /api/v1/intelligence/resumes/:id/drafts?beforeVersion=21` | `{ versions: [{ id, version, model, reasoning, createdAt }], nextBeforeVersion }`; newest first, at most twenty; cursor optional, null when complete |
+| `POST /api/v1/intelligence/resumes/:id/draft/apply` | JSON `{ "analysisId": "draft-uuid", "patch": { "version": 0, "headline": "Reviewed headline" } }`; `{ profile }` |
+
+All routes use existing JWT/role/owner rules. Foreign, missing or deleting sources return 404, including for ADMIN. Analyze accepts exactly `model` and `reasoning`; GPT-4.1 requires `reasoning: null`. Use only compatible options from capabilities. Unsupported IDs/options and caller-supplied owner/text/URL fields return 400. Analyze shares extraction's ten-attempts/user/15-minute limit; no automatic retries.
+
+Every successful Analyze saves an immutable `version` (1, 2, …) per owned resume, even with identical model/settings. This counter is separate from the PDF's `source.resumeVersion`. Failures do not save a version. History contains metadata only; fetch an individual ID for its full draft. Unknown/repeated query fields, invalid UUIDs and nonpositive/noninteger/out-of-range cursors return 400. Reads apply no profile changes and make no provider call.
+
+The complete bounded result schema is [generated from Python](../../backend/platform/src/intelligence/resume-draft.schema.json). A record includes schema/version/id/status, source `{ resumeId, resumeVersion, sha256 }`, analyzer/provider/model/reasoning, token usage, creation time, extraction pages/warnings and the rich draft. Each scalar fact is `{ value: "copied text" | null, evidence: [{ page, quote }] }`; known values require valid exact quotes and copied values, unknown values use empty evidence. Arrays are empty when absent. Source dates retain their original wording/precision. Lists and strings are bounded. This is extracted information, not a resume/JD evaluation or employer ATS score.
+
+Apply accepts only an owned saved draft ID bound to the current source/version/hash and a reviewed profile patch. Supported fields: fullName, headline, summary, location, phone, skills, experience, education, certifications, links. Existing [profile validation](profiles.md) and `version` compare-and-set apply; a stale profile returns 409 `PROFILE_CONFLICT`, an unavailable draft ID returns 409 `DRAFT_CHANGED`. Import resolves the exact reviewed ID; a newer draft from another model does not invalidate it. Profile arrays replace the selected field; the UI includes existing rows and appends deduplicated suggestions before confirmation. Projects/email/languages/preferences/other unsupported imports are rejected. User corrections need not be verbatim source facts; they are explicit manual profile edits. No fields apply on generation or GET.
+
+Internal routes use the dedicated service token, never user JWTs:
+
+- `GET /internal/v1/capabilities` describes analysis configuration independently of ordinary parser readiness.
+- `POST /internal/v1/resumes/analyze` receives raw PDF bytes and trusted headers `X-Owner-Id`, `X-Resume-Id`, `X-Resume-Version`, `X-Source-Sha256`, `X-LLM-Model`, optionally `X-LLM-Reasoning`. Python checks UUIDs, model options and the bytes' hash before analysis. Node derives this context; browser headers are not forwarded.
+- `GET /internal/v1/resumes/:id/draft` receives the same owner/source/version/hash context and returns only that namespace's record. Node supplies `X-Analysis-Id` internally for exact-version viewing/import; otherwise GET returns the latest source draft.
+- `GET /internal/v1/resumes/:id/drafts?beforeVersion=21` receives that same trusted context and returns a bounded history page; the optional cursor excludes versions at or above it.
+- `DELETE /internal/v1/resumes/:id/draft` receives trusted owner/ID context, atomically deletes that source's drafts and adds a minimal deletion tombstone; repeat deletion is idempotent and returns `{ "status": "deleted" }`.
+
+PostgreSQL stores only derived drafts. Records retain owner, source ID/version/hash, analyzer version, model and reasoning. Fresh successful analyses get unique consecutive versions under a per-owner/resume transaction lock. No failed/refused/partial outputs are persisted. Deletion first hides the source and queues durable MongoDB cleanup; retry every 30 seconds while Node runs. Downstream failure does not keep deleted PDFs publicly accessible; a late generation cannot recreate a tombstoned source. There is no cross-database transaction.
+
+AI limits: 60,000 input bytes including instructions/schema, 16,384 output tokens, 90 seconds, one active generation/no queue. Node's analyze deadline is 140 seconds, response cap 2 MiB. Extraction retains its existing bounds. Analyze sends extracted text to OpenAI explicitly; GET/opening a draft never calls OpenAI. `store: false` is used but provider abuse-monitoring retention may still apply.
+
+Additional safe errors: 413 `LLM_BUDGET_LIMIT` for configured input/output limits; 422 `NO_EXTRACTABLE_TEXT` or `LLM_REFUSED`; 429 `LLM_RATE_LIMITED`; 502 `LLM_RESPONSE_INVALID` for invalid evidence/schema or incomplete output; 503 `ANALYSIS_UNAVAILABLE` for storage/provider configuration/failure; 504 `LLM_TIMEOUT`. Browser response messages never contain raw provider/document errors. Model availability depends on the key's access; there is no silent fallback.

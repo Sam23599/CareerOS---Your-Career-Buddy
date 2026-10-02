@@ -2,6 +2,8 @@
 
 Keep answers short and simple. Prefer minimal, practical changes within the requested scope. Explain the root cause when discussing a problem, and summarize changes with exact file/line references.
 
+Use OOP for service/domain responsibilities and provider/storage adapters across backend services. Keep routing and startup thin. Shared AI infrastructure belongs to intelligence and serves multiple features; Cady is one consumer. Notify the user before starting each new AI-dependent stage as agreed in `docs/project-notes.md`.
+
 ## Project notes
 
 Use `docs/project-notes.md` as the ongoing observation and change-request notebook. Read it when reviewing notes or choosing future project work; preserve its raw notes, stable IDs, decisions, and review history. Follow its working agreement when refining requests.

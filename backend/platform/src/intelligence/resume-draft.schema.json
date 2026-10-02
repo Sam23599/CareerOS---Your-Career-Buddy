@@ -1,0 +1,682 @@
+{
+  "$defs": {
+    "AdditionalSection": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/Fact"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 40,
+          "title": "Content",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "content"
+      ],
+      "title": "AdditionalSection",
+      "type": "object"
+    },
+    "Certification": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/Fact"
+        },
+        "issuer": {
+          "$ref": "#/$defs/Fact"
+        },
+        "issuedDate": {
+          "$ref": "#/$defs/Fact"
+        },
+        "expiryDate": {
+          "$ref": "#/$defs/Fact"
+        },
+        "url": {
+          "$ref": "#/$defs/Fact"
+        }
+      },
+      "required": [
+        "name",
+        "issuer",
+        "issuedDate",
+        "expiryDate",
+        "url"
+      ],
+      "title": "Certification",
+      "type": "object"
+    },
+    "Education": {
+      "additionalProperties": false,
+      "properties": {
+        "institution": {
+          "$ref": "#/$defs/Fact"
+        },
+        "qualification": {
+          "$ref": "#/$defs/Fact"
+        },
+        "field": {
+          "$ref": "#/$defs/Fact"
+        },
+        "startDate": {
+          "$ref": "#/$defs/Fact"
+        },
+        "endDate": {
+          "$ref": "#/$defs/Fact"
+        },
+        "details": {
+          "$ref": "#/$defs/Fact"
+        }
+      },
+      "required": [
+        "institution",
+        "qualification",
+        "field",
+        "startDate",
+        "endDate",
+        "details"
+      ],
+      "title": "Education",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Page",
+          "type": "integer"
+        },
+        "quote": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "page",
+        "quote"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Experience": {
+      "additionalProperties": false,
+      "properties": {
+        "company": {
+          "$ref": "#/$defs/Fact"
+        },
+        "role": {
+          "$ref": "#/$defs/Fact"
+        },
+        "location": {
+          "$ref": "#/$defs/Fact"
+        },
+        "startDate": {
+          "$ref": "#/$defs/Fact"
+        },
+        "endDate": {
+          "$ref": "#/$defs/Fact"
+        },
+        "description": {
+          "$ref": "#/$defs/Fact"
+        },
+        "achievements": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 30,
+          "title": "Achievements",
+          "type": "array"
+        },
+        "skills": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 50,
+          "title": "Skills",
+          "type": "array"
+        }
+      },
+      "required": [
+        "company",
+        "role",
+        "location",
+        "startDate",
+        "endDate",
+        "description",
+        "achievements",
+        "skills"
+      ],
+      "title": "Experience",
+      "type": "object"
+    },
+    "Extraction": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "parser": {
+          "$ref": "#/$defs/Parser"
+        },
+        "status": {
+          "enum": [
+            "extracted",
+            "no_text"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "pageCount": {
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Pagecount",
+          "type": "integer"
+        },
+        "pages": {
+          "items": {
+            "$ref": "#/$defs/Page"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Pages",
+          "type": "array"
+        },
+        "text": {
+          "maxLength": 200000,
+          "title": "Text",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/Warning"
+          },
+          "maxItems": 2,
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "parser",
+        "status",
+        "pageCount",
+        "pages",
+        "text",
+        "warnings"
+      ],
+      "title": "Extraction",
+      "type": "object"
+    },
+    "Fact": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "maxLength": 6000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 4,
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value",
+        "evidence"
+      ],
+      "title": "Fact",
+      "type": "object"
+    },
+    "Link": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/Fact"
+        },
+        "url": {
+          "$ref": "#/$defs/Fact"
+        }
+      },
+      "required": [
+        "label",
+        "url"
+      ],
+      "title": "Link",
+      "type": "object"
+    },
+    "Page": {
+      "additionalProperties": false,
+      "properties": {
+        "number": {
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Number",
+          "type": "integer"
+        },
+        "text": {
+          "maxLength": 200000,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "number",
+        "text"
+      ],
+      "title": "Page",
+      "type": "object"
+    },
+    "Parser": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "pypdf",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 50,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "Parser",
+      "type": "object"
+    },
+    "Project": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/Fact"
+        },
+        "role": {
+          "$ref": "#/$defs/Fact"
+        },
+        "description": {
+          "$ref": "#/$defs/Fact"
+        },
+        "startDate": {
+          "$ref": "#/$defs/Fact"
+        },
+        "endDate": {
+          "$ref": "#/$defs/Fact"
+        },
+        "skills": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 50,
+          "title": "Skills",
+          "type": "array"
+        },
+        "achievements": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 30,
+          "title": "Achievements",
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/$defs/Link"
+          },
+          "maxItems": 10,
+          "title": "Links",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "role",
+        "description",
+        "startDate",
+        "endDate",
+        "skills",
+        "achievements",
+        "links"
+      ],
+      "title": "Project",
+      "type": "object"
+    },
+    "ResumeDraft": {
+      "additionalProperties": false,
+      "properties": {
+        "fullName": {
+          "$ref": "#/$defs/Fact"
+        },
+        "headline": {
+          "$ref": "#/$defs/Fact"
+        },
+        "summary": {
+          "$ref": "#/$defs/Fact"
+        },
+        "location": {
+          "$ref": "#/$defs/Fact"
+        },
+        "phone": {
+          "$ref": "#/$defs/Fact"
+        },
+        "email": {
+          "$ref": "#/$defs/Fact"
+        },
+        "skills": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 50,
+          "title": "Skills",
+          "type": "array"
+        },
+        "technologies": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 50,
+          "title": "Technologies",
+          "type": "array"
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 30,
+          "title": "Roles",
+          "type": "array"
+        },
+        "experience": {
+          "items": {
+            "$ref": "#/$defs/Experience"
+          },
+          "maxItems": 30,
+          "title": "Experience",
+          "type": "array"
+        },
+        "education": {
+          "items": {
+            "$ref": "#/$defs/Education"
+          },
+          "maxItems": 20,
+          "title": "Education",
+          "type": "array"
+        },
+        "certifications": {
+          "items": {
+            "$ref": "#/$defs/Certification"
+          },
+          "maxItems": 30,
+          "title": "Certifications",
+          "type": "array"
+        },
+        "projects": {
+          "items": {
+            "$ref": "#/$defs/Project"
+          },
+          "maxItems": 30,
+          "title": "Projects",
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/$defs/Link"
+          },
+          "maxItems": 20,
+          "title": "Links",
+          "type": "array"
+        },
+        "languages": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 30,
+          "title": "Languages",
+          "type": "array"
+        },
+        "keywords": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 50,
+          "title": "Keywords",
+          "type": "array"
+        },
+        "careerPreferences": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "maxItems": 30,
+          "title": "Careerpreferences",
+          "type": "array"
+        },
+        "additionalSections": {
+          "items": {
+            "$ref": "#/$defs/AdditionalSection"
+          },
+          "maxItems": 30,
+          "title": "Additionalsections",
+          "type": "array"
+        }
+      },
+      "required": [
+        "fullName",
+        "headline",
+        "summary",
+        "location",
+        "phone",
+        "email",
+        "skills",
+        "technologies",
+        "roles",
+        "experience",
+        "education",
+        "certifications",
+        "projects",
+        "links",
+        "languages",
+        "keywords",
+        "careerPreferences",
+        "additionalSections"
+      ],
+      "title": "ResumeDraft",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "resumeId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Resumeid",
+          "type": "string"
+        },
+        "resumeVersion": {
+          "minimum": 1,
+          "title": "Resumeversion",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resumeId",
+        "resumeVersion",
+        "sha256"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Usage": {
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": {
+          "minimum": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "outputTokens": {
+          "minimum": 0,
+          "title": "Outputtokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "inputTokens",
+        "outputTokens"
+      ],
+      "title": "Usage",
+      "type": "object"
+    },
+    "Warning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "NO_EXTRACTABLE_TEXT",
+            "PAGES_WITHOUT_TEXT",
+            "PDF_STRUCTURE_REPAIRED"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "Warning",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "id": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "version": {
+      "maximum": 2147483647,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "source": {
+      "$ref": "#/$defs/Source"
+    },
+    "status": {
+      "const": "ready",
+      "default": "ready",
+      "title": "Status",
+      "type": "string"
+    },
+    "analyzerVersion": {
+      "const": "resume-draft-v1",
+      "default": "resume-draft-v1",
+      "title": "Analyzerversion",
+      "type": "string"
+    },
+    "provider": {
+      "const": "openai",
+      "default": "openai",
+      "title": "Provider",
+      "type": "string"
+    },
+    "model": {
+      "enum": [
+        "gpt-4.1",
+        "gpt-6-luna",
+        "gpt-6.1-sol"
+      ],
+      "title": "Model",
+      "type": "string"
+    },
+    "reasoning": {
+      "anyOf": [
+        {
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reasoning"
+    },
+    "usage": {
+      "$ref": "#/$defs/Usage"
+    },
+    "createdAt": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Createdat",
+      "type": "string"
+    },
+    "extraction": {
+      "$ref": "#/$defs/Extraction"
+    },
+    "draft": {
+      "$ref": "#/$defs/ResumeDraft"
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "source",
+    "model",
+    "reasoning",
+    "usage",
+    "createdAt",
+    "extraction",
+    "draft"
+  ],
+  "title": "DraftRecord",
+  "type": "object"
+}

@@ -14,9 +14,16 @@ from pypdf.generic import DecodedStreamObject, DictionaryObject, EncodedStreamOb
 import pytest
 
 from app import main
-from app.limits import ExtractionError, MAX_INPUT, MAX_OUTPUT
-from app.runner import run_worker
-from app.worker import ParserWarnings, extract_pdf
+from app.core.errors import IntelligenceError as ExtractionError
+from app.core.limits import MAX_INPUT, MAX_OUTPUT
+from app.parsing.runner import PdfWorkerRunner
+run_worker = PdfWorkerRunner().run
+from app.core.security import ServiceAuthenticator
+from app.api.controller import IntelligenceController
+from app.core.settings import Settings
+from app.parsing.warnings import ParserWarnings
+from app.parsing.pdf import PdfTextExtractor
+extract_pdf = PdfTextExtractor().extract
 
 TOKEN = "ab" * 32
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/pdf"}
@@ -200,7 +207,7 @@ def test_compressed_content_limit(client):
 
 
 def test_real_worker_address_space_limit():
-    script = "from app.worker import enforce_memory_limit\nimport json\nenforce_memory_limit()\ntry:\n bytearray(300 * 1024 * 1024)\nexcept MemoryError:\n print(json.dumps({'error': {'status': 503, 'code': 'PARSER_RESOURCE_LIMIT'}}))"
+    script = "from app.core.resources import WorkerMemoryBudget\nimport json\nWorkerMemoryBudget().enforce()\ntry:\n bytearray(300 * 1024 * 1024)\nexcept MemoryError:\n print(json.dumps({'error': {'status': 503, 'code': 'PARSER_RESOURCE_LIMIT'}}))"
     with pytest.raises(ExtractionError) as caught:
         asyncio.run(run_worker(b"", command=[sys.executable, "-c", script]))
     assert caught.value.code == "PARSER_RESOURCE_LIMIT"
@@ -243,10 +250,11 @@ def test_busy_and_cancellation_release_slot_and_reap_worker(monkeypatch, tmp_pat
     marker = tmp_path / "cancelled"
     async def slow_worker(data):
         return await run_worker(data, command=[sys.executable, "-c", f"import os,time,pathlib; pathlib.Path({str(marker)!r}).write_text(str(os.getpid())); time.sleep(30)"])
-    monkeypatch.setattr(main, "run_worker", slow_worker)
+    monkeypatch.setattr(main.application.extraction.runner, "run", slow_worker)
     async def exercise():
-        main.app.state.ready = True
-        main.app.state.active = None
+        main.application.extraction.ready = True
+        main.application.extraction.active = None
+        main.app.state.controller = IntelligenceController(Settings(service_token=TOKEN), main.application.extraction, None)
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=main.app), base_url="http://test") as client:
             first = asyncio.create_task(client.post("/internal/v1/resumes/extract", headers=HEADERS, content=pdf()))
             for _ in range(100):
@@ -259,7 +267,7 @@ def test_busy_and_cancellation_release_slot_and_reap_worker(monkeypatch, tmp_pat
             assert second.headers["Retry-After"] == "5"
             first.cancel()
             await asyncio.gather(first, return_exceptions=True)
-            assert main.app.state.active is None
+            assert main.application.extraction.active is None
             assert_reaped(marker)
     asyncio.run(exercise())
 
@@ -269,10 +277,11 @@ def test_asgi_disconnect_stops_and_reaps_parser(monkeypatch, tmp_path):
     marker = tmp_path / "disconnected"
     async def slow_worker(data):
         return await run_worker(data, command=[sys.executable, "-c", f"import os,time,pathlib; pathlib.Path({str(marker)!r}).write_text(str(os.getpid())); time.sleep(30)"])
-    monkeypatch.setattr(main, "run_worker", slow_worker)
+    monkeypatch.setattr(main.application.extraction.runner, "run", slow_worker)
     async def exercise():
-        main.app.state.ready = True
-        main.app.state.active = None
+        main.application.extraction.ready = True
+        main.application.extraction.active = None
+        main.app.state.controller = IntelligenceController(Settings(service_token=TOKEN), main.application.extraction, None)
         disconnected = asyncio.Event()
         sent = False
         async def receive():
@@ -283,7 +292,7 @@ def test_asgi_disconnect_stops_and_reaps_parser(monkeypatch, tmp_path):
             await disconnected.wait()
             return {"type": "http.disconnect"}
         request = Request({"type": "http", "headers": [(b"authorization", f"Bearer {TOKEN}".encode()), (b"content-type", b"application/pdf")]}, receive)
-        task = asyncio.create_task(main.extract(request))
+        task = asyncio.create_task(main.application.extraction.extract(request))
         for _ in range(100):
             if marker.exists(): break
             await asyncio.sleep(.01)
@@ -291,6 +300,6 @@ def test_asgi_disconnect_stops_and_reaps_parser(monkeypatch, tmp_path):
         disconnected.set()
         with pytest.raises(ClientDisconnect):
             await task
-        assert main.app.state.active is None
+        assert main.application.extraction.active is None
         assert_reaped(marker)
     asyncio.run(exercise())

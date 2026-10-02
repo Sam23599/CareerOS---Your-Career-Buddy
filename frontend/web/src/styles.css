@@ -124,3 +124,7 @@ nav.actions { align-items: center; flex-wrap: wrap; }
 .quick-check-filters legend { padding: 0 6px; font-weight: 600; }
 .notification-card.unread { border-left: 5px solid #83ad91; }
 header { flex-wrap: wrap; }
+.draft-review { max-height: 90vh; overflow: auto; }
+.draft-review pre, .draft-fact, .draft-review blockquote p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.draft-field, .draft-item { padding: 1rem 0; border-bottom: 1px solid var(--border, #d9e0e8); }
+.draft-review details { margin: .75rem 0; }

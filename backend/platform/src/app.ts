@@ -66,7 +66,7 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
     app.use('/api/v1/auth', authRouter(auth));
     if (resumes) {
       app.use('/api/v1/resumes', resumeRouter(auth.service, resumes));
-      app.use('/api/v1/intelligence', intelligenceRouter(auth.service, resumes, intelligence));
+      app.use('/api/v1/intelligence', intelligenceRouter(auth.service, resumes, intelligence, profiles));
     }
     if (profiles) app.use('/api/v1/profiles', profileRouter(auth.service, profiles));
     app.get('/api/v1/users/me', authenticate(auth.service), requireRoles('USER', 'ADMIN'), (_req, res) => {

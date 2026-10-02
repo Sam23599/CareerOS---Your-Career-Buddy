@@ -10,6 +10,7 @@ One ongoing notebook for the whole project: bugs, rough ideas, UX observations, 
 - Check relevant code/plans before claiming a root cause or that something is already implemented. Add exact file/line references where useful; otherwise label the finding unverified.
 - Suggest a small, practical next step and timing. You choose **now / soon / end of phase / end of project / undecided**. Suggestions do not change the roadmap by themselves.
 - Notes and scheduled reviews authorize refinement only. Implement a request when you explicitly approve it in conversation or record a clear approval for the named item. An approval for later is not permission to start now.
+- Before starting any project stage that will use AI capabilities (LLMs, embeddings, AI-based OCR or similar), notify you first. Explain its purpose, whether it is required or optional, the proposed provider/model or local setup, what data is processed or sent externally, and expected cost/configuration. Provider and budget choices must be settled before external model calls.
 - Keep completed/deferred items and decision history in this file. Do not commit, push, or modify application code during a notes-only review.
 
 ## Your raw notes

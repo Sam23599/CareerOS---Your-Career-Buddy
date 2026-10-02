@@ -341,7 +341,7 @@ At this point, CareerOS should already be usable without AI.
 
 # 5. Phase 2 — Intelligence & AI
 
-The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Its first batch is private PDF text extraction through Python, with [ADR-010](adr/010-resume-intelligence-foundation.md) and an [API contract](api/intelligence.md). Batch 1 is implemented locally; structured analysis, matching and Cady remain planned.
+The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Its first batch is private PDF text extraction through Python, with [ADR-010](adr/010-resume-intelligence-foundation.md) and an [API contract](api/intelligence.md). Batches 1–2 are implemented locally: private PDF extraction and OpenAI-assisted structured drafts with explicit profile import. See [ADR-011](adr/011-structured-resume-drafts.md). JD analysis, matching and Cady remain planned.
 
 ## Technology
 
@@ -1278,10 +1278,10 @@ The goal is to progressively turn CareerOS into a unified career platform rather
 | Repository setup      | Local foundation implemented |
 | README                | Initial version |
 | Development plan      | Initial version |
-| Architecture          | Implemented decisions recorded in ADR-001 through ADR-007 |
+| Architecture          | Implemented decisions recorded in ADR-001 through ADR-011 |
 | Frontend              | Auth, profiles, resumes, jobs, saved jobs, career sources, and in-app notifications implemented |
 | Node.js platform      | JWT/RBAC, profiles, resumes, jobs/ingestion, saved jobs, private career-source checks, and notifications implemented |
-| Python intelligence   | Not started     |
+| Python intelligence   | Private PDF extraction, shared OpenAI layer, saved structured drafts and reviewed profile import implemented |
 | Java workflows        | Not started     |
 | Kafka                 | Future phase    |
 | Community             | Planned         |

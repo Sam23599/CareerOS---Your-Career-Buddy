@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const root = new URL('../', import.meta.url);
 const path = fileURLToPath(new URL('.env', root));
 let content = readFileSync(existsSync(path) ? path : new URL('.env.example', root), 'utf8');
-for (const key of ['AUTH_SECRET', 'INTELLIGENCE_SERVICE_TOKEN']) {
+for (const key of ['AUTH_SECRET', 'INTELLIGENCE_SERVICE_TOKEN', 'INTELLIGENCE_DB_PASSWORD']) {
   if (!new RegExp(`^${key}=.+$`, 'm').test(content)) {
     const setting = `${key}=${randomBytes(32).toString('hex')}`;
     const line = new RegExp(`^${key}=.*$`, 'm');

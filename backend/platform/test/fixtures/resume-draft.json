@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+  "source": {
+    "resumeId": "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb",
+    "resumeVersion": 1,
+    "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "status": "ready",
+  "analyzerVersion": "resume-draft-v1",
+  "provider": "openai",
+  "model": "gpt-6-luna",
+  "reasoning": "medium",
+  "usage": {
+    "inputTokens": 100,
+    "outputTokens": 200
+  },
+  "createdAt": "2026-10-03T00:00:00+00:00",
+  "extraction": {
+    "schemaVersion": 1,
+    "parser": {
+      "name": "pypdf",
+      "version": "6.19.0"
+    },
+    "status": "extracted",
+    "pageCount": 1,
+    "pages": [
+      {
+        "number": 1,
+        "text": "Resume Tester\nSoftware engineer\nPython"
+      }
+    ],
+    "text": "Resume Tester\nSoftware engineer\nPython",
+    "warnings": []
+  },
+  "draft": {
+    "fullName": {
+      "value": "Resume Tester",
+      "evidence": [
+        {
+          "page": 1,
+          "quote": "Resume Tester"
+        }
+      ]
+    },
+    "headline": {
+      "value": "Software engineer",
+      "evidence": [
+        {
+          "page": 1,
+          "quote": "Software engineer"
+        }
+      ]
+    },
+    "summary": {
+      "value": null,
+      "evidence": []
+    },
+    "location": {
+      "value": null,
+      "evidence": []
+    },
+    "phone": {
+      "value": null,
+      "evidence": []
+    },
+    "email": {
+      "value": null,
+      "evidence": []
+    },
+    "skills": [
+      {
+        "value": "Python",
+        "evidence": [
+          {
+            "page": 1,
+            "quote": "Python"
+          }
+        ]
+      }
+    ],
+    "technologies": [],
+    "roles": [],
+    "experience": [],
+    "education": [],
+    "certifications": [],
+    "projects": [],
+    "links": [],
+    "languages": [],
+    "keywords": [],
+    "careerPreferences": [],
+    "additionalSections": []
+  },
+  "version": 1
+}

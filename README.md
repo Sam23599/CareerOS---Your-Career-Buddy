@@ -763,3 +763,7 @@ The [development plan](docs/development-plan.md) defines the roadmap. The [Phase
 The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured analysis, matching and Cady remain planned.
 
 The first release focuses on the core job workflow; community belongs to Phase 5. This README describes the product vision and planned architecture.
+
+## Structured resume drafts
+
+At `/resumes`, choose **Resume draft** to generate detailed, evidence-backed fields using OpenAI, then edit/select, preview and explicitly apply supported fields to your profile. Python is modular/OOP and owns derived drafts in a separate PostgreSQL database. The shared provider layer is extensible across CareerOS; JD analysis, matching and Cady remain later steps. See [configuration, review flow and checks](docs/resume-drafts.md) and [ADR-011](docs/adr/011-structured-resume-drafts.md).

@@ -1,12 +1,9 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import Field, model_validator
 
-from .limits import MAX_CHARACTERS, MAX_PAGES
-
-
-class StrictModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
+from app.core.limits import MAX_CHARACTERS, MAX_PAGES
+from app.core.models import StrictModel
 
 
 class Page(StrictModel):
