@@ -1,7 +1,12 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { OAuthButtons } from './OAuthButtons';
 import { forgetAccount, rememberedAccount, signIn, signOut, startProviderSignIn, useSession } from './session';
+import { Icon } from '../ui/WorkspaceUi';
+
+function AuthLayout({ children }: { children: ReactNode }) {
+  return <div className="workspace-auth-layout"><section className="workspace-auth-story"><p className="eyebrow">More clarity. More possibility.</p><h2>Make your <br />next move <br /><span>your own.</span></h2><p>A calmer place to bring your experience, your documents and your next opportunity together.</p><ul><li><Icon name="profile" /><span>A profile that tells your story</span></li><li><Icon name="resume" /><span>Your resumes, ready when you are</span></li><li><Icon name="jobs" /><span>Opportunities worth exploring</span></li></ul><div className="workspace-auth-story-footer"><Icon name="sparkles" /><span>Your career, with a little more direction.</span></div></section><div className="workspace-auth-form-wrap">{children}</div></div>;
+}
 
 export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const session = useSession();
@@ -46,7 +51,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   if (!registering && account && !showForm) {
     const user = account;
     const initials = user.name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
-    return <section className="panel auth-panel" aria-labelledby="auth-heading">
+    return <AuthLayout><section className="panel auth-panel" aria-labelledby="auth-heading">
       <p className="eyebrow">Your career buddy</p><h1 id="auth-heading">Welcome back.</h1>
       <button className="remembered-account" type="button" disabled={busy} onClick={continueAccount}>
         <span className="profile-avatar" aria-hidden="true">{initials}</span>
@@ -59,7 +64,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
       </button>
       <p><button type="button" className="text-button" disabled={busy} onClick={otherSignInOptions}>Use email or other sign-in options</button></p>
       {session.state !== 'authenticated' && <p><button type="button" className="text-button" disabled={busy} onClick={() => { forgetAccount(); setShowForm(true); }}>Forget this account</button></p>}
-    </section>;
+    </section></AuthLayout>;
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -77,7 +82,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
     finally { setBusy(false); }
   }
   return (
-    <section className="panel auth-panel" aria-labelledby="auth-heading">
+    <AuthLayout><section className="panel auth-panel" aria-labelledby="auth-heading">
       <p className="eyebrow">Your career buddy</p>
       <h1 id="auth-heading">{registering ? 'Start your next chapter.' : 'Welcome back.'}</h1>
       <p className="description">{registering ? 'Create your CareerOS account to get started.' : 'Sign in to continue your career journey.'}</p>
@@ -93,6 +98,6 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         </fieldset>
       </form>
       <p className="muted">{registering ? 'Already have an account? ' : 'New to CareerOS? '}<Link to={registering ? '/login' : '/register'}>{registering ? 'Sign in' : 'Create an account'}</Link></p>
-    </section>
+    </section></AuthLayout>
   );
 }

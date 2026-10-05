@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { authenticatedRequest, useSession } from '../auth/session';
+import { Icon } from '../ui/WorkspaceUi';
 
 export function notificationsChanged() { window.dispatchEvent(new Event('notifications-updated')); }
 function Badge() {
@@ -12,6 +13,6 @@ function Badge() {
     window.addEventListener('notifications-updated', refresh); document.addEventListener('visibilitychange', refresh);
     return () => { active = false; window.clearInterval(timer); window.removeEventListener('notifications-updated', refresh); document.removeEventListener('visibilitychange', refresh); };
   }, [pathname]);
-  return <Link to="/notifications">Notifications{count ? ` (${count})` : ''}</Link>;
+  return <Link className="workspace-notifications" to="/notifications" aria-current={pathname === '/notifications' ? 'page' : undefined}><Icon name="bell" /><span>Notifications{count ? ` (${count})` : ''}</span></Link>;
 }
 export function NotificationLink() { const session = useSession(); return session.state === 'authenticated' ? <Badge key={session.user?.id} /> : null; }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
+import { Icon, PageHeading } from '../ui/WorkspaceUi';
+import { useWorkspaceNavigationGuard } from '../ui/navigation';
 import { type SavedJob, statusLabels } from './types';
 
 type List = { savedJobs: SavedJob[]; total: number; page: number; limit: number };
@@ -24,11 +26,10 @@ function SavedCard({ initial, onRemove, onDirty, canLeave }: { initial: SavedJob
     replace(result.savedJob); setMessage('Changes saved.');
   }); }
   return <article className="panel profile-section saved-job-card">
-    <h2>{saved.available ? <Link to={`/jobs/${saved.jobId}`} onClick={event => { if (!canLeave()) event.preventDefault(); }}>{saved.job.title}</Link> : saved.job.title}</h2>
-    <p>{saved.job.company} · {saved.job.location || 'Location not specified'}</p>
+    <div className="workspace-card-heading"><span className="workspace-card-icon"><Icon name="bookmark" /></span><div className="workspace-card-copy"><h2>{saved.available ? <Link to={`/jobs/${saved.jobId}`} onClick={event => { if (!canLeave()) event.preventDefault(); }}>{saved.job.title}</Link> : saved.job.title}</h2><p>{saved.job.company} · {saved.job.location || 'Location not specified'}</p></div><span className="workspace-badge">{statusLabels[saved.status]}</span></div>
     {!saved.available && <p className="muted">The original job is no longer in the catalog. Your notes are still available.</p>}
     {saved.job.expiresAt && Date.parse(saved.job.expiresAt) <= viewedAt && <p className="muted">This listing has expired.</p>}
-    <p className="muted">Source: <a href={saved.job.sourceUrl} target="_blank" rel="noopener noreferrer">{saved.job.source === 'remotive' ? 'Remotive' : saved.job.source}</a> · Saved {new Date(saved.savedAt).toLocaleDateString()}</p>
+    <p className="muted workspace-card-meta">Source: <a href={saved.job.sourceUrl} target="_blank" rel="noopener noreferrer">{saved.job.source === 'remotive' ? 'Remotive' : saved.job.source}</a> · Saved {new Date(saved.savedAt).toLocaleDateString()}</p>
     <form onSubmit={submit}><fieldset disabled={busy}><div className="profile-grid">
       <label>Interest status<select value={draft.status} onChange={event => setDraft({ ...draft, status: event.target.value as SavedJob['status'] })}>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <label>Priority<select value={draft.priority} onChange={event => setDraft({ ...draft, priority: event.target.value as SavedJob['priority'] })}>{['LOW', 'MEDIUM', 'HIGH'].map(value => <option key={value} value={value}>{value[0] + value.slice(1).toLowerCase()}</option>)}</select></label>
@@ -67,24 +68,25 @@ function SavedList() {
     window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn);
   }, []);
   function canLeave() { return !dirty.current.size || window.confirm('Discard your unsaved saved-job changes?'); }
+  useWorkspaceNavigationGuard(canLeave);
   function navigate(next: URLSearchParams) {
     if (!canLeave()) return;
     if (next.toString() === query) { setData(null); setError(''); setAttempt(value => value + 1); }
     else setParams(next);
   }
-  return <div className="profile-page"><nav className="profile-nav"><Link to="/dashboard" onClick={event => { if (!canLeave()) event.preventDefault(); }}>← Dashboard</Link><Link to="/jobs" onClick={event => { if (!canLeave()) event.preventDefault(); }}>Find more jobs</Link></nav>
-    <h1>Saved jobs</h1><p className="description">Keep your shortlist, priorities, and private notes together. Interest status is separate from an application’s progress.</p>
-    <form className="panel profile-section" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(); for (const [key, value] of new FormData(event.currentTarget)) if (value) next.set(key, String(value)); navigate(next); }}>
+  return <div className="profile-page workspace-page"><nav className="profile-nav"><Link to="/dashboard" onClick={event => { if (!canLeave()) event.preventDefault(); }}>← Dashboard</Link><Link to="/jobs" onClick={event => { if (!canLeave()) event.preventDefault(); }}>Find more jobs</Link></nav>
+    <PageHeading eyebrow="Your next opportunities" title="Saved jobs" description="Keep your shortlist, priorities, and private notes together. Interest status is separate from an application’s progress." />
+    <form className="panel profile-section workspace-filter-bar" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(); for (const [key, value] of new FormData(event.currentTarget)) if (value) next.set(key, String(value)); navigate(next); }}>
       <div className="profile-grid"><label>Filter by status<select name="status" defaultValue={params.get('status') ?? ''}><option value="">All statuses</option>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label>Filter by priority<select name="priority" defaultValue={params.get('priority') ?? ''}><option value="">All priorities</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option></select></label></div>
       <button>Apply filters</button>
     </form>
     {error && <><p role="alert" className="form-error">{error}</p><button onClick={() => { setError(''); setAttempt(value => value + 1); }}>Retry</button></>}
     {!data && !error && <p role="status">Loading saved jobs…</p>}
-    {data && <><p>{data.total} saved {data.total === 1 ? 'job' : 'jobs'}</p>
-      {!data.savedJobs.length && <p>No saved jobs match this view. Save a job from search or change your filters.</p>}
-      {data.savedJobs.map(item => <SavedCard key={item.jobId} initial={item} onDirty={onDirty} canLeave={canLeave} onRemove={id => setData(current => current ? { ...current, total: Math.max(0, current.total - 1), savedJobs: current.savedJobs.filter(item => item.jobId !== id) } : current)} />)}
-      <nav className="actions" aria-label="Saved job pages">{[-1, 1].map(direction => <button key={direction} disabled={direction === -1 ? data.page <= 1 : data.page * data.limit >= data.total} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(data.page + direction)); navigate(next); }}>{direction === -1 ? 'Previous' : 'Next'}</button>)}<span>Page {data.page} of {Math.max(1, Math.ceil(data.total / data.limit))}</span></nav>
+    {data && <><p className="workspace-results-summary">{data.total} saved {data.total === 1 ? 'job' : 'jobs'}</p>
+      {!data.savedJobs.length && <p className="workspace-empty-state">No saved jobs match this view. Save a job from search or change your filters.</p>}
+      <div className="workspace-list">{data.savedJobs.map(item => <SavedCard key={item.jobId} initial={item} onDirty={onDirty} canLeave={canLeave} onRemove={id => setData(current => current ? { ...current, total: Math.max(0, current.total - 1), savedJobs: current.savedJobs.filter(item => item.jobId !== id) } : current)} />)}</div>
+      <nav className="actions workspace-pagination" aria-label="Saved job pages">{[-1, 1].map(direction => <button key={direction} disabled={direction === -1 ? data.page <= 1 : data.page * data.limit >= data.total} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(data.page + direction)); navigate(next); }}>{direction === -1 ? 'Previous' : 'Next'}</button>)}<span>Page {data.page} of {Math.max(1, Math.ceil(data.total / data.limit))}</span></nav>
     </>}
   </div>;
 }

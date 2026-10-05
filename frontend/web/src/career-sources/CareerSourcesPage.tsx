@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
 import { notificationsChanged } from '../notifications/NotificationLink';
+import { Icon, PageHeading } from '../ui/WorkspaceUi';
 import { SourceForm } from './SourceForm';
 import { type CareerSource, type SourceFilters, type SourceKind, limitedCoverageMessage } from './types';
 
@@ -44,15 +45,16 @@ function SourceCard({ source, reload, saved }: { source: CareerSource; reload: (
   }
   if (editing) return <SourceForm source={source} kind={editing} onCancel={() => setEditing(null)} onSaved={kind => { setEditing(null); saved(kind); }} />;
   return <article className="panel profile-section career-source-card">
-    <h2>{source.company}</h2><p><a href={source.careerUrl} target="_blank" rel="noopener noreferrer">Open career page</a> · {bookmark ? 'Career bookmark' : `${source.providerName ?? 'Provider unavailable'} · job source`}{!bookmark && !source.enabled && ' · Paused'}</p>
+    <div className="workspace-card-heading"><span className="workspace-card-icon"><Icon name={bookmark ? 'bookmark' : 'sources'} /></span><div className="workspace-card-copy"><h2>{source.company}</h2><p className="muted">{bookmark ? 'Career bookmark' : `${source.providerName ?? 'Provider unavailable'} · job source`}</p></div>{!bookmark && <span className={`workspace-badge${source.enabled ? '' : ' subtle'}`}>{source.enabled ? 'Tracking enabled' : 'Paused'}</span>}</div>
+    <p><a className="workspace-inline-link" href={source.careerUrl} target="_blank" rel="noopener noreferrer"><Icon name="link" />Open career page<Icon name="arrow-right" /></a></p>
     {bookmark ? <p className="muted">{source.canEnableTracking ? `${source.providerName} supports job tracking. Enable it when you are ready.` : 'Job tracking is not supported for this page yet. Open it to browse manually.'}</p> : <>
     {source.coverage === 'limited' && <p className="muted">{limitedCoverageMessage}</p>}
-    <p className="muted">Saved filters · Keywords: {source.keywords.join(', ') || 'All roles'} · Locations: {source.locations.join(', ') || 'All locations'}</p>
+    <p className="muted workspace-card-meta">Saved filters · Keywords: {source.keywords.join(', ') || 'All roles'} · Locations: {source.locations.join(', ') || 'All locations'}</p>
     {source.canRefresh && <>
-      <p>{source.lastCheckedAt ? `Last check with saved filters: ${new Date(source.lastCheckedAt).toLocaleString()} · ${source.status === 'failed' ? 'Failed' : `${source.matchingCount} matches, ${source.newCount} newly found`}` : 'No checks with saved filters yet.'}</p>
+      <p className="workspace-card-meta">{source.lastCheckedAt ? `Last check with saved filters: ${new Date(source.lastCheckedAt).toLocaleString()} · ${source.status === 'failed' ? 'Failed' : `${source.matchingCount} matches, ${source.newCount} newly found`}` : 'No checks with saved filters yet.'}</p>
       {source.importedAt && <p className="muted">Listings imported: {new Date(source.importedAt).toLocaleString()}</p>}
       <p className="muted">{source.scanHours ? `Every ${source.scanHours} hours${source.nextScanAt ? ` · Next due: ${new Date(source.nextScanAt).toLocaleString()}` : ''}` : 'Manual checks only'}</p>
-      <Link to={`/career-sources/${source.id}/jobs${matchQuery}`}>{checkedFilters ? 'View matches for this check' : 'View matching jobs'}</Link>
+      <Link className="workspace-inline-link" to={`/career-sources/${source.id}/jobs${matchQuery}`}>{checkedFilters ? 'View matches for this check' : 'View matching jobs'}<Icon name="arrow-right" /></Link>
     </>}</>}
     {source.canRefresh && <fieldset className="quick-check-filters" disabled={busy}>
       <legend>Filters for Check now (optional)</legend>
@@ -81,21 +83,21 @@ function SourceList() {
   }, [query, attempt]);
   const reload = () => { setError(''); setAttempt(value => value + 1); };
   const saved = (savedKind: SourceKind, message = '') => { setNotice(message); setAdding(null); if (savedKind !== kind) setParams({ kind: savedKind }); else reload(); };
-  return <div className="profile-page"><nav className="profile-nav"><Link to="/dashboard">← Dashboard</Link><Link to="/jobs">Platform jobs</Link><Link to="/notifications">Notifications</Link></nav>
-    <h1>Career sources</h1><p className="description">Track jobs from supported sources or bookmark company career pages for manual visits. Your list and filters are private; imported public listings also appear in the job catalog.</p>
+  return <div className="profile-page workspace-page">
+    <PageHeading eyebrow="Your discovery network" title="Career sources" description="Track jobs from supported sources or bookmark company career pages for manual visits. Your list and filters are private; imported public listings also appear in the job catalog." actions={!adding && <><button onClick={() => setAdding('job-source')}><Icon name="sources" />Add job source</button><button className="secondary" onClick={() => setAdding('bookmark')}><Icon name="bookmark" />Bookmark career page</button></>} />
     <nav className="profile-nav career-source-tabs" aria-label="Career source sections"><Link to="?kind=job-source" aria-current={!bookmark ? 'page' : undefined}>Job sources</Link><Link to="?kind=bookmark" aria-current={bookmark ? 'page' : undefined}>Career bookmarks</Link></nav>
     <p className="muted">{bookmark ? 'Bookmarks stay here until you choose to enable job tracking. They do not import jobs or send alerts.' : 'Greenhouse boards and Google Careers support refreshes; Google has limited coverage. Keywords and locations must both match when provided.'}</p>
-    {adding ? <SourceForm kind={adding} onCancel={() => setAdding(null)} onSaved={saved} /> : <div className="actions"><button onClick={() => setAdding('job-source')}>Add job source</button><button className="secondary" onClick={() => setAdding('bookmark')}>Bookmark career page</button></div>}
-    <form className="panel profile-section source-search" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams({ kind }); for (const [key, value] of new FormData(event.currentTarget)) if (value) next.set(key, String(value)); if (next.toString() === query) reload(); else setParams(next); }}>
+    {adding && <SourceForm kind={adding} onCancel={() => setAdding(null)} onSaved={saved} />}
+    <form className="panel profile-section source-search workspace-filter-bar" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams({ kind }); for (const [key, value] of new FormData(event.currentTarget)) if (value) next.set(key, String(value)); if (next.toString() === query) reload(); else setParams(next); }}>
       <div className="profile-grid"><label>Search companies<input name="q" maxLength={200} defaultValue={params.get('q') ?? ''} placeholder="Company or career page…" /></label>
         {!bookmark && <label>Tracking status<select name="filter" defaultValue={params.get('filter') ?? ''}><option value="">All job sources</option><option value="paused">Paused</option></select></label>}</div><button>{bookmark ? 'Filter bookmarks' : 'Filter sources'}</button>
     </form>
     {notice && <p role="status">{notice}</p>}
     {error && <><p role="alert" className="form-error">{error}</p><button onClick={reload}>Retry</button></>}
     {!data && !error && <p role="status">Loading career sources…</p>}
-    {data && <><p>{data.total} {bookmark ? data.total === 1 ? 'career bookmark' : 'career bookmarks' : data.total === 1 ? 'job source' : 'job sources'}</p>{!data.sources.length && <p>{bookmark ? 'No career bookmarks in this view. Bookmark a company page or change your search.' : 'No job sources in this view. Add a supported source or change your filters.'}</p>}
-      {data.sources.map(source => <SourceCard key={`${source.id}:${source.revision}`} source={source} reload={reload} saved={saved} />)}
-      <nav className="actions" aria-label="Career source pages"><button disabled={data.page <= 1} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(data.page - 1)); setParams(next); }}>Previous</button><span>Page {data.page} of {Math.max(1, Math.ceil(data.total / data.limit))}</span><button disabled={data.page * data.limit >= data.total} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(data.page + 1)); setParams(next); }}>Next</button></nav>
+    {data && <><p className="workspace-results-summary">{data.total} {bookmark ? data.total === 1 ? 'career bookmark' : 'career bookmarks' : data.total === 1 ? 'job source' : 'job sources'}</p>{!data.sources.length && <p className="workspace-empty-state">{bookmark ? 'No career bookmarks in this view. Bookmark a company page or change your search.' : 'No job sources in this view. Add a supported source or change your filters.'}</p>}
+      <div className="workspace-list">{data.sources.map(source => <SourceCard key={`${source.id}:${source.revision}`} source={source} reload={reload} saved={saved} />)}</div>
+      <nav className="actions workspace-pagination" aria-label="Career source pages"><button disabled={data.page <= 1} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(data.page - 1)); setParams(next); }}>Previous</button><span>Page {data.page} of {Math.max(1, Math.ceil(data.total / data.limit))}</span><button disabled={data.page * data.limit >= data.total} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(data.page + 1)); setParams(next); }}>Next</button></nav>
     </>}
   </div>;
 }

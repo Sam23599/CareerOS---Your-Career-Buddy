@@ -12,7 +12,7 @@ import { ConnectionStatus } from './ConnectionStatus';
 import { CareerSourcesPage } from './career-sources/CareerSourcesPage';
 import { SourceJobsPage } from './career-sources/SourceJobsPage';
 import { NotificationsPage } from './notifications/NotificationsPage';
-import { NotificationLink } from './notifications/NotificationLink';
+import { WorkspaceShell } from './ui/WorkspaceShell';
 
 function AccountRoutes() {
   const session = useSession();
@@ -47,13 +47,12 @@ function AccountRoutes() {
 
 export function App() {
   useEffect(() => { void initializeSession(); }, []);
-  return <BrowserRouter><main>
-    <header><Link className="brand" to="/"><span className="logo" aria-hidden="true">C</span><strong>CareerOS</strong></Link><Link to="/jobs">Jobs</Link><NotificationLink /><span className="badge">Your career buddy</span></header>
+  return <BrowserRouter><WorkspaceShell>
     <Routes>
       <Route path="/jobs" element={<JobsPage />} />
       <Route path="/jobs/:id" element={<JobDetailPage />} />
       <Route path="/status" element={<ConnectionStatus />} />
       <Route path="*" element={<AccountRoutes />} />
     </Routes>
-  </main></BrowserRouter>;
+  </WorkspaceShell></BrowserRouter>;
 }

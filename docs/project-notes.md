@@ -19,6 +19,11 @@ Add entries below. Dates, screenshots/paths, expected behavior, and examples hel
 
 <!-- Write freely below this line. The reviewer will add IDs without changing your words. -->
 improve the main header bar sections and overall feel of the app. (just the ui/ux and frontend changes needed mainly) to give a modern fresh and user friendly look.
+add support for dark mode so user can pick between the two.
+implement a removed/deleted option as well for almost everywhere where the user has deleted anything. this allows them to restore in future in-case if they want to, with a custom (default 30 day) bin cleanup as well. bin cleanup will only soft delete it, allowing the data to persist in db even after delete and bin cleanup. so basically we would be needing 2 type deletes.
+an additioanl section of settings should be added to app for some custom user related settings for dashboard/ui/app token/credit usages, recharge/autofil credit etc things. 
+add a new window for user to track failure tasks or logs, that they can navigate or mail us, the careerOS developers for to debug and fix.
+add compress/expand button for the analyzed jobs/cv etc. currently it occupies the whole window, making the UI inconvinent.
 
 auth:
 add cache for continued session scheck if security-vise applicable.
@@ -39,6 +44,10 @@ custom career sources and notifications:
 functionality vise it works perfect. just some ui/ux improvements are needed for much cleaner ui and flow.
 add linkedln jobs as well for common job sources. my R&D suggests linkedln supports public job search (for example: https://www.linkedin.com/jobs/jobs-in-pune-division?trk=homepage-jobseeker_brand-discovery_intent-module-secondBtn&position=1&pageNum=0), but for easy apply or more diverse search, a linkedln account sign-in is required.So we'll support both. default public search that linkedln allows, then for advance search ask user to sign-in to linkedln through our platform and allow the access to their linkedln, then use it for search and list available jobs. note, for sensitive platforms like this, we'll give user a specific guideline and prompt if they want a more faster scheduled search like every hour or every 30 mins with a warning that that particular platform might limit this feature or is against this type of heavy crawling. 
 the newly added jobs should be at the top of the list on '/career-sources/{id}' page. also add sorting and filter as you type on that page
+
+nits:
+"/status" currently ony have support for only 3 service's status. should track all services.
+in docker or services, service name should be more defined for better understanding. intelligence-db-1 should be renamed to better service. 
 
 ## Refined notes
 

@@ -3,6 +3,8 @@ import { Link } from 'react-router';
 import { authenticatedRequest, RequestError } from '../auth/session';
 import { Entries, TagsInput } from './Fields';
 import { type CareerProfile, type Preferences } from './types';
+import { Icon, PageHeading } from '../ui/WorkspaceUi';
+import { useWorkspaceNavigationGuard } from '../ui/navigation';
 
 export function ProfilePage() {
   const [profile, setProfile] = useState<CareerProfile | null>(null);
@@ -13,6 +15,7 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [conflict, setConflict] = useState(false);
   const dirty = JSON.stringify(profile) !== JSON.stringify(saved);
+  useWorkspaceNavigationGuard(() => !dirty || window.confirm('Leave without saving your profile changes?'));
 
   useEffect(() => {
     let active = true;
@@ -57,14 +60,14 @@ export function ProfilePage() {
     ? <><p role="alert" className="form-error">{error}</p><button disabled={loading} onClick={reload}>Retry</button></>
     : <p role="status">Loading your profile…</p>}</section>;
 
-  return <div className="profile-page">
-    <Link to="/profile" onClick={event => { if (dirty && !window.confirm('Leave without saving your profile changes?')) event.preventDefault(); }}>← View profile</Link>
-    <h1>Edit career profile</h1>
-    <p className="description">Bring your experience, skills, and career goals together. Only you can access this profile.</p>
+  return <div className="profile-page profile-editor">
+    <PageHeading eyebrow="Career profile" title="Edit career profile" description="Bring your experience, skills, and career goals together. Only you can access this profile." actions={
+      <Link className="secondary button-link" to="/profile" onClick={event => { if (dirty && !window.confirm('Leave without saving your profile changes?')) event.preventDefault(); }}>View profile<Icon name="arrow-right" /></Link>
+    } />
     <form onSubmit={save}>
       <fieldset disabled={busy || loading}>
         <section className="panel profile-section" aria-labelledby="about-heading">
-          <h2 id="about-heading">About you</h2>
+          <div className="section-heading"><h2 id="about-heading">About you</h2><p className="section-description">Introduce yourself and the work you do.</p></div>
           <div className="profile-grid">
             <label>Full name<input required maxLength={100} value={profile.fullName} onChange={event => change({ fullName: event.target.value })} /></label>
             <label>Headline<input maxLength={200} placeholder="Backend engineer · Python & Node.js" value={profile.headline} onChange={event => change({ headline: event.target.value })} /></label>
@@ -74,30 +77,30 @@ export function ProfilePage() {
           </div>
         </section>
         <section className="panel profile-section" aria-labelledby="skills-heading">
-          <h2 id="skills-heading">Skills</h2>
+          <div className="section-heading"><h2 id="skills-heading">Skills</h2><p className="section-description">The tools, technologies, and strengths you bring.</p></div>
           <TagsInput key={`skills-${profile.version}-${loading}`} label="Your skills" values={profile.skills} onChange={skills => change({ skills })} />
         </section>
         <section className="panel profile-section" aria-labelledby="experience-heading">
-          <h2 id="experience-heading">Experience</h2>
+          <div className="section-heading"><h2 id="experience-heading">Experience</h2><p className="section-description">Tell the story of your roles and achievements.</p></div>
           <Entries label="Experience" max={30} items={profile.experience} onChange={experience => change({ experience })}
             create={() => ({ company: '', role: '', location: '', startDate: '', endDate: '', current: false, description: '' })}
             fields={[{ key: 'company', label: 'Company', required: true, maxLength: 200 }, { key: 'role', label: 'Role', required: true, maxLength: 200 }, { key: 'location', label: 'Location', maxLength: 200 }, { key: 'startDate', label: 'Start date', type: 'month', required: true }, { key: 'endDate', label: 'End date', type: 'month' }, { key: 'current', label: 'I currently work here', type: 'checkbox' }, { key: 'description', label: 'Responsibilities and achievements', type: 'textarea', maxLength: 3000 }]} />
         </section>
         <section className="panel profile-section" aria-labelledby="education-heading">
-          <h2 id="education-heading">Education</h2>
+          <div className="section-heading"><h2 id="education-heading">Education</h2></div>
           <p className="muted">Leave the end date empty for ongoing education.</p>
           <Entries label="Education" max={20} items={profile.education} onChange={education => change({ education })}
             create={() => ({ institution: '', qualification: '', field: '', startDate: '', endDate: '' })}
             fields={[{ key: 'institution', label: 'Institution', required: true, maxLength: 200 }, { key: 'qualification', label: 'Qualification', required: true, maxLength: 200 }, { key: 'field', label: 'Field of study', maxLength: 200 }, { key: 'startDate', label: 'Start date', type: 'month', required: true }, { key: 'endDate', label: 'End date', type: 'month' }]} />
         </section>
         <section className="panel profile-section" aria-labelledby="certifications-heading">
-          <h2 id="certifications-heading">Certifications</h2>
+          <div className="section-heading"><h2 id="certifications-heading">Certifications</h2><p className="section-description">Qualifications that support your experience.</p></div>
           <Entries label="Certification" max={30} items={profile.certifications} onChange={certifications => change({ certifications })}
             create={() => ({ name: '', issuer: '', issuedDate: '', url: '' })}
             fields={[{ key: 'name', label: 'Certification name', required: true, maxLength: 200 }, { key: 'issuer', label: 'Issuer', maxLength: 200 }, { key: 'issuedDate', label: 'Issue date', type: 'month' }, { key: 'url', label: 'Credential URL', type: 'url', maxLength: 2048 }]} />
         </section>
         <section className="panel profile-section" aria-labelledby="preferences-heading">
-          <h2 id="preferences-heading">Career preferences</h2>
+          <div className="section-heading"><h2 id="preferences-heading">Career preferences</h2><p className="section-description">Shape the opportunities you want to explore.</p></div>
           <div className="profile-grid" key={`preferences-${profile.version}-${loading}`}>
             <TagsInput label="Preferred roles" values={profile.preferences.roles} onChange={roles => preference({ roles })} />
             <TagsInput label="Preferred locations" values={profile.preferences.locations} onChange={locations => preference({ locations })} />
@@ -115,13 +118,13 @@ export function ProfilePage() {
           </div>
         </section>
         <section className="panel profile-section" aria-labelledby="links-heading">
-          <h2 id="links-heading">Professional links</h2>
+          <div className="section-heading"><h2 id="links-heading">Professional links</h2></div>
           <p className="muted">Add your LinkedIn, GitHub, Naukri, coding profile, or portfolio URLs.</p>
           <Entries label="Professional link" max={20} items={profile.links} onChange={links => change({ links })}
             create={() => ({ label: '', url: '' })}
             fields={[{ key: 'label', label: 'Link label', required: true, maxLength: 100 }, { key: 'url', label: 'Profile URL', type: 'url', required: true, maxLength: 2048 }]} />
         </section>
-        <div className="profile-save">
+        <div className="panel profile-save">
           {error && <p role="alert" className="form-error">{error}</p>}
           <p role="status">{message || (dirty ? 'You have unsaved changes.' : profile.updatedAt ? 'Your profile is up to date.' : 'Fill in your profile when you’re ready.')}</p>
           <div className="actions"><button type="submit" disabled={!dirty || conflict}>{busy ? 'Saving…' : 'Save profile'}</button><button type="button" className="secondary" onClick={reload}>{loading ? 'Loading…' : 'Reload saved profile'}</button></div>

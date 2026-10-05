@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Icon, PageHeading } from './ui/WorkspaceUi';
 
 type Connection = 'checking' | 'up' | 'down';
 type Status = { api: Connection; database: Connection };
@@ -37,15 +38,10 @@ export function ConnectionStatus() {
   const label = (value: Connection) => value === 'checking' ? 'Checking…' : value === 'up' ? 'Connected' : 'Unavailable';
 
   return (
-    <div>
-      <section className="intro">
-        <p className="eyebrow">Your career buddy</p>
-        <h1>A starting point for<br />your next chapter.</h1>
-        <p className="description">Discover opportunities, prepare with purpose, and keep your career journey in one place.</p>
-      </section>
+    <div className="workspace-page service-status-page">
+      <PageHeading eyebrow="Workspace health" title="Connection status" description="Check the services that keep your CareerOS workspace running." />
       <section className="panel" aria-labelledby="status-heading">
-        <h2 id="status-heading">Connection status</h2>
-        <p className="muted">The first building block of CareerOS.</p>
+        <div className="workspace-card-heading"><span className="workspace-card-icon"><Icon name="shield" /></span><div className="workspace-card-copy"><h2 id="status-heading">Local services</h2><p className="muted">Your frontend, API and job database.</p></div></div>
         <dl aria-live="polite">
           <div><dt>React frontend</dt><dd className="up">Running</dd></div>
           <div><dt>Express API</dt><dd className={status.api}>{label(status.api)}</dd></div>
@@ -54,7 +50,6 @@ export function ConnectionStatus() {
         <p role="status">{busy ? 'Checking local services…' : connected ? 'All connected. Your local foundation is ready.' : 'A connection needs attention. Check the service logs and try again.'}</p>
         <button disabled={busy} onClick={() => { setStatus(checking); setAttempt(value => value + 1); }}>Check again</button>
       </section>
-      <footer>Next up: your career profile.</footer>
     </div>
   );
 }

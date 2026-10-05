@@ -2,6 +2,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import * as stories from './stories';
 import '../../src/styles.css';
+import '../../src/ui/workspace.css';
 
 declare global {
   interface Window {

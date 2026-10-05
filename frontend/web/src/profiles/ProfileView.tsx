@@ -4,6 +4,7 @@ import { authenticatedRequest } from '../auth/session';
 import { type CareerProfile } from './types';
 import { PasswordSettings } from '../auth/PasswordSettings';
 import { UsernameSettings } from '../auth/UsernameSettings';
+import { Icon, PageHeading } from '../ui/WorkspaceUi';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return <section className="panel profile-section"><h2>{title}</h2>{children}</section>;
@@ -35,16 +36,20 @@ export function ProfileView() {
   const salary = p.salaryMin !== null && p.salaryMax !== null ? `${p.salaryMin.toLocaleString()} – ${p.salaryMax.toLocaleString()}`
     : p.salaryMin !== null ? `From ${p.salaryMin.toLocaleString()}` : p.salaryMax !== null ? `Up to ${p.salaryMax.toLocaleString()}` : '';
   return <div className="profile-page profile-view">
-    <nav className="profile-nav" aria-label="Profile navigation"><Link to="/dashboard">← Dashboard</Link><Link to="/resumes">Manage resumes</Link><Link className="profile-edit-link" to="/profile/edit">Edit profile</Link></nav>
+    <PageHeading eyebrow="Your career profile" title={profile.fullName} description="Your experience, your strengths, and where you want to go next." actions={
+      <nav className="profile-nav actions" aria-label="Profile navigation"><Link className="secondary button-link" to="/dashboard">Dashboard</Link><Link className="secondary button-link" to="/resumes">Manage resumes</Link><Link className="profile-edit-link button-link" to="/profile/edit">Edit profile<Icon name="arrow-right" /></Link></nav>
+    } />
     <section className="panel profile-section profile-hero">
       <div className="profile-avatar" aria-hidden="true">{profile.fullName.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()}</div>
-      <div><p className="eyebrow">Your career profile · Private</p><h1>{profile.fullName}</h1>
-        {profile.headline && <p className="profile-headline">{profile.headline}</p>}
+      <div className="profile-hero-details"><p className="eyebrow">Your professional story</p><h2 className="profile-headline">{profile.headline || 'Professional overview'}</h2>
         {profile.location && <p className="muted">{profile.location}</p>}
         {profile.phone && <p>Phone: {profile.phone}</p>}
       </div>
+      <span className="profile-private-badge"><Icon name="shield" />Private profile</span>
     </section>
     {profile.version === 0 && <p className="description">Your profile is ready to build. Choose Edit profile to add your experience, skills, and career goals.</p>}
+    <div className="profile-overview-grid">
+    <div className="profile-main">
     <Section title="About"><p className="profile-prose">{profile.summary || 'Add a summary to tell your professional story.'}</p></Section>
     <Section title="Skills"><Tags values={profile.skills} /></Section>
     <Section title="Experience">{profile.experience.length ? profile.experience.map((entry, index) => <article className="profile-detail" key={index}>
@@ -60,6 +65,8 @@ export function ProfileView() {
       <h3>{entry.name}</h3>{entry.issuer && <p>{entry.issuer}</p>}{entry.issuedDate && <p className="muted">{month(entry.issuedDate)}</p>}
       {entry.url && <a href={entry.url} target="_blank" rel="noopener noreferrer">View credential</a>}
     </article>) : <p className="muted">No certifications added yet.</p>}</Section>
+    </div>
+    <div className="profile-sidebar">
     <Section title="Career preferences"><dl className="profile-preferences">
       <div><dt>Preferred roles</dt><dd>{p.roles.join(', ') || 'Not specified'}</dd></div>
       <div><dt>Preferred locations</dt><dd>{p.locations.join(', ') || 'Not specified'}</dd></div>
@@ -71,5 +78,7 @@ export function ProfileView() {
     <Section title="Professional links">{profile.links.length ? <ul className="profile-links">{profile.links.map((link, index) => <li key={index}><a href={link.url} target="_blank" rel="noopener noreferrer">{link.label}</a></li>)}</ul> : <p className="muted">No professional links added yet.</p>}</Section>
     <UsernameSettings />
     <PasswordSettings />
+    </div>
+    </div>
   </div>;
 }
