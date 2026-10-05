@@ -1,6 +1,6 @@
 # Phase 2 — Resume intelligence and job matching
 
-Updated: 2026-10-05, Asia/Kolkata. **Batches 1–3 implemented locally; later batches remain planned.**
+Updated: 2026-10-06, Asia/Kolkata. **Batches 1–4 implemented locally; later batches remain planned.**
 
 This follows the planning step agreed after Phase 1. The original [Phase 2 roadmap](development-plan.md#5-phase-2--intelligence--ai) remains the product scope. [ADR-010](adr/010-resume-intelligence-foundation.md) defines the first batch; the [API contract](api/intelligence.md) makes it implementable. Later milestones below are a sequence, not a claim that they are built.
 
@@ -24,12 +24,12 @@ Start with extraction so incorrect reading order, missing text and unsupported P
 | 1. PDF text extraction — implemented | Python/FastAPI service, private parser endpoint, Node gateway and resume text preview | An owned PDF produces reviewable page text; failures are clear; original files/profile remain unchanged |
 | 2. Structured resume draft — implemented | Section/skill/experience/education extraction, evidence and Python-owned numbered draft history | Results reference source pages; unknown values stay unknown; a user can review and explicitly apply supported profile fields |
 | 3. Job-description analysis — implemented | Existing descriptions, quoted requirements and private numbered versions | Results preserve source identity, label unknown priorities and stale/expired listings, and do not mutate jobs/profiles |
-| 4. Explainable matching | Compare profile/resume and a selected job using a documented baseline | Show matched/missing skills, unknown requirements and the score calculation; fixtures demonstrate predictable results |
+| 4. Explainable matching — implemented | Compare saved CV/job analyses and optional profile skills using `skill-coverage-v1` | Show quoted matched/not-found skills, unscored review requirements and weighted score calculation; source/owner checks and fixtures demonstrate predictable results |
 | 5. Resume checks and skill gaps | Keyword/structure checks and preparation suggestions | Findings link back to resume/JD evidence; clearly label CareerOS heuristics rather than claiming an actual employer ATS score |
 | 6. Job ranking | Rank available/saved jobs using matching and user preferences | Explain why a job ranks higher; handle incomplete/stale source data explicitly |
 | 7. Initial Cady | Answer career questions from the authenticated user's profile, resume and selected/saved jobs | Answers use authorized context and evidence; Cady requests confirmation before any profile mutation |
 
-Batch 3 follows the approved [job-description analysis plan](job-description-analysis-plan.md); see [local use](job-description-analysis.md) and [ADR-012](adr/012-job-description-analysis.md). Batch 4 next defines a documented deterministic matching baseline; notify the user before new AI-dependent work.
+Batch 3 follows the approved [job-description analysis plan](job-description-analysis-plan.md); see [local use](job-description-analysis.md) and [ADR-012](adr/012-job-description-analysis.md). Batch 4 implements the [deterministic matching baseline](cv-job-matching.md) and [ADR-013](adr/013-cv-job-matching.md) with no new provider calls. Resume checks/skill gaps are next; notify the user before new AI-dependent work.
 
 ## Batch 1 — Concrete work
 
@@ -89,7 +89,7 @@ Source deletion suppresses access immediately and writes a durable MongoDB clean
 | Model provider and budget | Batch 2 settled | OpenAI Responses; requested three models and compatible reasoning; Luna/medium default; explicit text-only processing, fixed input/output/time limits, no retries; provider spending limits configured separately |
 | Rules versus model extraction | Batch 2 settled | LLM creates rich typed drafts; deterministic source-quote/value verification and explicit user review guard profile imports |
 | OCR and DOCX | After text-PDF extraction works | Separate extension; no promise of scanned-document support in batch 1 |
-| Matching formula and ranking weights | Before batch 4 | Deterministic, documented baseline first; a match score is not a hiring probability |
+| Matching formula and ranking weights | Batch 4 baseline settled; ranking later | Required/unspecified/preferred skill weights 3/2/1; deduplicated exact/curated-alias skill coverage, other requirements reviewed; no hiring probability or employer ATS claim |
 | Analysis retention and deletion | Batch 2 settled | Owner-scoped PostgreSQL records tied to source lifetime; durable Node cleanup outbox; minimal deletion tombstones |
 
 Google live sign-in and the UI/source/filter requests in [project notes](project-notes.md) remain separately prioritized work. Application tracking remains Phase 3, community Phase 5 and production deployment Phase 7. This extraction batch does not implement those requests.

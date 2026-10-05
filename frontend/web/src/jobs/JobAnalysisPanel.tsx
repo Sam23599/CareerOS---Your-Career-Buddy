@@ -20,7 +20,7 @@ function Fact({ item }: { item: JobFact }) {
   </div>;
 }
 
-function Analysis({ job }: { job: Job }) {
+function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
   const active = useRef<AbortController | null>(null);
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [saved, setSaved] = useState<SavedAnalysis | null>(null);
@@ -64,6 +64,7 @@ function Analysis({ job }: { job: Job }) {
       const result = await authenticatedRequest<SavedAnalysis>(`${base}/analyze`, { method: 'POST', body: JSON.stringify({ model, reasoning }), signal });
       if (signal.aborted) return;
       setSaved(result);
+      onSaved?.();
       const { id, version, createdAt, source } = result.analysis;
       setHistory(current => ({ ...current, versions: [{ id, version, model: result.analysis.model, reasoning: result.analysis.reasoning, createdAt, sourceHash: source.sha256, stale: false }, ...current.versions.filter(item => item.id !== id)] }));
     });
@@ -89,7 +90,7 @@ function Analysis({ job }: { job: Job }) {
     { field: 'Compensation', listing: job.metadata.salary ?? '', extracted: (record.analysis.compensation as JobFact).value },
   ] : [];
   const wordingDiffers = comparisons.some(item => item.listing && item.extracted && item.listing.trim().toLowerCase() !== item.extracted.trim().toLowerCase());
-  return <section className="panel profile-section job-analysis" aria-label="Job analysis"><h2>Job analysis</h2>
+  return <section id="job-analysis" className="panel profile-section job-analysis" aria-label="Job analysis"><h2>Job analysis</h2>
     <p>Analyze job sends this listing’s text to OpenAI and incurs provider charges. Each successful click saves a new version. Saved versions open without another AI call.</p>
     {loading && <p role="status">Loading saved analysis…</p>}
     {error && <p className="form-error" role="alert">{error}</p>}
@@ -127,9 +128,9 @@ function Analysis({ job }: { job: Job }) {
   </section>;
 }
 
-export function JobAnalysisPanel({ job }: { job: Job }) {
+export function JobAnalysisPanel({ job, onSaved }: { job: Job; onSaved?: () => void }) {
   const session = useSession();
   if (session.state === 'loading') return null;
   if (session.state !== 'authenticated') return <p><Link to="/login">Sign in to analyze this job</Link></p>;
-  return <Analysis key={`${session.user!.id}:${job.id}`} job={job} />;
+  return <Analysis key={`${session.user!.id}:${job.id}`} job={job} onSaved={onSaved} />;
 }

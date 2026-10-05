@@ -134,3 +134,53 @@ After processing/reads, Node rechecks source existence/content. Changed content 
 Private Python endpoints mirror analyze/analysis/analyses/capabilities under `/internal/v1/jobs/`. They require the service Bearer token and validated `X-Owner-Id`; GET uses trusted `X-Source-Sha256` and optionally `X-Analysis-Id`. Analyze receives the bounded source JSON and compatible `X-LLM-Model` / optional `X-LLM-Reasoning`. No user JWT, CV/profile content or arbitrary fetch URL is forwarded. `DELETE /internal/v1/jobs/:id/analysis` performs idempotent account/job cleanup and adds a minimal deletion tombstone. It has no public delete route.
 
 Saved rows live in PostgreSQL `job_analyses`, with private owner/job versions assigned under the same lock as deletion. Node tracks cleanup references in MongoDB `job_analysis_sources` before generation; scans up to twenty-five references every thirty seconds while running, retaining failed cleanup work for restart/retry. Hard removal blocks access immediately; expiry retains analyses. Resume/job generation shares one active slot with no queue, and PDF extraction retains its separate worker bound. Normal reads never call OpenAI; automatic provider refreshes never analyze job descriptions.
+
+## CV-to-job matching
+
+`POST /api/v1/intelligence/jobs/:id/match` requires a current USER/ADMIN JWT and JSON:
+
+```json
+{
+  "resumeId": "owned-pdf-uuid",
+  "draftId": "owned-saved-cv-analysis-uuid",
+  "jobAnalysisId": "owned-saved-job-analysis-uuid",
+  "includeProfileSkills": false
+}
+```
+
+All four fields are required; UUIDs must be valid. Extra fields/query parameters,
+browser owner IDs, source text, skills, profile revisions and URLs are rejected.
+Node resolves authoritative context; ADMIN cannot use another account's CV or analyses.
+
+The response is `{ match: MatchResult, sourceStatus: { expired: boolean } }`. The
+[generated schema](../../backend/platform/src/intelligence/matching.schema.json)
+defines source IDs/hashes/versions, `matcherVersion: skill-coverage-v1`, nullable
+integer `score`, `matchedWeight`, `totalWeight`, comparison `items` and `notStated`.
+Each item contains a quoted/priority-backed job requirement, category, status
+(`matched`, `not_found`, `needs_review`), score weight and optional candidate value
+with resume page evidence or an explicit self-reported profile source.
+
+Scoring covers deduplicated exact/curated-alias skills and technologies only:
+required=3, unspecified=2, preferred=1; matched points/total points × 100 rounded
+half up. Unknown, ambiguous and other requirement categories remain visible for
+review outside the score; no scorable requirements gives null. See the complete
+[formula and limits](../cv-job-matching.md). This is not a hiring probability or
+employer ATS score. Matching makes no provider call and persists no new record.
+
+Foreign/missing/deleting resumes and missing analyses return the existing 404
+codes. Stale job analyses return 409 `JOB_ANALYSIS_STALE`. Job edits during work
+return 409 `JOB_CHANGED`; included profile revision changes return 409
+`MATCH_SOURCE_CHANGED`. Expired unchanged jobs return a labelled comparison for
+reference. Other failures use existing private-service/storage mappings. Matching
+has its own sixty-attempts/user/fifteen-minute throttle with Retry-After; the paid
+processing allowance is unchanged. Response cap is 2 MiB; the upstream deadline
+is fifteen seconds. No automatic retry or regeneration occurs.
+
+`POST /internal/v1/matching/compare` is service-token authenticated and receives
+trusted `X-Owner-Id`, JSON `{ resume: { resumeId, resumeVersion, sha256 }, draftId,
+jobId, jobHash, jobAnalysisId, profile: null | { version, skills } }` (maximum 16 KB).
+Python reads exact IDs in that owner/source namespace from its PostgreSQL
+repositories and rejects changed inputs. It receives no user JWT, MongoDB
+connection, original PDF, external URL or OpenAI credential for this request.
+Node independently validates result schema, identity, evidence and arithmetic,
+then rechecks source availability/current content and optional profile revision.

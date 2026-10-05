@@ -1,5 +1,6 @@
 import { SaveJobButton } from '../saved-jobs/SaveJobButton';
 import { JobAnalysisPanel } from './JobAnalysisPanel';
+import { JobMatchPanel } from './JobMatchPanel';
 import { limitedCoverageMessage } from '../career-sources/types';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
@@ -71,6 +72,7 @@ function JobResults() {
 }
 export function JobsPage() { const [params] = useSearchParams(); return <JobResults key={params.toString()} />; }
 function JobDetail({ id }: { id: string }) {
+  const [analysisRevision, setAnalysisRevision] = useState(0);
   const [viewedAt] = useState(Date.now);
   const [params] = useSearchParams();
   const { data, error, retry } = useJobsData<{ job: Job }>(`/${encodeURIComponent(id)}`);
@@ -86,7 +88,8 @@ function JobDetail({ id }: { id: string }) {
         <SaveJobButton jobId={job.id} />
       </section>
       {job.skills.length > 0 && <section className="panel profile-section"><h2>Skills</h2><ul className="profile-tags">{job.skills.map(skill => <li key={skill}>{skill}</li>)}</ul></section>}
-      <JobAnalysisPanel job={job} />
+      <JobMatchPanel jobId={job.id} revision={analysisRevision} />
+      <JobAnalysisPanel job={job} onSaved={() => setAnalysisRevision(value => value + 1)} />
       <section className="panel profile-section"><h2>About the role</h2><p className="profile-prose">{job.description || 'See the original listing for the full description.'}</p></section>
     </>}
   </div>;

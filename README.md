@@ -760,14 +760,18 @@ The architecture, service boundaries, technology choices, and feature set are ex
 
 The [development plan](docs/development-plan.md) defines the roadmap. The [Phase 1 backlog](docs/phase-1-backlog.md) tracks the first release, and the [review and next steps](docs/implementation-next-steps.md) define the proposed implementation sequence.
 
-The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts and job-description analysis are implemented; matching and Cady remain planned.
+The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts, job-description analysis and explainable CV-to-job matching are implemented; later checks, ranking and Cady remain planned.
 
 The first release focuses on the core job workflow; community belongs to Phase 5. This README describes the product vision and planned architecture.
 
 ## Structured resume drafts
 
-At `/resumes`, choose **Resume draft** to generate detailed, evidence-backed fields using OpenAI, then edit/select, preview and explicitly apply supported fields to your profile. Python is modular/OOP and owns derived drafts in a separate PostgreSQL database. The shared provider layer serves both resume and job analysis; matching and Cady remain later steps. See [configuration, review flow and checks](docs/resume-drafts.md) and [ADR-011](docs/adr/011-structured-resume-drafts.md).
+At `/resumes`, choose **Resume draft** to generate detailed, evidence-backed fields using OpenAI, then edit/select, preview and explicitly apply supported fields to your profile. Python is modular/OOP and owns derived drafts in a separate PostgreSQL database. The shared provider layer serves both resume and job analysis; Cady remains a later step. See [configuration, review flow and checks](docs/resume-drafts.md) and [ADR-011](docs/adr/011-structured-resume-drafts.md).
 
 ## Job-description analysis
 
-On a job detail page, use **Analyze job** to extract source-backed requirements, priorities and responsibilities. Analyses have private saved versions, quoted evidence and stale/expired listing notices. Opening saved versions makes no AI call. See [local use and checks](docs/job-description-analysis.md). Matching remains the next planned Phase 2 batch.
+On a job detail page, use **Analyze job** to extract source-backed requirements, priorities and responsibilities. Analyses have private saved versions, quoted evidence and stale/expired listing notices. Opening saved versions makes no AI call. See [local use and checks](docs/job-description-analysis.md).
+
+## CV-to-job matching
+
+On a job detail page, choose saved resume/job analysis versions and click **Compare CV to job**. See weighted skill coverage, quoted matches, skills not found and other requirements to review. Profile skills are an optional self-reported supplement. Matching itself makes no AI call, and the score is not a hiring probability or employer ATS score. See [formula, boundaries and checks](docs/cv-job-matching.md).

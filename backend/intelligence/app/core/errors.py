@@ -29,4 +29,7 @@ ERRORS = {
     "JOB_TEXT_EMPTY": "This listing has no description to analyze.",
     "JOB_NOT_FOUND": "Job not found.",
     "JOB_ANALYSIS_NOT_FOUND": "No saved job analysis is available.",
+    "JOB_ANALYSIS_STALE": "This listing changed. Analyze its current description before matching.",
+    "MATCH_SOURCE_CHANGED": "A comparison input changed. Reload the inputs and compare again.",
+    "MATCHING_LIMIT": "This comparison exceeds the supported size limit.",
 }

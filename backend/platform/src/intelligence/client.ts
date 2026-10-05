@@ -2,6 +2,9 @@ import { ApiError } from '../errors.js';
 import { MAX_RESUME_BYTES } from '../resumes/store.js';
 import { validateDraft, validateHistory, type Source } from './drafts.js';
 import { JobAnalysisVerifier, type JobSource } from './jobs.js';
+import { MatchVerifier, type ProfileSkills } from './matching.js';
+import { type DraftRecord } from './drafts.js';
+import { type JobAnalysisRecord } from './jobs.js';
 
 const MAX_OUTPUT = 2 * 1024 * 1024;
 const MAX_CHARACTERS = 200_000;
@@ -34,6 +37,9 @@ const upstreamErrors: Record<string, [number, string]> = {
   JOB_NOT_FOUND: [404, 'Job not found.'],
   JOB_ANALYSIS_NOT_FOUND: [404, 'No saved analysis is available for this job.'],
   JOB_TEXT_EMPTY: [422, 'This listing has no description to analyze.'],
+  JOB_ANALYSIS_STALE: [409, 'This listing changed. Analyze its current description before matching.'],
+  MATCH_SOURCE_CHANGED: [409, 'A comparison input changed. Reload the inputs and compare again.'],
+  MATCHING_LIMIT: [413, 'This comparison exceeds the supported size limit.'],
 };
 
 function fields(value: unknown, names: string[]): value is Record<string, unknown> {
@@ -215,5 +221,12 @@ export class IntelligenceClient {
   async deleteJobAnalyses(owner: string, jobId: string) {
     const body = await this.request(`/internal/v1/jobs/${jobId}/analysis`, { method: 'DELETE', headers: { 'X-Owner-Id': owner } });
     if (!fields(body, ['status']) || body.status !== 'deleted') throw invalid();
+  }
+  async compare(owner: string, resume: DraftRecord, job: JobAnalysisRecord, profile: ProfileSkills | null, signal: AbortSignal) {
+    return MatchVerifier.result(await this.request('/internal/v1/matching/compare', {
+      method: 'POST', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resume: resume.source, draftId: resume.id, jobId: job.source.jobId,
+        jobHash: job.source.sha256, jobAnalysisId: job.id, profile }),
+    }, signal), resume, job, profile);
   }
 }

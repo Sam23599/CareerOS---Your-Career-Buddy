@@ -341,7 +341,7 @@ At this point, CareerOS should already be usable without AI.
 
 # 5. Phase 2 — Intelligence & AI
 
-The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Its first batch is private PDF text extraction through Python, with [ADR-010](adr/010-resume-intelligence-foundation.md) and an [API contract](api/intelligence.md). Batches 1–3 are implemented locally: private PDF extraction, OpenAI-assisted structured drafts with explicit profile import, and job-description requirements/evidence with private version history. See [ADR-011](adr/011-structured-resume-drafts.md) and [ADR-012](adr/012-job-description-analysis.md). Matching and Cady remain planned.
+The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Batches 1–4 are implemented locally: private PDF extraction ([ADR-010](adr/010-resume-intelligence-foundation.md)), OpenAI-assisted structured drafts with explicit profile import ([ADR-011](adr/011-structured-resume-drafts.md)), job-description requirements/evidence with private version history ([ADR-012](adr/012-job-description-analysis.md)), and [explainable CV-to-job skill matching](cv-job-matching.md) ([ADR-013](adr/013-cv-job-matching.md)). Matching compares saved analyses without new AI calls. Resume checks/skill gaps, ranking and Cady remain planned. See the [API contract](api/intelligence.md).
 
 ## Technology
 
@@ -1278,10 +1278,10 @@ The goal is to progressively turn CareerOS into a unified career platform rather
 | Repository setup      | Local foundation implemented |
 | README                | Initial version |
 | Development plan      | Initial version |
-| Architecture          | Implemented decisions recorded in ADR-001 through ADR-011 |
+| Architecture          | Implemented decisions recorded in ADR-001 through ADR-013 |
 | Frontend              | Auth, profiles, resumes, jobs, saved jobs, career sources, and in-app notifications implemented |
 | Node.js platform      | JWT/RBAC, profiles, resumes, jobs/ingestion, saved jobs, private career-source checks, and notifications implemented |
-| Python intelligence   | Private PDF extraction, shared OpenAI layer, saved structured drafts and reviewed profile import implemented |
+| Python intelligence   | Private PDF extraction, shared OpenAI layer, saved CV/JD analyses, reviewed profile import and deterministic skill matching implemented |
 | Java workflows        | Not started     |
 | Kafka                 | Future phase    |
 | Community             | Planned         |

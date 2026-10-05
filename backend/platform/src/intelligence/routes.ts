@@ -13,6 +13,8 @@ import { type JobAnalysisCleanup } from './job-cleanup.js';
 import { JobAnalysisService } from './job-service.js';
 import { JobAnalysisRoutes } from './job-routes.js';
 import { AnalysisQueries } from './queries.js';
+import { MatchingService } from './match-service.js';
+import { MatchingRoutes } from './match-routes.js';
 
 export function intelligenceRouter(auth: AuthService, resumes: ResumeStore | undefined, client: IntelligenceClient, profiles?: ProfileStore, jobs?: JobStore, cleanup?: JobAnalysisCleanup) {
   const router = Router();
@@ -30,6 +32,14 @@ export function intelligenceRouter(auth: AuthService, resumes: ResumeStore | und
   if (jobs) new JobAnalysisRoutes(new JobAnalysisService(jobs, client, cleanup), client).register(router, throttle);
   if (!resumes) return router;
   const analysis = new ResumeAnalysisService(resumes, client, profiles);
+  if (jobs) new MatchingRoutes(new MatchingService(analysis, new JobAnalysisService(jobs, client), client, profiles)).register(router, rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false,
+    keyGenerator: (_req, res) => res.locals.user.id,
+    handler: (_req, res, next) => {
+      res.setHeader('Retry-After', '900');
+      next(new ApiError(429, 'RATE_LIMITED', 'Too many comparisons. Please try again later.'));
+    },
+  }));
   router.use('/resumes/:id', (req, _res, next) => {
     if (typeof req.params.id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(req.params.id)) {
       throw new ApiError(400, 'INVALID_INPUT', 'Provide a valid resume ID.');

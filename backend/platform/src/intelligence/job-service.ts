@@ -27,9 +27,9 @@ export class JobAnalysisService {
     const current = await this.recheck(source);
     return { analysis, sourceStatus: { stale: false, expired: current.expired } };
   }
-  async get(owner: string, id: string, analysisId?: string) {
+  async get(owner: string, id: string, analysisId?: string, signal?: AbortSignal) {
     const { source } = await this.source(id);
-    const analysis = await this.client.jobAnalysis(owner, source, analysisId);
+    const analysis = await this.client.jobAnalysis(owner, source, analysisId, signal);
     const current = await this.recheck(source);
     return { analysis, sourceStatus: { stale: analysis.source.sha256 !== current.source.sha256, expired: current.expired } };
   }

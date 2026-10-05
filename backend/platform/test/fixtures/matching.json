@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "matcherVersion": "skill-coverage-v1",
+  "source": {
+    "resume": {
+      "resumeId": "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb",
+      "resumeVersion": 1,
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "draftId": "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+    "draftVersion": 1,
+    "jobId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "jobHash": "bf0ad60deadb0e7d9a09edee5bfabf23b3b4ccb0bb73d45ca5c9759339cc0a71",
+    "jobAnalysisId": "11111111-1111-1111-1111-111111111111",
+    "jobAnalysisVersion": 1,
+    "profileVersion": null
+  },
+  "score": 75,
+  "matchedWeight": 3,
+  "totalWeight": 4,
+  "items": [
+    {
+      "category": "skills",
+      "requirement": {
+        "value": "Python",
+        "evidence": [
+          {
+            "section": "description",
+            "quote": "Python",
+            "start": 39,
+            "end": 45
+          }
+        ],
+        "priority": "required",
+        "priorityEvidence": [
+          {
+            "section": "description",
+            "quote": "Required qualifications:",
+            "start": 14,
+            "end": 38
+          }
+        ]
+      },
+      "status": "matched",
+      "weight": 3,
+      "candidate": {
+        "source": "resume",
+        "field": "skills",
+        "value": "Python",
+        "evidence": [
+          {
+            "page": 1,
+            "quote": "Python"
+          }
+        ]
+      }
+    },
+    {
+      "category": "technologies",
+      "requirement": {
+        "value": "TypeScript",
+        "evidence": [
+          {
+            "section": "description",
+            "quote": "TypeScript",
+            "start": 87,
+            "end": 97
+          }
+        ],
+        "priority": "preferred",
+        "priorityEvidence": [
+          {
+            "section": "description",
+            "quote": "Preferred skills:",
+            "start": 69,
+            "end": 86
+          }
+        ]
+      },
+      "status": "not_found",
+      "weight": 1,
+      "candidate": null
+    },
+    {
+      "category": "experience",
+      "requirement": {
+        "value": "3+ years of experience",
+        "evidence": [
+          {
+            "section": "description",
+            "quote": "3+ years of experience",
+            "start": 46,
+            "end": 68
+          }
+        ],
+        "priority": "required",
+        "priorityEvidence": [
+          {
+            "section": "description",
+            "quote": "Required qualifications:",
+            "start": 14,
+            "end": 38
+          }
+        ]
+      },
+      "status": "needs_review",
+      "weight": 0,
+      "candidate": null
+    },
+    {
+      "category": "location",
+      "requirement": {
+        "value": "Europe",
+        "evidence": [
+          {
+            "section": "location",
+            "quote": "Europe",
+            "start": 0,
+            "end": 6
+          }
+        ],
+        "priority": "unspecified",
+        "priorityEvidence": []
+      },
+      "status": "needs_review",
+      "weight": 0,
+      "candidate": null
+    },
+    {
+      "category": "workMode",
+      "requirement": {
+        "value": "Remote within Europe",
+        "evidence": [
+          {
+            "section": "description",
+            "quote": "Remote within Europe",
+            "start": 127,
+            "end": 147
+          }
+        ],
+        "priority": "unspecified",
+        "priorityEvidence": []
+      },
+      "status": "needs_review",
+      "weight": 0,
+      "candidate": null
+    }
+  ],
+  "notStated": [
+    "education",
+    "certifications",
+    "languages",
+    "eligibility",
+    "applicationRequirements",
+    "additionalRequirements",
+    "employmentType",
+    "compensation"
+  ]
+}

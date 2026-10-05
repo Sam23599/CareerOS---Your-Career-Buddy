@@ -17,6 +17,8 @@ from app.resumes.service import ResumeDraftService
 from app.storage.postgres import PostgresDraftRepository
 from app.storage.jobs_postgres import PostgresJobAnalysisRepository
 from app.jobs.service import JobAnalysisService
+from app.api.matching import MatchingController
+from app.matching.service import MatchingService
 
 
 class IntelligenceApplication:
@@ -35,6 +37,7 @@ class IntelligenceApplication:
         self.jobs = JobAnalysisService(self.llm, PostgresJobAnalysisRepository(self.repository))
         app.state.controller = IntelligenceController(settings, self.extraction, self.drafts)
         app.state.jobs = JobAnalysisController(settings, self.jobs)
+        app.state.matching = MatchingController(settings.service_token, MatchingService(self.repository, self.jobs.repository))
         app.state.extraction = self.extraction
         await self.extraction.start()
         await self.repository.start()
@@ -67,6 +70,7 @@ class IntelligenceApplication:
         async def get_job(job_id: str, request: Request): return await request.app.state.jobs.get(job_id, request)
         async def job_history(job_id: str, request: Request): return await request.app.state.jobs.history(job_id, request)
         async def delete_job(job_id: str, request: Request): return await request.app.state.jobs.delete(job_id, request)
+        async def match(request: Request): return await request.app.state.matching.compare(request)
         for path, method, handler in (
             ("health", "GET", health), ("ready", "GET", ready), ("capabilities", "GET", capabilities),
             ("resumes/extract", "POST", extract), ("resumes/analyze", "POST", analyze),
@@ -75,6 +79,7 @@ class IntelligenceApplication:
             ("jobs/capabilities", "GET", job_capabilities), ("jobs/{job_id}/analyze", "POST", analyze_job),
             ("jobs/{job_id}/analysis", "GET", get_job), ("jobs/{job_id}/analyses", "GET", job_history),
             ("jobs/{job_id}/analysis", "DELETE", delete_job),
+            ("matching/compare", "POST", match),
         ):
             app.add_api_route("/internal/v1/" + path, handler, methods=[method])
         return app

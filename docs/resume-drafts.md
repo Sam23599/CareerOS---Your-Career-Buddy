@@ -28,7 +28,7 @@ Remove the temporary key from `.env` and recreate intelligence when done. New ge
 | `backend/platform/src/intelligence` | Owned source resolution, bounded/schema-validated gateway, profile import and cleanup outbox |
 | `frontend/web/src/resumes` | Resume library, evidence display, edits, selected-field preview/confirmation |
 
-A future Gemini/Grok adapter implements `LLMProvider`; register provider-specific capabilities alongside it. Future JD analysis/matching/Cady reuse the shared LLM service rather than putting their logic inside the OpenAI adapter. Notify the user before each future AI-dependent stage. No such stage is implemented here.
+A future Gemini/Grok adapter implements `LLMProvider`; register provider-specific capabilities alongside it. Job analysis now reuses the shared LLM service. [Matching](cv-job-matching.md) compares saved analyses deterministically without a model call; future AI features/Cady reuse the shared provider layer rather than putting domain logic inside the OpenAI adapter. Notify the user before each future AI-dependent stage.
 
 ## Checks
 

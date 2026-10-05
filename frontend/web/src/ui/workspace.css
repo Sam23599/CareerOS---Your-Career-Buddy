@@ -388,3 +388,18 @@ blockquote p { margin: 8px 0 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+.job-matching fieldset { margin-top: 20px; }
+.job-matching .check-label { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+.job-matching .check-label input { width: 18px; min-height: 18px; }
+.match-result { margin-top: 24px; }
+.match-score { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 20px; background: var(--brand-soft); border-radius: 12px; }
+.match-score-value { font-size: 30px; font-weight: 700; margin: 4px 0; }
+.match-group { margin-top: 18px; }
+.match-group > summary { font-weight: 600; padding: 12px 0; cursor: pointer; }
+.match-items { list-style: none; padding: 0; margin: 0; }
+.match-item { border-top: 1px solid var(--border); padding: 16px 0; overflow-wrap: anywhere; }
+.match-item-heading { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+.match-item-heading > strong { flex: 1 1 160px; }
+.match-item .workspace-badge { margin-left: 0; white-space: normal; }
+.job-matching details summary { min-height: 44px; display: list-item; align-content: center; }
