@@ -96,6 +96,9 @@ textarea:focus-visible, select:focus-visible { outline: 3px solid #83ad91; outli
 .resume-card .actions, .profile-nav { flex-wrap: wrap; }
 
 .job-detail { overflow-wrap: anywhere; }
+.job-analysis table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 20px 0; }
+.job-analysis caption { text-align: left; font-weight: 600; padding-bottom: 10px; }
+.job-analysis th, .job-analysis td { text-align: left; vertical-align: top; padding: 10px 6px; border-bottom: 1px solid #dce3db; }
 .job-detail .profile-edit-link { display: inline-block; line-height: 1.5; }
 nav.actions { align-items: center; flex-wrap: wrap; }
 

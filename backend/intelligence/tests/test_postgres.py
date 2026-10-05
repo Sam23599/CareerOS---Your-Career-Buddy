@@ -75,6 +75,53 @@ def test_postgres_versions_pagination_concurrency_restart_and_delete_tombstone()
 
 
 @pytest.mark.skipif(not os.getenv("TEST_DATABASE_URL"), reason="Explicit isolated PostgreSQL test configuration required")
+def test_job_storage_migration_versions_stale_sources_history_restart_and_cleanup():
+    from app.storage.jobs_postgres import PostgresJobAnalysisRepository
+    from test_jobs import record, source
+
+    async def run():
+        url = os.environ["TEST_DATABASE_URL"]
+        name = "job_analysis_test_" + uuid4().hex
+        admin = await AsyncConnection.connect(url, autocommit=True)
+        await admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))
+        database = PostgresDraftRepository(make_conninfo(url, dbname=name))
+        try:
+            await database.start(); assert database.ready
+            repository = PostgresJobAnalysisRepository(database)
+            owner = str(uuid4()); other = str(uuid4())
+            first = await repository.save(owner, record())
+            changed_source = source(first.source.sections[-1].text + "\nSQL")
+            second = await repository.save(owner, first.model_copy(update={"id": str(uuid4()), "source": changed_source}))
+            assert second.version == 2
+            assert await repository.get(owner, first.source.jobId, first.source.sha256) == first
+            assert await repository.get(owner, first.source.jobId, "c" * 64) == second
+            assert await repository.get(owner, first.source.jobId, second.source.sha256, first.id) == first
+            assert await repository.get(other, first.source.jobId, first.source.sha256, first.id) is None
+            foreign = await repository.save(other, first.model_copy(update={"id": str(uuid4())}))
+            assert foreign.version == 1
+            assert await repository.save(owner, first) == first
+            concurrent = await asyncio.gather(*(repository.save(owner, first.model_copy(update={"id": str(uuid4())})) for _ in range(20)))
+            assert sorted(item.version for item in concurrent) == list(range(3, 23))
+            history = await repository.history(owner, first.source.jobId)
+            assert [item.version for item in history.versions] == list(range(22, 2, -1)) and history.nextBeforeVersion == 3
+            assert [item.version for item in (await repository.history(owner, first.source.jobId, 3)).versions] == [2, 1]
+            await database.close()
+            database = PostgresDraftRepository(make_conninfo(url, dbname=name)); await database.start()
+            repository = PostgresJobAnalysisRepository(database)
+            assert await repository.get(owner, first.source.jobId, first.source.sha256, first.id) == first
+            await repository.delete(owner, first.source.jobId); await repository.delete(owner, first.source.jobId)
+            assert not (await repository.history(owner, first.source.jobId)).versions
+            assert await repository.get(other, first.source.jobId, first.source.sha256) == foreign
+            with pytest.raises(IntelligenceError) as caught:
+                await repository.save(owner, first)
+            assert caught.value.code == "JOB_NOT_FOUND"
+        finally:
+            await database.close()
+            await admin.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(name))); await admin.close()
+    asyncio.run(run())
+
+
+@pytest.mark.skipif(not os.getenv("TEST_DATABASE_URL"), reason="Explicit isolated PostgreSQL test configuration required")
 def test_version_migration_preserves_existing_drafts_and_runs_once():
     async def run():
         url = os.environ["TEST_DATABASE_URL"]

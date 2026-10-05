@@ -1,6 +1,6 @@
 # Phase 2 — Resume intelligence and job matching
 
-Updated: 2026-10-03, Asia/Kolkata. **Batches 1–2 implemented locally; later batches remain planned.**
+Updated: 2026-10-05, Asia/Kolkata. **Batches 1–3 implemented locally; later batches remain planned.**
 
 This follows the planning step agreed after Phase 1. The original [Phase 2 roadmap](development-plan.md#5-phase-2--intelligence--ai) remains the product scope. [ADR-010](adr/010-resume-intelligence-foundation.md) defines the first batch; the [API contract](api/intelligence.md) makes it implementable. Later milestones below are a sequence, not a claim that they are built.
 
@@ -23,13 +23,13 @@ Start with extraction so incorrect reading order, missing text and unsupported P
 | --- | --- | --- |
 | 1. PDF text extraction — implemented | Python/FastAPI service, private parser endpoint, Node gateway and resume text preview | An owned PDF produces reviewable page text; failures are clear; original files/profile remain unchanged |
 | 2. Structured resume draft — implemented | Section/skill/experience/education extraction, evidence and Python-owned numbered draft history | Results reference source pages; unknown values stay unknown; a user can review and explicitly apply supported profile fields |
-| 3. Job-description analysis | Normalize existing job descriptions and extract requirements with evidence | Job analysis preserves source identity and does not invent missing skills, experience or dates |
+| 3. Job-description analysis — implemented | Existing descriptions, quoted requirements and private numbered versions | Results preserve source identity, label unknown priorities and stale/expired listings, and do not mutate jobs/profiles |
 | 4. Explainable matching | Compare profile/resume and a selected job using a documented baseline | Show matched/missing skills, unknown requirements and the score calculation; fixtures demonstrate predictable results |
 | 5. Resume checks and skill gaps | Keyword/structure checks and preparation suggestions | Findings link back to resume/JD evidence; clearly label CareerOS heuristics rather than claiming an actual employer ATS score |
 | 6. Job ranking | Rank available/saved jobs using matching and user preferences | Explain why a job ranks higher; handle incomplete/stale source data explicitly |
 | 7. Initial Cady | Answer career questions from the authenticated user's profile, resume and selected/saved jobs | Answers use authorized context and evidence; Cady requests confirmation before any profile mutation |
 
-The next authorized planning output is the [detailed batch 3 job-description analysis plan](job-description-analysis-plan.md). Its implementation and external AI calls remain pending the user's next instruction.
+Batch 3 follows the approved [job-description analysis plan](job-description-analysis-plan.md); see [local use](job-description-analysis.md) and [ADR-012](adr/012-job-description-analysis.md). Batch 4 next defines a documented deterministic matching baseline; notify the user before new AI-dependent work.
 
 ## Batch 1 — Concrete work
 

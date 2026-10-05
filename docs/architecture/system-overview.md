@@ -1,6 +1,6 @@
 # CareerOS — System Architecture Overview
 
-Current implementation: React, Express/MongoDB, and modular Python/FastAPI with Python-owned PostgreSQL for structured resume drafts. See [ADR-001](../adr/001-local-platform-foundation.md), [ADR-010](../adr/010-resume-intelligence-foundation.md) and [ADR-011](../adr/011-structured-resume-drafts.md). The diagrams below describe the planned evolution; Java, Redis, Kafka and Cady remain future work.
+Current implementation: React, Express/MongoDB, and modular Python/FastAPI with Python-owned PostgreSQL for structured resume drafts and job analyses. See [ADR-001](../adr/001-local-platform-foundation.md), [ADR-010](../adr/010-resume-intelligence-foundation.md), [ADR-011](../adr/011-structured-resume-drafts.md) and [ADR-012](../adr/012-job-description-analysis.md). The diagrams below describe the planned evolution; Java, Redis, Kafka and Cady remain future work.
 
 ## 1. Purpose
 

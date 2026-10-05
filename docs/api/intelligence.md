@@ -1,6 +1,6 @@
-# Intelligence API — PDF extraction and structured drafts
+# Intelligence API — Resume and job analysis
 
-Status: Batches 1–2 implemented locally, 2026-10-03. Extraction is transient; saved structured drafts require explicit review before profile updates. See [ADR-010](../adr/010-resume-intelligence-foundation.md) and the [Phase 2 backlog](../phase-2-backlog.md).
+Status: Batches 1–3 implemented locally, 2026-10-05. Extraction is transient; saved structured drafts require explicit review before profile updates. See [ADR-010](../adr/010-resume-intelligence-foundation.md) and the [Phase 2 backlog](../phase-2-backlog.md).
 
 ## Browser gateway
 
@@ -110,3 +110,27 @@ PostgreSQL stores only derived drafts. Records retain owner, source ID/version/h
 AI limits: 60,000 input bytes including instructions/schema, 16,384 output tokens, 90 seconds, one active generation/no queue. Node's analyze deadline is 140 seconds, response cap 2 MiB. Extraction retains its existing bounds. Analyze sends extracted text to OpenAI explicitly; GET/opening a draft never calls OpenAI. `store: false` is used but provider abuse-monitoring retention may still apply.
 
 Additional safe errors: 413 `LLM_BUDGET_LIMIT` for configured input/output limits; 422 `NO_EXTRACTABLE_TEXT` or `LLM_REFUSED`; 429 `LLM_RATE_LIMITED`; 502 `LLM_RESPONSE_INVALID` for invalid evidence/schema or incomplete output; 503 `ANALYSIS_UNAVAILABLE` for storage/provider configuration/failure; 504 `LLM_TIMEOUT`. Browser response messages never contain raw provider/document errors. Model availability depends on the key's access; there is no silent fallback.
+
+## Job-description analysis
+
+Implemented in batch 3, 2026-10-05. See [ADR-012](../adr/012-job-description-analysis.md) and [local use/checks](../job-description-analysis.md).
+
+| Browser endpoint | Contract |
+| --- | --- |
+| `GET /api/v1/intelligence/jobs/capabilities` | Same safe model/reasoning/default/limit fields as resume capabilities; availability depends on analysis storage/provider, independently of PDF parsing |
+| `POST /api/v1/intelligence/jobs/:id/analyze` | JSON `{ model, reasoning }`; `{ analysis: JobAnalysisRecord, sourceStatus: { stale: false, expired: boolean } }` |
+| `GET /api/v1/intelligence/jobs/:id/analysis` | Latest current-content analysis, or latest saved analysis explicitly marked stale; no generation |
+| `GET /api/v1/intelligence/jobs/:id/analysis?analysisId=uuid` | One saved version for this account/job, including old content with `sourceStatus.stale: true` |
+| `GET /api/v1/intelligence/jobs/:id/analyses?beforeVersion=N` | `{ versions: [{ id, version, model, reasoning, createdAt, sourceHash, stale }], nextBeforeVersion }`; newest first, twenty per page |
+
+All routes require the existing JWT and USER/ADMIN role. Catalogue jobs are public, but saved analyses are private to each account; ADMIN does not read another user's analysis. IDs are lowercase 64-hex job IDs, not resume UUIDs. Unsupported IDs/model/settings, owner/text/URL payload fields and arbitrary/repeated query fields return 400. Analyze shares the existing combined ten-processing-attempts/user/fifteen-minutes allowance with PDF extraction and resume analysis. Generation starts only on explicit clicks and makes no profile/job changes.
+
+Node builds `source = { jobId, normalizerVersion: "job-source-v1", sha256, sections }`, with sections in order: title, company, location, description. Sections are already plain text; normalize CRLF/nulls and trim edges without truncating. SHA-256 hashes the UTF-8 `JSON.stringify({ normalizerVersion, sections })` payload; Python uses equivalent compact Unicode JSON. Import timestamps are excluded. Analysis records contain source text, schema/analyzer/provider/model/reasoning, token usage, timestamp, UUID, sequential per-account/job version and the typed analysis. The [generated schema](../../backend/platform/src/intelligence/job-analysis.schema.json) is checked alongside the resume schema.
+
+Known facts use `{ value, evidence: [{ section, quote, start, end }] }`, with exact quotes and copied values. Offsets are zero-based, end-exclusive Unicode code-point positions in that saved section. Python computes offsets from quotes; Node validates them. Unknown scalars use null/empty evidence and absent lists stay empty. Requirement rows additionally include `priority: required | preferred | unspecified` and `priorityEvidence`. Priority comes from conservative explicit English cues/headings, not an unrestricted model judgment. Fixed ambiguity/possible-conflict warning messages have verified evidence. Original date/experience/salary wording is retained.
+
+After processing/reads, Node rechecks source existence/content. Changed content during a request returns 409 `JOB_CHANGED`; later reads of old results use `sourceStatus.stale: true`. Future matching must require a current source-bound result. Expired listings return 409 `JOB_EXPIRED` on Analyze, but saved GET/history remains available and the status is labelled expired. Empty descriptions return 422 `JOB_TEXT_EMPTY`. Missing catalogue records or foreign/unavailable analysis IDs return 404 `JOB_NOT_FOUND` / `JOB_ANALYSIS_NOT_FOUND`. Provider/storage/budget/busy errors keep the existing fixed mappings; UI failures retain the previous displayed record.
+
+Private Python endpoints mirror analyze/analysis/analyses/capabilities under `/internal/v1/jobs/`. They require the service Bearer token and validated `X-Owner-Id`; GET uses trusted `X-Source-Sha256` and optionally `X-Analysis-Id`. Analyze receives the bounded source JSON and compatible `X-LLM-Model` / optional `X-LLM-Reasoning`. No user JWT, CV/profile content or arbitrary fetch URL is forwarded. `DELETE /internal/v1/jobs/:id/analysis` performs idempotent account/job cleanup and adds a minimal deletion tombstone. It has no public delete route.
+
+Saved rows live in PostgreSQL `job_analyses`, with private owner/job versions assigned under the same lock as deletion. Node tracks cleanup references in MongoDB `job_analysis_sources` before generation; scans up to twenty-five references every thirty seconds while running, retaining failed cleanup work for restart/retry. Hard removal blocks access immediately; expiry retains analyses. Resume/job generation shares one active slot with no queue, and PDF extraction retains its separate worker bound. Normal reads never call OpenAI; automatic provider refreshes never analyze job descriptions.

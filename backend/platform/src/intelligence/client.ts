@@ -1,6 +1,7 @@
 import { ApiError } from '../errors.js';
 import { MAX_RESUME_BYTES } from '../resumes/store.js';
 import { validateDraft, validateHistory, type Source } from './drafts.js';
+import { JobAnalysisVerifier, type JobSource } from './jobs.js';
 
 const MAX_OUTPUT = 2 * 1024 * 1024;
 const MAX_CHARACTERS = 200_000;
@@ -21,15 +22,18 @@ const upstreamErrors: Record<string, [number, string]> = {
   INTELLIGENCE_TIMEOUT: [504, 'Extraction took too long. Try a simpler PDF.'],
   INTELLIGENCE_UNAVAILABLE: [503, 'Resume text extraction is temporarily unavailable.'],
   INVALID_INPUT: [400, 'The analysis request is invalid.'],
-  ANALYSIS_UNAVAILABLE: [503, 'Resume analysis is temporarily unavailable. Check AI and analysis storage configuration.'],
+  ANALYSIS_UNAVAILABLE: [503, 'Analysis is temporarily unavailable. Check AI and analysis storage configuration.'],
   ANALYSIS_NOT_FOUND: [404, 'No saved draft is available for this resume.'],
   RESUME_NOT_FOUND: [404, 'Resume not found.'],
   NO_EXTRACTABLE_TEXT: [422, 'No readable text was found. Upload a text-based PDF.'],
-  LLM_TIMEOUT: [504, 'Resume analysis took too long. Please retry.'],
+  LLM_TIMEOUT: [504, 'Analysis took too long. Please retry.'],
   LLM_RATE_LIMITED: [429, 'The AI provider is busy. Please try again later.'],
-  LLM_BUDGET_LIMIT: [413, 'This resume exceeds the configured AI input or output limit. Try a shorter version.'],
-  LLM_RESPONSE_INVALID: [502, 'The AI draft could not be validated. Please retry.'],
-  LLM_REFUSED: [422, 'The AI provider could not create a draft from this document.'],
+  LLM_BUDGET_LIMIT: [413, 'This source exceeds the configured AI input or output limit. Try a shorter version.'],
+  LLM_RESPONSE_INVALID: [502, 'The AI result could not be validated. Please retry.'],
+  LLM_REFUSED: [422, 'The AI provider could not analyze this source.'],
+  JOB_NOT_FOUND: [404, 'Job not found.'],
+  JOB_ANALYSIS_NOT_FOUND: [404, 'No saved analysis is available for this job.'],
+  JOB_TEXT_EMPTY: [422, 'This listing has no description to analyze.'],
 };
 
 function fields(value: unknown, names: string[]): value is Record<string, unknown> {
@@ -141,8 +145,8 @@ export class IntelligenceClient {
       method: 'POST', headers: { 'Content-Type': 'application/pdf', 'X-Request-Id': requestId }, body: new Uint8Array(data),
     }, signal));
   }
-  async capabilities(signal?: AbortSignal) {
-    const body = await this.request('/internal/v1/capabilities', {}, signal, 2000);
+  async capabilities(signal?: AbortSignal, jobs = false) {
+    const body = await this.request(jobs ? '/internal/v1/jobs/capabilities' : '/internal/v1/capabilities', {}, signal, 2000);
     if (!fields(body, ['available', 'provider', 'models', 'defaultModel', 'defaultReasoning', 'limits'])
       || typeof body.available !== 'boolean' || body.provider !== 'openai' || !Array.isArray(body.models)
       || body.models.length !== 3 || typeof body.defaultModel !== 'string'
@@ -185,5 +189,31 @@ export class IntelligenceClient {
     return validateHistory(await this.request(`/internal/v1/resumes/${source.resumeId}/drafts${query}`, {
       headers: this.sourceHeaders(owner, source),
     }, signal), beforeVersion);
+  }
+  private jobHeaders(owner: string, source: Pick<JobSource, 'jobId' | 'sha256'>) {
+    return { 'X-Owner-Id': owner, 'X-Source-Sha256': source.sha256 };
+  }
+  async analyzeJob(owner: string, source: JobSource, options: { model: string; reasoning: string | null }, signal: AbortSignal) {
+    const body = JSON.stringify(source);
+    if (Buffer.byteLength(body) > 60_000) throw new ApiError(413, 'LLM_BUDGET_LIMIT', 'This listing exceeds the configured AI input limit.');
+    return JobAnalysisVerifier.record(await this.request(`/internal/v1/jobs/${source.jobId}/analyze`, {
+      method: 'POST', headers: { ...this.jobHeaders(owner, source), 'Content-Type': 'application/json',
+        'X-LLM-Model': options.model, ...(options.reasoning === null ? {} : { 'X-LLM-Reasoning': options.reasoning }) }, body,
+    }, signal, 140_000), source.jobId, source.sha256);
+  }
+  async jobAnalysis(owner: string, source: JobSource, analysisId?: string, signal?: AbortSignal) {
+    return JobAnalysisVerifier.record(await this.request(`/internal/v1/jobs/${source.jobId}/analysis`, {
+      headers: { ...this.jobHeaders(owner, source), ...(analysisId ? { 'X-Analysis-Id': analysisId } : {}) },
+    }, signal), source.jobId, undefined, analysisId);
+  }
+  async jobHistory(owner: string, source: JobSource, beforeVersion?: number, signal?: AbortSignal) {
+    const query = beforeVersion === undefined ? '' : `?beforeVersion=${beforeVersion}`;
+    return JobAnalysisVerifier.history(await this.request(`/internal/v1/jobs/${source.jobId}/analyses${query}`, {
+      headers: this.jobHeaders(owner, source),
+    }, signal), beforeVersion);
+  }
+  async deleteJobAnalyses(owner: string, jobId: string) {
+    const body = await this.request(`/internal/v1/jobs/${jobId}/analysis`, { method: 'DELETE', headers: { 'X-Owner-Id': owner } });
+    if (!fields(body, ['status']) || body.status !== 'deleted') throw invalid();
   }
 }

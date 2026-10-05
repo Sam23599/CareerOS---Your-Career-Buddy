@@ -17,8 +17,9 @@ import { notificationRouter } from './notifications/routes.js';
 import { type NotificationStore } from './notifications/store.js';
 import { intelligenceRouter } from './intelligence/routes.js';
 import { IntelligenceClient } from './intelligence/client.js';
+import { type JobAnalysisCleanup } from './intelligence/job-cleanup.js';
 
-export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore, features?: { careerSources: CareerSourceStore; notifications: NotificationStore }, intelligence = new IntelligenceClient({})) {
+export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore, features?: { careerSources: CareerSourceStore; notifications: NotificationStore }, intelligence = new IntelligenceClient({}), jobCleanup?: JobAnalysisCleanup) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -66,8 +67,8 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
     app.use('/api/v1/auth', authRouter(auth));
     if (resumes) {
       app.use('/api/v1/resumes', resumeRouter(auth.service, resumes));
-      app.use('/api/v1/intelligence', intelligenceRouter(auth.service, resumes, intelligence, profiles));
     }
+    if (resumes || jobs) app.use('/api/v1/intelligence', intelligenceRouter(auth.service, resumes, intelligence, profiles, jobs?.store, jobCleanup));
     if (profiles) app.use('/api/v1/profiles', profileRouter(auth.service, profiles));
     app.get('/api/v1/users/me', authenticate(auth.service), requireRoles('USER', 'ADMIN'), (_req, res) => {
       res.json({ user: res.locals.user });

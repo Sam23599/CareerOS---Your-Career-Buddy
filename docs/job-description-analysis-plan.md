@@ -1,6 +1,6 @@
 # Phase 2, batch 3 — Job-description analysis plan
 
-Status: Proposed implementation plan, 2026-10-03 (Asia/Kolkata). Implementation has not started. Follows [the original roadmap](development-plan.md#52-job-description-intelligence) and [Phase 2 backlog](phase-2-backlog.md). Resume extraction, structured drafts and persisted draft versions are complete locally.
+Status: Approved and implemented locally, 2026-10-05 (Asia/Kolkata); original plan dated 2026-10-03. See [local use and verification](job-description-analysis.md) and [ADR-012](adr/012-job-description-analysis.md). Follows [the original roadmap](development-plan.md#52-job-description-intelligence) and [Phase 2 backlog](phase-2-backlog.md). Resume extraction, structured drafts and persisted draft versions are complete locally.
 
 ## Outcome
 
@@ -10,7 +10,7 @@ Use jobs already imported into CareerOS. Node remains authoritative for job cont
 
 ## AI involvement — notify before implementation
 
-This stage needs an LLM to organize free-text job requirements. Proposed default: reuse OpenAI, `gpt-6-luna` with medium reasoning, and the same compatible GPT-4.1/GPT-6.1 Sol controls. Settle this proposal with the user before enabling external calls for this stage.
+This stage needs an LLM to organize free-text job requirements. The user approved this plan and was notified before implementation. It reuses OpenAI, `gpt-6-luna` with medium reasoning, and the same compatible GPT-4.1/GPT-6.1 Sol controls. Live synthetic provider verification remains separately authorized; regular checks mock AI.
 
 Only an explicit **Analyze job** click calls the provider. Send the selected listing's title/company/location and normalized description as labelled source text, plus the analysis instructions/schema. Do not send the user's CV, profile, saved-job notes or credentials. Saved analysis reads make no AI call. No automatic analysis during browsing, ingestion or four-hour refresh.
 
@@ -49,7 +49,7 @@ The result is informational. The user reviews evidence on the job page; there is
 | `GET /api/v1/intelligence/jobs/:id/analysis?analysisId=uuid` | One saved version, with explicit stale status when source content has changed |
 | `GET /api/v1/intelligence/jobs/:id/analyses?beforeVersion=N` | Newest-first metadata history, at most twenty entries |
 
-Private Python routes mirror these responsibilities under `/internal/v1/jobs/` with the service token and validated owner/job/content context. The new job ID contract must use 64-hex IDs; do not reuse the resume UUID validator. The exact stale-response/error contract and removal cleanup mechanism are settled with the source/storage contract in steps 1–3.
+Private Python routes mirror these responsibilities under `/internal/v1/jobs/` with the service token and validated owner/job/content context. The new job ID contract must use 64-hex IDs; do not reuse the resume UUID validator. The implemented stale-response/error contract and removal cleanup mechanism are documented in [the API](api/intelligence.md#job-description-analysis) and ADR-012.
 
 ## Acceptance and next handoff
 
@@ -60,4 +60,4 @@ Private Python routes mirror these responsibilities under `/internal/v1/jobs/` w
 - Authentication, resume drafts and ordinary job browsing stay usable during intelligence/provider outages.
 - No CV/profile mutation or automatic paid work occurs in this batch.
 
-Begin with steps 1–2 once this batch is approved, then storage/gateway/UI together. After it passes, batch 4 defines a deterministic matching formula for skill overlap, missing skills, experience and unknown requirements using job-analysis identity plus resume/profile versions. Embeddings, rankings, ATS heuristics and Cady keep their original later order.
+All six steps are implemented locally; see the implementation document for verification evidence. After it passes, batch 4 defines a deterministic matching formula for skill overlap, missing skills, experience and unknown requirements using job-analysis identity plus resume/profile versions. Embeddings, rankings, ATS heuristics and Cady keep their original later order.

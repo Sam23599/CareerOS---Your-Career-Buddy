@@ -1,4 +1,5 @@
 import { SaveJobButton } from '../saved-jobs/SaveJobButton';
+import { JobAnalysisPanel } from './JobAnalysisPanel';
 import { limitedCoverageMessage } from '../career-sources/types';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
@@ -85,6 +86,7 @@ function JobDetail({ id }: { id: string }) {
         <SaveJobButton jobId={job.id} />
       </section>
       {job.skills.length > 0 && <section className="panel profile-section"><h2>Skills</h2><ul className="profile-tags">{job.skills.map(skill => <li key={skill}>{skill}</li>)}</ul></section>}
+      <JobAnalysisPanel job={job} />
       <section className="panel profile-section"><h2>About the role</h2><p className="profile-prose">{job.description || 'See the original listing for the full description.'}</p></section>
     </>}
   </div>;

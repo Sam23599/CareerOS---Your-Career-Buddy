@@ -1,0 +1,490 @@
+{
+  "$defs": {
+    "AnalysisWarning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "AMBIGUOUS_REQUIREMENT",
+            "POSSIBLE_CONTRADICTION"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 200,
+          "title": "Message",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/JobEvidence"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "evidence"
+      ],
+      "title": "AnalysisWarning",
+      "type": "object"
+    },
+    "JobAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/JobFact"
+        },
+        "company": {
+          "$ref": "#/$defs/JobFact"
+        },
+        "location": {
+          "$ref": "#/$defs/JobFact"
+        },
+        "workMode": {
+          "$ref": "#/$defs/JobFact"
+        },
+        "employmentType": {
+          "$ref": "#/$defs/JobFact"
+        },
+        "compensation": {
+          "$ref": "#/$defs/JobFact"
+        },
+        "skills": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 50,
+          "title": "Skills",
+          "type": "array"
+        },
+        "technologies": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 50,
+          "title": "Technologies",
+          "type": "array"
+        },
+        "experience": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 30,
+          "title": "Experience",
+          "type": "array"
+        },
+        "education": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 20,
+          "title": "Education",
+          "type": "array"
+        },
+        "certifications": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 30,
+          "title": "Certifications",
+          "type": "array"
+        },
+        "languages": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 30,
+          "title": "Languages",
+          "type": "array"
+        },
+        "eligibility": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 30,
+          "title": "Eligibility",
+          "type": "array"
+        },
+        "applicationRequirements": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 30,
+          "title": "Applicationrequirements",
+          "type": "array"
+        },
+        "responsibilities": {
+          "items": {
+            "$ref": "#/$defs/JobFact"
+          },
+          "maxItems": 40,
+          "title": "Responsibilities",
+          "type": "array"
+        },
+        "deliverables": {
+          "items": {
+            "$ref": "#/$defs/JobFact"
+          },
+          "maxItems": 30,
+          "title": "Deliverables",
+          "type": "array"
+        },
+        "benefits": {
+          "items": {
+            "$ref": "#/$defs/JobFact"
+          },
+          "maxItems": 30,
+          "title": "Benefits",
+          "type": "array"
+        },
+        "keywords": {
+          "items": {
+            "$ref": "#/$defs/JobFact"
+          },
+          "maxItems": 50,
+          "title": "Keywords",
+          "type": "array"
+        },
+        "additionalRequirements": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "maxItems": 30,
+          "title": "Additionalrequirements",
+          "type": "array"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/AnalysisWarning"
+          },
+          "maxItems": 10,
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "company",
+        "location",
+        "workMode",
+        "employmentType",
+        "compensation",
+        "skills",
+        "technologies",
+        "experience",
+        "education",
+        "certifications",
+        "languages",
+        "eligibility",
+        "applicationRequirements",
+        "responsibilities",
+        "deliverables",
+        "benefits",
+        "keywords",
+        "additionalRequirements",
+        "warnings"
+      ],
+      "title": "JobAnalysis",
+      "type": "object"
+    },
+    "JobEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "section": {
+          "enum": [
+            "title",
+            "company",
+            "location",
+            "description"
+          ],
+          "title": "Section",
+          "type": "string"
+        },
+        "quote": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        },
+        "start": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "maximum": 100000,
+          "minimum": 1,
+          "title": "End",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "section",
+        "quote",
+        "start",
+        "end"
+      ],
+      "title": "JobEvidence",
+      "type": "object"
+    },
+    "JobFact": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "maxLength": 6000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/JobEvidence"
+          },
+          "maxItems": 4,
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value",
+        "evidence"
+      ],
+      "title": "JobFact",
+      "type": "object"
+    },
+    "JobSource": {
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobid",
+          "type": "string"
+        },
+        "normalizerVersion": {
+          "const": "job-source-v1",
+          "title": "Normalizerversion",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/Section"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Sections",
+          "type": "array"
+        }
+      },
+      "required": [
+        "jobId",
+        "normalizerVersion",
+        "sha256",
+        "sections"
+      ],
+      "title": "JobSource",
+      "type": "object"
+    },
+    "Requirement": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "maxLength": 6000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/JobEvidence"
+          },
+          "maxItems": 4,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "priority": {
+          "enum": [
+            "required",
+            "preferred",
+            "unspecified"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "priorityEvidence": {
+          "items": {
+            "$ref": "#/$defs/JobEvidence"
+          },
+          "maxItems": 4,
+          "title": "Priorityevidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value",
+        "evidence",
+        "priority",
+        "priorityEvidence"
+      ],
+      "title": "Requirement",
+      "type": "object"
+    },
+    "Section": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "title",
+            "company",
+            "location",
+            "description"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 100000,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "Section",
+      "type": "object"
+    },
+    "Usage": {
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": {
+          "minimum": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "outputTokens": {
+          "minimum": 0,
+          "title": "Outputtokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "inputTokens",
+        "outputTokens"
+      ],
+      "title": "Usage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "id": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "version": {
+      "maximum": 2147483647,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "source": {
+      "$ref": "#/$defs/JobSource"
+    },
+    "analyzerVersion": {
+      "const": "job-analysis-v1",
+      "title": "Analyzerversion",
+      "type": "string"
+    },
+    "provider": {
+      "const": "openai",
+      "title": "Provider",
+      "type": "string"
+    },
+    "model": {
+      "enum": [
+        "gpt-4.1",
+        "gpt-6-luna",
+        "gpt-6.1-sol"
+      ],
+      "title": "Model",
+      "type": "string"
+    },
+    "reasoning": {
+      "anyOf": [
+        {
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reasoning"
+    },
+    "usage": {
+      "$ref": "#/$defs/Usage"
+    },
+    "createdAt": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Createdat",
+      "type": "string"
+    },
+    "analysis": {
+      "$ref": "#/$defs/JobAnalysis"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "source",
+    "analyzerVersion",
+    "provider",
+    "model",
+    "reasoning",
+    "usage",
+    "createdAt",
+    "analysis"
+  ],
+  "title": "JobAnalysisRecord",
+  "type": "object"
+}

@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime, timezone
 import json
 from uuid import uuid4
@@ -16,23 +15,20 @@ from app.storage.base import DraftRepository
 class ResumeDraftService:
     def __init__(self, llm: LLMService, repository: DraftRepository):
         self.llm, self.repository = llm, repository
-        self.active = None
         self.evidence = EvidenceVerifier()
 
+    @property
+    def active(self):
+        return self.llm.gate.active
+
     async def close(self):
-        if self.active is not None:
-            self.active.cancel()
-            await asyncio.gather(self.active, return_exceptions=True)
+        await self.llm.gate.close()
 
     async def analyze(self, owner: str, source: Source, extraction: Extraction, model: str, reasoning: str | None):
         self.llm.models.validate(model, reasoning)
-        if self.active is not None:
-            raise IntelligenceError(503, "INTELLIGENCE_BUSY")
         if extraction.status == "no_text":
             raise IntelligenceError(422, "NO_EXTRACTABLE_TEXT")
-        task = asyncio.current_task()
-        self.active = task
-        try:
+        async with self.llm.gate.claim():
             text = json.dumps({"pages": [page.model_dump() for page in extraction.pages]}, ensure_ascii=False)
             result = await self.llm.generate(model, reasoning, ResumeDraftPrompt.instructions, text, ResumeDraft)
             self.evidence.verify(result.value, extraction)
@@ -43,6 +39,3 @@ class ResumeDraftService:
             if len(record.model_dump_json().encode()) > MAX_OUTPUT:
                 raise IntelligenceError(413, "LLM_BUDGET_LIMIT")
             return await self.repository.save(owner, record)
-        finally:
-            if self.active is task:
-                self.active = None

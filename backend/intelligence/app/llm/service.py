@@ -4,6 +4,7 @@ from app.core.errors import IntelligenceError
 from app.core.settings import Settings
 from app.llm.models import ModelRegistry, StructuredRequest
 from app.llm.providers.base import ProviderRegistry
+from app.llm.gate import GenerationGate
 
 
 class LLMService:
@@ -11,6 +12,7 @@ class LLMService:
 
     def __init__(self, settings: Settings, providers: ProviderRegistry, models: ModelRegistry):
         self.settings, self.providers, self.models = settings, providers, models
+        self.gate = GenerationGate()
 
     @property
     def available(self):

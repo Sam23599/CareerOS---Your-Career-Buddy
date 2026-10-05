@@ -15,3 +15,4 @@ Record meaningful decisions as implementation reaches them. Assign each new deci
 | [009](009-career-bookmarks.md) | Explicit career bookmarks and opt-in job tracking | Accepted |
 | [010](010-resume-intelligence-foundation.md) | Private resume text extraction through a Python service | Accepted; batch 1 implemented |
 | [011](011-structured-resume-drafts.md) | Structured resume drafts and shared provider infrastructure | Accepted; batch 2 implemented |
+| [012](012-job-description-analysis.md) | Job requirements, quoted evidence, private versions and freshness | Accepted; batch 3 implemented |
