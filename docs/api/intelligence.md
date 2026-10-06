@@ -246,3 +246,61 @@ reuses `skill-coverage-v1` and returns the bounded report. Node validates eviden
 keyword and preparation provenance plus source binding/arithmetic, then rechecks
 current source lifetime/content/profile revision. No report persistence, automatic
 retry, external-model call or original-data mutation occurs.
+
+## Saved-job ranking
+
+Batch 6 saved-job baseline, 2026-10-06. See [ADR-015](../adr/015-saved-job-ranking.md)
+and [ordering/use/limits](../job-ranking.md). Authenticated `USER` / `ADMIN` have
+identical owner restrictions. Ranking makes no new AI call and stores no report.
+
+`POST /api/v1/intelligence/saved-jobs/rank`, JSON only, no query parameters:
+
+```json
+{
+  "resumeId": "owned-pdf-uuid",
+  "draftId": "saved-cv-analysis-uuid",
+  "includeProfileSkills": false,
+  "usePreferences": true,
+  "filters": { "status": "", "priority": "" }
+}
+```
+
+All fields are required and unknown fields are rejected. Status/priority accept
+the same choices as saved-job listing, with empty strings for all. No browser
+owner ID, source hash, profile facts, job list, model or analysis text is accepted.
+Node resolves up to 50 jobs across **all pages** of these filters, one owned CV
+analysis, optional profile revision and each current owner-private job analysis.
+Larger filtered sets return 413 `RANKING_LIMIT`; there is no silent truncation.
+
+The typed [response contract](../../backend/platform/src/intelligence/ranking.ts)
+contains `rankingVersion: saved-skill-coverage-v1`, `createdAt`, `total`, `filters`,
+source CV identity/hash and draft version, included `profileVersion`, plus:
+
+- `ranked`: numbered jobs with compact catalogue identity, saved priority/date,
+  existing skill percentage/weighted totals, selected JD ID/version, matched and
+  missing skills with priority, profile-only labels, manual-review count, and
+  explicit preference reasons (`matched`, `not_matched`, `unknown`).
+- `unranked`: jobs with reason `analysis_required`, `stale_analysis`, `expired`,
+  `unavailable`, `not_interested` or `no_scorable_skills`. They receive no rank/score.
+
+Ordering is coverage descending, then matching preference-category count, saved
+priority, saved date and stable ID. Role/location use normalized literal phrases,
+work mode uses the catalogue enum. Salary/experience and other requirements remain
+manual review. Preferences never change the existing skill percentage.
+
+No new private route is needed: Node reuses owner-scoped draft/job reads and the
+verified `/internal/v1/matching/compare` contract, at most four jobs concurrently.
+Each full match is validated before projection. CV availability, shortlist and
+profile revisions, catalogue summaries, description hashes and ranked-job expiration
+are checked again before returning. Changed inputs return 409
+`RANKING_SOURCE_CHANGED` / `JOB_CHANGED`; deleted sources retain their 404 errors.
+Missing/foreign selected CV analyses remain 404. Upstream failures reject the
+whole request rather than returning partially ranked results.
+
+The whole request has a 60-second deadline (504 `RANKING_TIMEOUT`), per-private-call
+15-second / 2 MiB bounds, final response 2 MiB cap (413 `RANKING_LIMIT`), and a
+separate ten rankings/user/fifteen-minute limiter (`Retry-After: 900`). Disconnect
+or failure cancels pending/queued work. There is no automatic retry.
+
+Personalized AI preparation has a [separate proposed contract](../personalized-preparation-plan.md)
+and is not exposed by the current API.

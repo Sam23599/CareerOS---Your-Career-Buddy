@@ -760,7 +760,7 @@ The architecture, service boundaries, technology choices, and feature set are ex
 
 The [development plan](docs/development-plan.md) defines the roadmap. The [Phase 1 backlog](docs/phase-1-backlog.md) tracks the first release, and the [review and next steps](docs/implementation-next-steps.md) define the proposed implementation sequence.
 
-The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts, job-description analysis, explainable CV-to-job matching and the [resume-checks/preparation baseline](docs/resume-checks.md) are implemented. Checks reuse saved analyses without new AI calls; ranking, personalized AI preparation and Cady remain planned.
+The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts, job-description analysis, explainable CV-to-job matching, the [resume-checks/preparation baseline](docs/resume-checks.md) and [saved-job ranking](docs/job-ranking.md) are implemented. Matching, checks and ranking reuse saved analyses without new AI calls. [Personalized AI preparation](docs/personalized-preparation-plan.md) is planned next; Cady follows separately.
 
 The first release focuses on the core job workflow; community belongs to Phase 5. This README describes the product vision and planned architecture.
 
@@ -783,3 +783,11 @@ job comparison panel. Compact, expandable reports show recognized sections,
 PDF-reading warnings, prioritized missing evidence, profile-only claims and literal
 job terminology. Checks reuse saved versions without new AI calls or automatic
 edits. See [use, rules and limits](docs/resume-checks.md) and [ADR-014](docs/adr/014-resume-checks.md).
+
+## Saved-job ranking
+
+At `/saved-jobs`, expand **Rank your shortlist**, choose a saved CV analysis and
+click **Rank saved jobs**. Rank up to 50 jobs across the applied filters using
+skill coverage, with preferences and saved priority breaking ties. Expand reasons
+and review jobs needing analysis separately. No new AI call or automatic edits.
+See [rules and limits](docs/job-ranking.md) and [the personalized-AI next-step plan](docs/personalized-preparation-plan.md).

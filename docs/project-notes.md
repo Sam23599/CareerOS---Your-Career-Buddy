@@ -18,12 +18,11 @@ One ongoing notebook for the whole project: bugs, rough ideas, UX observations, 
 Add entries below. Dates, screenshots/paths, expected behavior, and examples help, but are optional. If you change your mind, append a follow-up referencing the earlier note.
 
 <!-- Write freely below this line. The reviewer will add IDs without changing your words. -->
-- improve the main header bar sections and overall feel of the app. (just the ui/ux and frontend changes needed mainly) to give a modern fresh and user friendly look.
+- (just the ui/ux and frontend changes needed mainly) to give a modern fresh and user friendly look.
 - add support for dark mode so user can pick between the two.
 - implement a removed/deleted option as well for almost everywhere where the user has deleted anything. this allows them to restore in future in-case if they want to, with a custom (default 30 day) bin cleanup as well. bin cleanup will only soft delete it, allowing the data to persist in db even after delete and bin cleanup. so basically we would be needing 2 type deletes.
 - an additioanl section of settings should be added to app for some custom user related settings for dashboard/ui/app token/credit usages, recharge/autofil credit etc things. 
 - add a new window for user to track failure tasks or logs, that they can navigate or mail us, the careerOS developers for to debug and fix.
-- add compress/expand button for the analyzed jobs/cv etc. currently it occupies the whole window, making the UI inconvinent.
 
 auth:
 - add cache for continued session scheck if security-vise applicable.
@@ -38,6 +37,7 @@ Jobs and ingestion:
 
 Saved jobs:
 - more filters by location, date post range, new apply/already applied to that company (this checks and allow the user if he is applying for the first time or not: this is because, a person would be ok to apply casually and be added in company's data records (company he is applying to), and also he might would like to be prepared for some specific ones first then only apply so his record stays fresh and new the company.) 
+- job analysis should support backend processing once the 'analyze' button has been clicked. continue even if user change page.
 - one more filter for if the user has applied to the job, application in progress, being interviewed, etc status. this will then later help to track its appliation. (this can be in saved jobs as well or in a better suited place in future)
 
 custom career sources and notifications:
@@ -48,6 +48,8 @@ custom career sources and notifications:
 nits:
 - "/status" currently ony have support for only 3 service's status. should track all services.
 - in docker or services, service name should be more defined for better understanding. intelligence-db-1 should be renamed to better service. 
+- add compress/expand button for the analyzed jobs/cv etc. currently it occupies the whole window, making the UI inconvinent.
+- make 'rank your shortlist' more ui friendly and redable. currently it looks like a copy pasted from text. 
 
 ## Refined notes
 

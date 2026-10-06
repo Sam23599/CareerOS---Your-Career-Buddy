@@ -1,6 +1,6 @@
 # Phase 2 — Resume intelligence and job matching
 
-Updated: 2026-10-06, Asia/Kolkata. **Batches 1–4 and the batch 5 baseline implemented locally; later batches remain planned.**
+Updated: 2026-10-06, Asia/Kolkata. **Batches 1–4, the batch 5 baseline and batch 6 saved-job baseline implemented locally; personalized AI preparation and Cady remain planned.**
 
 This follows the planning step agreed after Phase 1. The original [Phase 2 roadmap](development-plan.md#5-phase-2--intelligence--ai) remains the product scope. [ADR-010](adr/010-resume-intelligence-foundation.md) defines the first batch; the [API contract](api/intelligence.md) makes it implementable. Later milestones below are a sequence, not a claim that they are built.
 
@@ -26,10 +26,11 @@ Start with extraction so incorrect reading order, missing text and unsupported P
 | 3. Job-description analysis — implemented | Existing descriptions, quoted requirements and private numbered versions | Results preserve source identity, label unknown priorities and stale/expired listings, and do not mutate jobs/profiles |
 | 4. Explainable matching — implemented | Compare saved CV/job analyses and optional profile skills using `skill-coverage-v1` | Show quoted matched/not-found skills, unscored review requirements and weighted score calculation; source/owner checks and fixtures demonstrate predictable results |
 | 5. Resume checks and skill gaps — baseline implemented | Recognized-section/PDF-warning checks, literal job terminology, prioritized evidence gaps and preparation actions | Findings link back to saved inputs; compact reports distinguish missing evidence from skill gaps and CareerOS heuristics from actual employer ATS behavior |
-| 6. Job ranking | Rank available/saved jobs using matching and user preferences | Explain why a job ranks higher; handle incomplete/stale source data explicitly |
+| 6. Job ranking — saved-job baseline implemented | Rank up to 50 saved jobs across applied filters using matching, then explicit preferences/priority/date | Expand reasons; separate unanalysed/stale/expired/unavailable/unscorable/not-interested jobs; wider discovery ranking remains an extension |
+| Personalized AI preparation — planned extension | Confirm evidence-versus-learning gaps/time goals; explicitly generate, review and save a source-bound learning plan | Shared provider infrastructure, strict requirement links, versioning/cleanup and cost/consent controls; no silent CV/profile edits |
 | 7. Initial Cady | Answer career questions from the authenticated user's profile, resume and selected/saved jobs | Answers use authorized context and evidence; Cady requests confirmation before any profile mutation |
 
-Batch 3 follows the approved [job-description analysis plan](job-description-analysis-plan.md); see [local use](job-description-analysis.md) and [ADR-012](adr/012-job-description-analysis.md). Batch 4 implements the [deterministic matching baseline](cv-job-matching.md) and [ADR-013](adr/013-cv-job-matching.md). Batch 5 adds [resume checks and preparation](resume-checks.md) in [ADR-014](adr/014-resume-checks.md). Both reuse saved analyses without new provider calls. Ranking is next; personalized AI preparation guidance remains separate future work. Notify the user before new AI-dependent work.
+Batch 3 follows the approved [job-description analysis plan](job-description-analysis-plan.md); see [local use](job-description-analysis.md) and [ADR-012](adr/012-job-description-analysis.md). Batch 4 implements the [deterministic matching baseline](cv-job-matching.md) and [ADR-013](adr/013-cv-job-matching.md). Batch 5 adds [resume checks and preparation](resume-checks.md) in [ADR-014](adr/014-resume-checks.md). Batch 6 adds [saved-job ranking](job-ranking.md) in [ADR-015](adr/015-saved-job-ranking.md). These reuse saved analyses without new provider calls. The [personalized preparation plan](personalized-preparation-plan.md) defines the next optional AI extension before Cady. Notify the user before starting its AI-dependent implementation; planning enables no paid calls.
 
 ## Batch 1 — Concrete work
 
@@ -89,7 +90,7 @@ Source deletion suppresses access immediately and writes a durable MongoDB clean
 | Model provider and budget | Batch 2 settled | OpenAI Responses; requested three models and compatible reasoning; Luna/medium default; explicit text-only processing, fixed input/output/time limits, no retries; provider spending limits configured separately |
 | Rules versus model extraction | Batch 2 settled | LLM creates rich typed drafts; deterministic source-quote/value verification and explicit user review guard profile imports |
 | OCR and DOCX | After text-PDF extraction works | Separate extension; no promise of scanned-document support in batch 1 |
-| Matching formula and ranking weights | Batch 4 baseline settled; ranking later | Required/unspecified/preferred skill weights 3/2/1; deduplicated exact/curated-alias skill coverage, other requirements reviewed; no hiring probability or employer ATS claim |
+| Matching formula and ranking weights | Batches 4 and 6 saved-job baseline settled | Required/unspecified/preferred skill weights 3/2/1; coverage leads ranking, explicit preferences then saved priority/date break ties; other requirements reviewed; no hiring probability or employer ATS claim |
 | Analysis retention and deletion | Batch 2 settled | Owner-scoped PostgreSQL records tied to source lifetime; durable Node cleanup outbox; minimal deletion tombstones |
 
 Google live sign-in and the UI/source/filter requests in [project notes](project-notes.md) remain separately prioritized work. Application tracking remains Phase 3, community Phase 5 and production deployment Phase 7. This extraction batch does not implement those requests.

@@ -4,9 +4,10 @@ import { authenticatedRequest } from '../auth/session';
 import { Icon, PageHeading } from '../ui/WorkspaceUi';
 import { useWorkspaceNavigationGuard } from '../ui/navigation';
 import { type SavedJob, statusLabels } from './types';
+import { SavedJobRanking } from './SavedJobRanking';
 
 type List = { savedJobs: SavedJob[]; total: number; page: number; limit: number };
-function SavedCard({ initial, onRemove, onDirty, canLeave }: { initial: SavedJob; canLeave: () => boolean; onRemove: (id: string) => void; onDirty: (id: string, dirty: boolean) => void }) {
+function SavedCard({ initial, onRemove, onDirty, canLeave, onUpdated }: { initial: SavedJob; canLeave: () => boolean; onRemove: (id: string) => void; onDirty: (id: string, dirty: boolean) => void; onUpdated: () => void }) {
   const [saved, setSaved] = useState(initial);
   const [draft, setDraft] = useState({ notes: initial.notes, status: initial.status, priority: initial.priority });
   const [busy, setBusy] = useState(false);
@@ -15,7 +16,7 @@ function SavedCard({ initial, onRemove, onDirty, canLeave }: { initial: SavedJob
   const [viewedAt] = useState(Date.now);
   const dirty = draft.notes !== saved.notes || draft.status !== saved.status || draft.priority !== saved.priority;
   useEffect(() => { onDirty(initial.jobId, dirty); return () => onDirty(initial.jobId, false); }, [initial.jobId, dirty, onDirty]);
-  function replace(value: SavedJob) { setSaved(value); setDraft({ notes: value.notes, status: value.status, priority: value.priority }); }
+  function replace(value: SavedJob) { setSaved(value); setDraft({ notes: value.notes, status: value.status, priority: value.priority }); onUpdated(); }
   async function action(work: () => Promise<void>) {
     setBusy(true); setError(''); setMessage('');
     try { await work(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update saved job.'); }
@@ -54,6 +55,7 @@ function SavedList() {
   const [data, setData] = useState<List | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
+  const [rankingRevision, setRankingRevision] = useState(0);
   const dirty = useRef(new Set<string>());
   const onDirty = useCallback((id: string, changed: boolean) => { if (changed) dirty.current.add(id); else dirty.current.delete(id); }, []);
   const query = params.toString();
@@ -84,8 +86,9 @@ function SavedList() {
     {error && <><p role="alert" className="form-error">{error}</p><button onClick={() => { setError(''); setAttempt(value => value + 1); }}>Retry</button></>}
     {!data && !error && <p role="status">Loading saved jobs…</p>}
     {data && <><p className="workspace-results-summary">{data.total} saved {data.total === 1 ? 'job' : 'jobs'}</p>
+      {!!data.total && <SavedJobRanking filters={{ status: params.get('status') ?? '', priority: params.get('priority') ?? '' }} revision={rankingRevision} canLeave={canLeave} />}
       {!data.savedJobs.length && <p className="workspace-empty-state">No saved jobs match this view. Save a job from search or change your filters.</p>}
-      <div className="workspace-list">{data.savedJobs.map(item => <SavedCard key={item.jobId} initial={item} onDirty={onDirty} canLeave={canLeave} onRemove={id => setData(current => current ? { ...current, total: Math.max(0, current.total - 1), savedJobs: current.savedJobs.filter(item => item.jobId !== id) } : current)} />)}</div>
+      <div className="workspace-list">{data.savedJobs.map(item => <SavedCard key={item.jobId} initial={item} onDirty={onDirty} canLeave={canLeave} onUpdated={() => setRankingRevision(value => value + 1)} onRemove={id => { setRankingRevision(value => value + 1); setData(current => current ? { ...current, total: Math.max(0, current.total - 1), savedJobs: current.savedJobs.filter(item => item.jobId !== id) } : current); }} />)}</div>
       <nav className="actions workspace-pagination" aria-label="Saved job pages">{[-1, 1].map(direction => <button key={direction} disabled={direction === -1 ? data.page <= 1 : data.page * data.limit >= data.total} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(data.page + direction)); navigate(next); }}>{direction === -1 ? 'Previous' : 'Next'}</button>)}<span>Page {data.page} of {Math.max(1, Math.ceil(data.total / data.limit))}</span></nav>
     </>}
   </div>;

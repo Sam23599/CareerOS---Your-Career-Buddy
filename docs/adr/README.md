@@ -18,3 +18,4 @@ Record meaningful decisions as implementation reaches them. Assign each new deci
 | [012](012-job-description-analysis.md) | Job requirements, quoted evidence, private versions and freshness | Accepted; batch 3 implemented |
 | [013](013-cv-job-matching.md) | Source-bound deterministic CV/job skill coverage and review | Accepted; batch 4 implemented |
 | [014](014-resume-checks.md) | Compact, evidence-backed resume checks and preparation without new AI calls | Accepted; batch 5 baseline implemented |
+| [015](015-saved-job-ranking.md) | Saved-job skill coverage ranking with explicit preference tie-breakers | Accepted; batch 6 saved-job baseline implemented |
