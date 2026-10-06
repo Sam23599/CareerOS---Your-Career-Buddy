@@ -65,6 +65,18 @@ The API Gateway is the primary frontend entry point.
 
 The frontend should not normally communicate directly with internal services.
 
+### Planned intelligence execution boundary
+
+Current job tasks run through a PostgreSQL-backed poller inside FastAPI. The
+[Celery migration plan](../intelligence-background-processing-plan.md) proposes
+`Node → FastAPI → PostgreSQL task/outbox → Redis broker → Celery worker`, reusing
+existing Python domain/LLM services. PostgreSQL remains authoritative for owned
+task history and versioned artifacts; broker messages carry task IDs only.
+Introduce a shared generation permit before separating worker/API processes.
+Job analysis moves first, resume AI drafts later; fast matching/checks stay inline.
+Redis task delivery is planned independently of Kafka's later cross-domain events.
+Workers receive no CareerOS JWT secret, Node MongoDB access or original-resume mount.
+
 ---
 
 # 3. Backend Domain Ownership

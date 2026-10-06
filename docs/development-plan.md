@@ -341,12 +341,21 @@ At this point, CareerOS should already be usable without AI.
 
 # 5. Phase 2 — Intelligence & AI
 
+**2026-10-07 planning addition:** Introduce Celery workers in the Python intelligence
+layer for long-running execution, initially with Redis as the broker and existing
+PostgreSQL task/history/results as the durable record. Migrate current background
+job analysis first, then structured resume generation; keep fast deterministic
+matching/checks inline. See the [migration inventory and sequence](intelligence-background-processing-plan.md).
+This is planned infrastructure, separate from Phase 4 Kafka domain events; it is
+not implemented or required for the current local stack.
+
 The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Batches 1–4, the batch 5 baseline and batch 6 saved-job baseline are implemented locally: private PDF extraction ([ADR-010](adr/010-resume-intelligence-foundation.md)), OpenAI-assisted structured drafts with explicit profile import ([ADR-011](adr/011-structured-resume-drafts.md)), job-description requirements/evidence with private version history ([ADR-012](adr/012-job-description-analysis.md)), [explainable CV-to-job skill matching](cv-job-matching.md) ([ADR-013](adr/013-cv-job-matching.md)), [resume checks/preparation](resume-checks.md) ([ADR-014](adr/014-resume-checks.md)), and [saved-job ranking](job-ranking.md) ([ADR-015](adr/015-saved-job-ranking.md)). Matching, checks and ranking reuse saved analyses without new AI calls. The [personalized AI preparation extension](personalized-preparation-plan.md) is planned next, followed by initial Cady. See the [API contract](api/intelligence.md).
 
 ## Technology
 
 * Python
 * FastAPI
+* Celery + Redis broker for background intelligence tasks (planned)
 * NLP libraries
 * OpenAI API
 * Gemini API

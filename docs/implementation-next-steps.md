@@ -65,7 +65,7 @@ docker-compose.yml
 .gitignore
 ```
 
-Use domain modules inside `backend/platform/` as features arrive. Preserve the original Node/Python/Java ownership boundaries; add Python and Java directories when their phases start. Redis remains optional until a concrete requirement justifies it.
+Use domain modules inside `backend/platform/` as features arrive. Preserve the original Node/Python/Java ownership boundaries; add Python and Java directories when their phases start. Redis remains optional in the current stack; the approved [Celery planning direction](intelligence-background-processing-plan.md) now proposes it as the intelligence task broker when that migration is selected.
 
 Before scaffolding, record the language choice (the README currently allows JavaScript or TypeScript), package manager, supported runtime versions, local ports, and development commands. These are routine implementation choices, not changes to the product vision. Verify dependency versions at implementation time.
 

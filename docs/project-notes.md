@@ -73,6 +73,16 @@ nits:
 <!-- N-022 -->
 - make 'rank your shortlist' more ui friendly and redable. currently it looks like a copy pasted from text. 
 
+background processing:
+<!-- N-023 -->
+- for background processing or time taking tasks like ai analysis related stuffs, we can introduce Celery in intelligence layer. (my bad, forgot to add this in this initial disscussion plans). for now, lets just update the plans and introduce what current tasks or jobs can be migated to celery.
+
+
+- batch cv analysis
+- consolidate shortlisted jobs view page, give popup edit/view option
+- implement dark/light mode better, current dark mode color stings into eyes. 
+- 
+
 ## Refined notes
 
 Current update: **2026-10-07, Asia/Kolkata**. You explicitly requested
@@ -93,6 +103,7 @@ authoritative; the evidence/proposals/decisions preceding it describe the origin
 | Saved filters and manual progress | N-013, N-015 | Implemented as a manual foundation; full application workflow remains Phase 3 |
 | Authentication | N-006, N-008, N-007 | Seven-day behavior clarified as working; Google provider already exists, live consent waits for credentials |
 | LinkedIn/contact enrichment | N-012, N-017 | Published listing emails and external research links available; native integration needs supported provider access |
+| Celery execution direction | N-023 | Planning only: existing job tasks first, resume AI drafts next; keep PostgreSQL history/results and fast synchronous checks |
 
 Implementation contracts, storage behavior and limits are in
 [notebook improvements](notes-improvements.md) and [ADR-016](adr/016-notebook-improvements.md).
@@ -294,11 +305,20 @@ clarifications and explicit implementation request supersede that pending state.
 - **Dependencies / timing:** Follow existing forest-green tokens and mobile/keyboard behaviours; design judgment rather than a new visual audit. No new provider calls. Now, proposed batch A. **2026-10-06 decision: Pending. Original status: Ready for discussion.**
 - **2026-10-07 result:** Implemented a shorter ranking intro/control flow with method/limits in a disclosure and compact result rows. Applied saved-list filters carry into ranking. Scores, owner/version checks, result bounds and dirty-note protection remain. See [ranking controls](../frontend/web/src/saved-jobs/SavedJobRanking.tsx#L63).
 
+### N-023 — Celery for long-running intelligence work
+
+- **Raw source / type:** N-023; architecture/planning addition, related to N-005/N-014. You explicitly requested updating plans and identifying current migration candidates, not implementing Celery now.
+- **Current evidence:** Job analysis uses [AnalysisTaskWorker](../backend/intelligence/app/tasks/service.py#L10) started in FastAPI with a [PostgreSQL task repository](../backend/intelligence/app/tasks/repository.py#L8). [ResumeDraftService](../backend/intelligence/app/resumes/service.py#L27) still generates inline after extraction. The shared [GenerationGate](../backend/intelligence/app/llm/gate.py#L7) is process-local, so separating processes needs a shared generation permit first.
+- **Planning decision:** Add Celery to the intelligence execution direction, with Redis proposed as the broker and PostgreSQL retaining authoritative private task/history/results. Reuse OOP domain/provider services through thin task adapters. First migrate existing job analysis; next migrate resume AI generation with private intake/source-recheck contracts. Keep current extraction previews, fast deterministic matching/checks and bounded shortlist ranking inline; keep Node ingestion/notifications/cleanup ownership unchanged.
+- **Dependencies / next scope:** Define by-ID claims, transactional dispatch outbox, global capacity, async worker lifecycle, delivery/cancellation/restart/cost policy and compatible runtime pins. Future personalized preparation/OCR/indexing can reuse this when separately approved. The [migration plan](intelligence-background-processing-plan.md) records the inventory, sequence, boundaries and mocked acceptance checks.
+- **2026-10-07 result:** Planning documents updated only. Celery/Redis/Beat are not installed or started; no application code, dependencies, tests, paid AI calls or publication changes. Existing implementation remains intact. Implementation timing is undecided pending your selection.
+
 ### Current decisions and remaining prerequisites
 
 - **Approved:** You explicitly asked to implement the notebook changes on 2026-10-07. The results above supersede the original review's pending implementation statuses.
 - **Confirmed:** N-003 archive recovery is support-only; N-004 credits/usage/payments are a demo now; N-018 new means since the previous source view. N-006/N-008 ordinary restoration works; only the expected seven-day expiry asks again.
 - **Remaining:** N-007 live Google consent needs configured credentials/user interaction. N-012/N-017 native contact/LinkedIn integration and N-011 imported reviews need supported access/research. General HTTP failure history, real billing and the full Phase 3 workflow remain future.
+- **N-023 planning only:** Celery is selected as the future intelligence task direction; Redis is the proposed broker. Migration implementation and personalized AI remain separate future selections.
 - **Held:** Personalized AI preparation remains documented and deferred. No paid AI verification, external message, commit or push was authorized by this implementation request.
 - **Updated:** 2026-10-07, Asia/Kolkata. Daily 03:00 review is still not a verified background schedule.
 
@@ -309,6 +329,7 @@ clarifications and explicit implementation request supersede that pending state.
 | 2026-10-01 | Notebook setup | Raw and refined sections created. No feature requests or approvals inferred. |
 | 2026-10-06 | N-001–N-022 | First submitted-notes review: raw wording preserved and IDs assigned; code and supported-source research checked read-only; minimal scopes/timing proposed. Confirmed: bin cleanup retains data; new jobs means added since last source view; Continue-as prompts both after logout and ordinary return. Normal-return cause needs reproduction. Personalized AI plan saved in memory and held. No implementation, commit or push approved. |
 | 2026-10-07 | N-001–N-022 | Latest answers supersede the ordinary-return auth report: seven-day expiry only; all-filters-empty observation confirmed; archive restore reserved for support; settings credits/billing explicitly demo. User then authorized implementation. Implemented the available scopes above; unsupported provider integrations/Google live consent remain prerequisites. Mocked AI verification only; no paid calls, commit or push. |
+| 2026-10-07 | N-023; related N-005/N-014 | User requested a Celery planning addition and current-task migration inventory. Added job-first/resume-next migration, PostgreSQL-owned history/results, Redis broker proposal, shared capacity/outbox/restart/cost controls and future preparation alignment. Planning docs only; no runtime/dependency changes, tests, AI calls, commit or push. Previous implementation patch preserved. |
 
 ## Daily review setup
 

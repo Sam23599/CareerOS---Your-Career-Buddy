@@ -4,6 +4,15 @@ Implemented: 2026-10-02. Open `/resumes`, upload a PDF and choose **Extract text
 
 The parser is Python 3.14 / FastAPI / pypdf with fontTools for embedded CFF Type1 font encodings and exact runtime/test dependency pins. Readiness verifies that font support imports under the worker memory cap. It runs separately from Node and MongoDB. Node authenticates the account, reads the owned private PDF, sends bytes to the internal parser and validates its response. See [ADR-010](adr/010-resume-intelligence-foundation.md) and [the API](api/intelligence.md).
 
+## Planned background execution
+
+The [Celery migration plan](intelligence-background-processing-plan.md) proposes
+Celery/Redis for existing job tasks first and resume AI generation afterward.
+Celery is not installed or required by current startup commands. Keep the current
+transient parser preview and subprocess bounds; check Python/dependency/prefork
+compatibility before adding the separate worker. PostgreSQL task/history/results,
+domain services and private Node authorization remain authoritative.
+
 ## Docker stack
 
 Run from the repository root:

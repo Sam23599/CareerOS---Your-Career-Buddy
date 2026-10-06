@@ -1,6 +1,6 @@
 # Personalized AI preparation — next implementation plan
 
-Status: **Planned, not implemented**. Prepared 2026-10-06 (Asia/Kolkata).
+Status: **Planned, not implemented**. Prepared 2026-10-06; updated 2026-10-07 (IST) for Celery planning.
 Follows saved-job ranking and extends [resume checks](resume-checks.md), before
 the original roadmap's initial Cady. No endpoint, background generation or paid
 provider call is enabled by this document.
@@ -45,7 +45,10 @@ provider/model and processing notice before submission.
   employment content. No original PDF, password/token, private saved-job notes,
   unrelated CV/job history or entire profile. Contacts are not needed for this task.
 - **Controls:** reuse the shared generation gate, strict structured output,
-  `store:false`, fixed input/output/deadline limits and safe error mapping. Add
+  `store:false`, fixed input/output/deadline limits and safe error mapping. The
+  [Celery execution plan](intelligence-background-processing-plan.md) makes this
+  optional long-running action a worker task with PostgreSQL-backed status/results
+  when implemented; enforce the shared generation limit across processes. Add
   a separate per-user preparation limiter and input bounds; fail before provider
   calls on missing/stale/foreign inputs. No automatic generation or retries.
   Decide a smaller task-specific token cap after mocked sizing, within current
@@ -83,6 +86,8 @@ Public paths are proposals, not current API routes:
   and current job-analysis IDs, profile opt-in, capability-backed model/reasoning,
   confirmed per-requirement classifications, hours/week, weeks and bounded goal.
   Node derives owner/hash/profile version; browser-supplied facts/owner are rejected.
+  Return HTTP 202 and an owned task ID; task polling exposes the generated plan ID.
+  The accepted generation continues after navigation; review/save remains explicit.
 - `GET .../preparation-plans` and `GET .../preparation-plans/:planId`: private
   paginated history and a saved plan; no provider call. Label outdated sources.
 - `PATCH .../preparation-plans/:planId/review`: bounded reviewed suggestions/status
@@ -106,10 +111,12 @@ URLs or claim courses have been verified; resource discovery is a later feature.
 Python-owned PostgreSQL stores private immutable generated versions, with a
 revisioned reviewed overlay. Failed/refused/invalid generation stores no plan.
 Reusing an old result requires exact source/planner identity and remains a read,
-not implicit regeneration. Resume/job deletion must suppress access immediately
-and extend the durable cleanup/tombstone mechanism to derived plans; profile-only
-changes label old context rather than silently rewriting plans. No vectors/new
-broker are needed for the initial plan.
+not implicit regeneration. Resume/job removal must suppress access immediately
+and follow the [current recovery lifecycle](notes-improvements.md#recovery-and-manual-tracking)
+for retained derived plans; historical hard erasure retains cleanup/tombstones.
+Profile-only changes label old context rather than silently rewriting plans.
+No vectors are needed; use the planned shared Celery/Redis execution foundation
+instead of introducing a separate preparation queue framework.
 
 ## Implementable batches and acceptance
 
@@ -122,7 +129,9 @@ broker are needed for the initial plan.
    cancellation. Source changes during generation must not return a current plan.
 3. **Gateway/UI:** strict authenticated routes, independent limiter, opt-in model
    selection and readable notice, compact preview/edit/save/history and mobile
-   keyboard-accessible dialog. Changes/errors clear previews; closing cancels.
+   keyboard-accessible dialog. Changes/errors clear previews; closing stops polling
+   without cancelling an accepted generation. Queued cancellation is explicit;
+   running provider work may still incur its charge. Confirm this notice at implementation.
 4. **Verification:** unit, isolated PostgreSQL/Mongo integration and browser tests;
    prove no generation on reads and no silent profile mutation. With explicit
    authorization, run one small synthetic live call after model/key/budget checks.

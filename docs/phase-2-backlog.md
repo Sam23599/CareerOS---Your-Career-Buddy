@@ -1,6 +1,6 @@
 # Phase 2 — Resume intelligence and job matching
 
-Updated: 2026-10-06, Asia/Kolkata. **Batches 1–4, the batch 5 baseline and batch 6 saved-job baseline implemented locally; personalized AI preparation and Cady remain planned.**
+Updated: 2026-10-07, Asia/Kolkata. **Batches 1–4, the batch 5 baseline, batch 6 saved-job baseline and notebook follow-up implemented locally; Celery migration, personalized AI preparation and Cady remain planned.**
 
 This follows the planning step agreed after Phase 1. The original [Phase 2 roadmap](development-plan.md#5-phase-2--intelligence--ai) remains the product scope. [ADR-010](adr/010-resume-intelligence-foundation.md) defines the first batch; the [API contract](api/intelligence.md) makes it implementable. Later milestones below are a sequence, not a claim that they are built.
 
@@ -27,6 +27,7 @@ Start with extraction so incorrect reading order, missing text and unsupported P
 | 4. Explainable matching — implemented | Compare saved CV/job analyses and optional profile skills using `skill-coverage-v1` | Show quoted matched/not-found skills, unscored review requirements and weighted score calculation; source/owner checks and fixtures demonstrate predictable results |
 | 5. Resume checks and skill gaps — baseline implemented | Recognized-section/PDF-warning checks, literal job terminology, prioritized evidence gaps and preparation actions | Findings link back to saved inputs; compact reports distinguish missing evidence from skill gaps and CareerOS heuristics from actual employer ATS behavior |
 | 6. Job ranking — saved-job baseline implemented | Rank up to 50 saved jobs across applied filters using matching, then explicit preferences/priority/date | Expand reasons; separate unanalysed/stale/expired/unavailable/unscorable/not-interested jobs; wider discovery ranking remains an extension |
+| Celery execution foundation — planned | Migrate the existing PostgreSQL-backed job worker to Celery/Redis, then resume AI drafts in a separate batch | Preserve task/history/version contracts, outbox delivery recovery, one shared generation across processes and no automatic uncertain paid retry |
 | Personalized AI preparation — planned extension | Confirm evidence-versus-learning gaps/time goals; explicitly generate, review and save a source-bound learning plan | Shared provider infrastructure, strict requirement links, versioning/cleanup and cost/consent controls; no silent CV/profile edits |
 | 7. Initial Cady | Answer career questions from the authenticated user's profile, resume and selected/saved jobs | Answers use authorized context and evidence; Cady requests confirmation before any profile mutation |
 
@@ -84,6 +85,13 @@ Applying a draft reuses existing profile validation and revision checks through 
 Source removal suppresses access immediately. The approved notebook batch now retains resumes and derived records in a default 30-day recovery window, then a support-only retained archive. Historical hard deletions still use the durable MongoDB cleanup outbox and PostgreSQL tombstones. Stale source/draft/profile versions are rejected. Any reuse of results must include owner, content hash and analyzer version; matching also includes profile version and job-content version.
 
 ## Decisions needed later
+
+The [Celery migration plan](intelligence-background-processing-plan.md) records
+the approved planning direction and current task inventory. Start implementation
+with existing background job analysis when selected; keep matching/checks and
+bounded ranking synchronous. Redis is proposed as the task broker in Phase 2,
+independent of the later Phase 4 Kafka event roadmap. No worker/dependency change
+is implemented by this planning update.
 
 | Decision | When | Default direction |
 | --- | --- | --- |
