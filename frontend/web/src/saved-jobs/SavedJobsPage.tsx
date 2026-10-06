@@ -3,20 +3,20 @@ import { Link, useSearchParams } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
 import { Icon, PageHeading } from '../ui/WorkspaceUi';
 import { useWorkspaceNavigationGuard } from '../ui/navigation';
-import { type SavedJob, statusLabels } from './types';
+import { type SavedJob, statusLabels, applicationLabels } from './types';
 import { SavedJobRanking } from './SavedJobRanking';
 
 type List = { savedJobs: SavedJob[]; total: number; page: number; limit: number };
 function SavedCard({ initial, onRemove, onDirty, canLeave, onUpdated }: { initial: SavedJob; canLeave: () => boolean; onRemove: (id: string) => void; onDirty: (id: string, dirty: boolean) => void; onUpdated: () => void }) {
   const [saved, setSaved] = useState(initial);
-  const [draft, setDraft] = useState({ notes: initial.notes, status: initial.status, priority: initial.priority });
+  const [draft, setDraft] = useState({ applicationStatus: initial.applicationStatus ?? 'NOT_APPLIED', notes: initial.notes, status: initial.status, priority: initial.priority });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [viewedAt] = useState(Date.now);
-  const dirty = draft.notes !== saved.notes || draft.status !== saved.status || draft.priority !== saved.priority;
+  const dirty = draft.applicationStatus !== (saved.applicationStatus ?? 'NOT_APPLIED') || draft.notes !== saved.notes || draft.status !== saved.status || draft.priority !== saved.priority;
   useEffect(() => { onDirty(initial.jobId, dirty); return () => onDirty(initial.jobId, false); }, [initial.jobId, dirty, onDirty]);
-  function replace(value: SavedJob) { setSaved(value); setDraft({ notes: value.notes, status: value.status, priority: value.priority }); onUpdated(); }
+  function replace(value: SavedJob) { setSaved(value); setDraft({ applicationStatus: value.applicationStatus ?? 'NOT_APPLIED', notes: value.notes, status: value.status, priority: value.priority }); onUpdated(); }
   async function action(work: () => Promise<void>) {
     setBusy(true); setError(''); setMessage('');
     try { await work(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update saved job.'); }
@@ -31,9 +31,11 @@ function SavedCard({ initial, onRemove, onDirty, canLeave, onUpdated }: { initia
     {!saved.available && <p className="muted">The original job is no longer in the catalog. Your notes are still available.</p>}
     {saved.job.expiresAt && Date.parse(saved.job.expiresAt) <= viewedAt && <p className="muted">This listing has expired.</p>}
     <p className="muted workspace-card-meta">Source: <a href={saved.job.sourceUrl} target="_blank" rel="noopener noreferrer">{saved.job.source === 'remotive' ? 'Remotive' : saved.job.source}</a> · Saved {new Date(saved.savedAt).toLocaleDateString()}</p>
+    {!!saved.applicationEvents?.length && <details className="compact-details"><summary>Recorded application history</summary><ul>{saved.applicationEvents.map((event, index) => <li key={index}>{applicationLabels[event.status as keyof typeof applicationLabels] ?? event.status} · {new Date(event.at).toLocaleString()}</li>)}</ul></details>}
     <form onSubmit={submit}><fieldset disabled={busy}><div className="profile-grid">
       <label>Interest status<select value={draft.status} onChange={event => setDraft({ ...draft, status: event.target.value as SavedJob['status'] })}>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <label>Priority<select value={draft.priority} onChange={event => setDraft({ ...draft, priority: event.target.value as SavedJob['priority'] })}>{['LOW', 'MEDIUM', 'HIGH'].map(value => <option key={value} value={value}>{value[0] + value.slice(1).toLowerCase()}</option>)}</select></label>
+      <label>Application progress<select value={draft.applicationStatus} onChange={event => setDraft({ ...draft, applicationStatus: event.target.value as NonNullable<SavedJob['applicationStatus']> })}>{Object.entries(applicationLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label className="full-width">Private notes<textarea rows={3} maxLength={5000} value={draft.notes} onChange={event => setDraft({ ...draft, notes: event.target.value })} /></label>
     </div>
     {error && <p role="alert" className="form-error">{error}</p>}
@@ -44,7 +46,7 @@ function SavedCard({ initial, onRemove, onDirty, canLeave, onUpdated }: { initia
         void action(async () => { const result = await authenticatedRequest<{ savedJob: SavedJob | null }>(`/saved-jobs/${saved.jobId}`); if (result.savedJob) replace(result.savedJob); else onRemove(saved.jobId); });
       }}>Reload saved job</button>
       <button type="button" className="secondary" onClick={() => {
-        if (!window.confirm('Remove this saved job and its notes?')) return;
+        if (!window.confirm('Move this saved job and its notes to the recycle bin?')) return;
         void action(async () => { await authenticatedRequest(`/saved-jobs/${saved.jobId}`, { method: 'DELETE' }); onRemove(saved.jobId); });
       }}>Unsave job</button>
     </div></fieldset></form>
@@ -77,16 +79,16 @@ function SavedList() {
     else setParams(next);
   }
   return <div className="profile-page workspace-page"><nav className="profile-nav"><Link to="/dashboard" onClick={event => { if (!canLeave()) event.preventDefault(); }}>← Dashboard</Link><Link to="/jobs" onClick={event => { if (!canLeave()) event.preventDefault(); }}>Find more jobs</Link></nav>
-    <PageHeading eyebrow="Your next opportunities" title="Saved jobs" description="Keep your shortlist, priorities, and private notes together. Interest status is separate from an application’s progress." />
+    <PageHeading eyebrow="Your next opportunities" title="Saved jobs" description="Keep your shortlist, priorities, and private notes together. Record application progress separately from your interest. This is manual tracking; it does not submit applications." />
     <form className="panel profile-section workspace-filter-bar" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(); for (const [key, value] of new FormData(event.currentTarget)) if (value) next.set(key, String(value)); navigate(next); }}>
-      <div className="profile-grid"><label>Filter by status<select name="status" defaultValue={params.get('status') ?? ''}><option value="">All statuses</option>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+      <div className="profile-grid"><label>Location<input name="location" maxLength={100} defaultValue={params.get('location') ?? ''} /></label><label>Posted from<input type="date" name="postedFrom" defaultValue={params.get('postedFrom') ?? ''} /></label><label>Posted through<input type="date" name="postedTo" defaultValue={params.get('postedTo') ?? ''} /></label><label>Application progress<select name="applicationStatus" defaultValue={params.get('applicationStatus') ?? ''}><option value="">Any progress</option>{Object.entries(applicationLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Company history<select name="companyHistory" defaultValue={params.get('companyHistory') ?? ''}><option value="">All companies</option><option value="first_application">No previous application recorded</option><option value="previously_applied">Previously applied</option></select></label><label>Filter by status<select name="status" defaultValue={params.get('status') ?? ''}><option value="">All statuses</option>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label>Filter by priority<select name="priority" defaultValue={params.get('priority') ?? ''}><option value="">All priorities</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option></select></label></div>
-      <button>Apply filters</button>
+      <div className="actions"><button>Apply filters</button><button type="button" className="secondary" onClick={() => navigate(new URLSearchParams())}>Clear filters</button></div><p className="muted">Date filters use posting dates; listings with unknown dates are excluded. Company history uses your recorded progress and exact company names.</p>
     </form>
     {error && <><p role="alert" className="form-error">{error}</p><button onClick={() => { setError(''); setAttempt(value => value + 1); }}>Retry</button></>}
     {!data && !error && <p role="status">Loading saved jobs…</p>}
     {data && <><p className="workspace-results-summary">{data.total} saved {data.total === 1 ? 'job' : 'jobs'}</p>
-      {!!data.total && <SavedJobRanking filters={{ status: params.get('status') ?? '', priority: params.get('priority') ?? '' }} revision={rankingRevision} canLeave={canLeave} />}
+      {!!data.total && <SavedJobRanking filters={{ status: params.get('status') ?? '', priority: params.get('priority') ?? '', location: params.get('location') ?? '', postedFrom: params.get('postedFrom') ?? '', postedTo: params.get('postedTo') ?? '', applicationStatus: params.get('applicationStatus') ?? '', companyHistory: params.get('companyHistory') ?? '' }} revision={rankingRevision} canLeave={canLeave} />}
       {!data.savedJobs.length && <p className="workspace-empty-state">No saved jobs match this view. Save a job from search or change your filters.</p>}
       <div className="workspace-list">{data.savedJobs.map(item => <SavedCard key={item.jobId} initial={item} onDirty={onDirty} canLeave={canLeave} onUpdated={() => setRankingRevision(value => value + 1)} onRemove={id => { setRankingRevision(value => value + 1); setData(current => current ? { ...current, total: Math.max(0, current.total - 1), savedJobs: current.savedJobs.filter(item => item.jobId !== id) } : current); }} />)}</div>
       <nav className="actions workspace-pagination" aria-label="Saved job pages">{[-1, 1].map(direction => <button key={direction} disabled={direction === -1 ? data.page <= 1 : data.page * data.limit >= data.total} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(data.page + direction)); navigate(next); }}>{direction === -1 ? 'Previous' : 'Next'}</button>)}<span>Page {data.page} of {Math.max(1, Math.ceil(data.total / data.limit))}</span></nav>

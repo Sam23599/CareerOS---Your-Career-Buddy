@@ -29,6 +29,8 @@ Open http://localhost:5173 to register or sign in. JWT sessions, protected pages
 
 See [local development](docs/local-development.md) for host development, checks, ports, and persistence, and [ADR-001](docs/adr/001-local-platform-foundation.md) for the setup decisions. See [authentication and OAuth setup](docs/api/authentication.md) to configure Google/GitHub credentials.
 
+The [notebook improvements](docs/notes-improvements.md) add Light/Dark/System at `/settings`, recovery at `/recycle-bin`, durable background job analyses at `/tasks`, source New/Earlier groups and saved-job manual application filters. Credits/payments are demo only; native LinkedIn/contact/review integrations and live Google consent remain pending prerequisites.
+
 ---
 
 ## What is CareerOS?

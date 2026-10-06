@@ -1,3 +1,5 @@
+from app.tasks.repository import AnalysisTaskRepository
+from app.tasks.service import AnalysisTaskWorker
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -44,9 +46,13 @@ class IntelligenceApplication:
         app.state.extraction = self.extraction
         await self.extraction.start()
         await self.repository.start()
+        app.state.tasks = AnalysisTaskRepository(self.repository)
+        self.worker = AnalysisTaskWorker(app.state.tasks, self.jobs)
+        self.worker.start()
         try:
             yield
         finally:
+            await self.worker.close()
             await self.llm.gate.close()
             await self.extraction.close()
             await self.repository.close()
@@ -62,6 +68,7 @@ class IntelligenceApplication:
 
         async def health(): return {"status": "ok", "service": "intelligence"}
         async def ready(request: Request): return await request.app.state.controller.ready(request)
+        async def dependencies(request: Request): return await request.app.state.controller.dependencies(request)
         async def capabilities(request: Request): return await request.app.state.controller.capabilities(request)
         async def extract(request: Request): return await request.app.state.controller.extract(request)
         async def analyze(request: Request): return await request.app.state.controller.analyze(request)
@@ -73,16 +80,22 @@ class IntelligenceApplication:
         async def get_job(job_id: str, request: Request): return await request.app.state.jobs.get(job_id, request)
         async def job_history(job_id: str, request: Request): return await request.app.state.jobs.history(job_id, request)
         async def delete_job(job_id: str, request: Request): return await request.app.state.jobs.delete(job_id, request)
+        async def start_task(job_id: str, request: Request): return await request.app.state.jobs.start_task(job_id, request)
+        async def tasks(request: Request): return await request.app.state.jobs.tasks(request)
+        async def job_tasks(job_id: str, request: Request): return await request.app.state.jobs.tasks(request, job_id)
+        async def cancel_task(task_id: str, request: Request): return await request.app.state.jobs.cancel_task(task_id, request)
         async def match(request: Request): return await request.app.state.matching.compare(request)
         async def review(request: Request): return await request.app.state.reviews.review(request)
         for path, method, handler in (
-            ("health", "GET", health), ("ready", "GET", ready), ("capabilities", "GET", capabilities),
+            ("dependencies", "GET", dependencies), ("health", "GET", health), ("ready", "GET", ready), ("capabilities", "GET", capabilities),
             ("resumes/extract", "POST", extract), ("resumes/analyze", "POST", analyze),
             ("resumes/{resume_id}/draft", "GET", get_draft), ("resumes/{resume_id}/draft", "DELETE", delete_drafts),
             ("resumes/{resume_id}/drafts", "GET", draft_history),
             ("jobs/capabilities", "GET", job_capabilities), ("jobs/{job_id}/analyze", "POST", analyze_job),
             ("jobs/{job_id}/analysis", "GET", get_job), ("jobs/{job_id}/analyses", "GET", job_history),
             ("jobs/{job_id}/analysis", "DELETE", delete_job),
+            ("tasks", "GET", tasks), ("tasks/{task_id}/cancel", "POST", cancel_task),
+            ("jobs/{job_id}/tasks", "POST", start_task), ("jobs/{job_id}/tasks", "GET", job_tasks),
             ("matching/compare", "POST", match),
             ("resumes/review", "POST", review),
         ):

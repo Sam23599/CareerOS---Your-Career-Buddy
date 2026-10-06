@@ -105,9 +105,9 @@ Internal routes use the dedicated service token, never user JWTs:
 - `GET /internal/v1/resumes/:id/drafts?beforeVersion=21` receives that same trusted context and returns a bounded history page; the optional cursor excludes versions at or above it.
 - `DELETE /internal/v1/resumes/:id/draft` receives trusted owner/ID context, atomically deletes that source's drafts and adds a minimal deletion tombstone; repeat deletion is idempotent and returns `{ "status": "deleted" }`.
 
-PostgreSQL stores only derived drafts. Records retain owner, source ID/version/hash, analyzer version, model and reasoning. Fresh successful analyses get unique consecutive versions under a per-owner/resume transaction lock. No failed/refused/partial outputs are persisted. Deletion first hides the source and queues durable MongoDB cleanup; retry every 30 seconds while Node runs. Downstream failure does not keep deleted PDFs publicly accessible; a late generation cannot recreate a tombstoned source. There is no cross-database transaction.
+PostgreSQL stores only derived drafts. Records retain owner, source ID/version/hash, analyzer version, model and reasoning. Fresh successful analyses get unique consecutive versions under a per-owner/resume transaction lock. No failed/refused/partial outputs are persisted. New resume removal hides the source in the recovery bin and retains PDF/analyses; historical hard-deletion cleanup items continue retrying every 30 seconds. See [recovery](../notes-improvements.md#recovery-and-manual-tracking). Downstream failure does not keep deleted PDFs publicly accessible; a late generation cannot recreate a tombstoned source. There is no cross-database transaction.
 
-AI limits: 60,000 input bytes including instructions/schema, 16,384 output tokens, 90 seconds, one active generation/no queue. Node's analyze deadline is 140 seconds, response cap 2 MiB. Extraction retains its existing bounds. Analyze sends extracted text to OpenAI explicitly; GET/opening a draft never calls OpenAI. `store: false` is used but provider abuse-monitoring retention may still apply.
+AI limits: 60,000 input bytes including instructions/schema, 16,384 output tokens, 90 seconds, one active shared generation. Resume analysis has no queue; job tasks use the bounded durable queue described below. Node's synchronous analyze deadline is 140 seconds, response cap 2 MiB. Extraction retains its existing bounds. Analyze sends extracted text to OpenAI explicitly; GET/opening a draft never calls OpenAI. `store: false` is used but provider abuse-monitoring retention may still apply.
 
 Additional safe errors: 413 `LLM_BUDGET_LIMIT` for configured input/output limits; 422 `NO_EXTRACTABLE_TEXT` or `LLM_REFUSED`; 429 `LLM_RATE_LIMITED`; 502 `LLM_RESPONSE_INVALID` for invalid evidence/schema or incomplete output; 503 `ANALYSIS_UNAVAILABLE` for storage/provider configuration/failure; 504 `LLM_TIMEOUT`. Browser response messages never contain raw provider/document errors. Model availability depends on the key's access; there is no silent fallback.
 
@@ -133,7 +133,7 @@ After processing/reads, Node rechecks source existence/content. Changed content 
 
 Private Python endpoints mirror analyze/analysis/analyses/capabilities under `/internal/v1/jobs/`. They require the service Bearer token and validated `X-Owner-Id`; GET uses trusted `X-Source-Sha256` and optionally `X-Analysis-Id`. Analyze receives the bounded source JSON and compatible `X-LLM-Model` / optional `X-LLM-Reasoning`. No user JWT, CV/profile content or arbitrary fetch URL is forwarded. `DELETE /internal/v1/jobs/:id/analysis` performs idempotent account/job cleanup and adds a minimal deletion tombstone. It has no public delete route.
 
-Saved rows live in PostgreSQL `job_analyses`, with private owner/job versions assigned under the same lock as deletion. Node tracks cleanup references in MongoDB `job_analysis_sources` before generation; scans up to twenty-five references every thirty seconds while running, retaining failed cleanup work for restart/retry. Hard removal blocks access immediately; expiry retains analyses. Resume/job generation shares one active slot with no queue, and PDF extraction retains its separate worker bound. Normal reads never call OpenAI; automatic provider refreshes never analyze job descriptions.
+Saved rows live in PostgreSQL `job_analyses`, with private owner/job versions assigned under the same lock as deletion. Node tracks cleanup references in MongoDB `job_analysis_sources` before generation; scans up to twenty-five references every thirty seconds while running, retaining failed cleanup work for restart/retry. Hard removal blocks access immediately; expiry retains analyses. Resume/job generation shares one active slot; the job UI now submits bounded durable tasks (the legacy synchronous endpoints remain), and PDF extraction retains its separate worker bound. Normal reads never call OpenAI; automatic provider refreshes never analyze job descriptions.
 
 ## CV-to-job matching
 
@@ -304,3 +304,7 @@ or failure cancels pending/queued work. There is no automatic retry.
 
 Personalized AI preparation has a [separate proposed contract](../personalized-preparation-plan.md)
 and is not exposed by the current API.
+
+## Durable job tasks and dependencies (2026-10-07)
+
+See [task API and lifecycle](../notes-improvements.md#durable-job-analysis-tasks). The browser uses the new task submission route; leaving does not cancel accepted job analysis. Legacy synchronous analyze routes and resume/extraction flows retain disconnect cancellation. GET `/api/v1/system/status` uses private GET `/internal/v1/dependencies` without provider calls.

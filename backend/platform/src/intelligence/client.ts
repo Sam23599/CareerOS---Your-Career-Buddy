@@ -1,3 +1,4 @@
+import { TaskVerifier } from './tasks.js';
 import { ApiError } from '../errors.js';
 import { MAX_RESUME_BYTES } from '../resumes/store.js';
 import { validateDraft, validateHistory, type Source } from './drafts.js';
@@ -137,6 +138,13 @@ export class IntelligenceClient {
       throw unavailable();
     }
   }
+  async dependencies() {
+    try {
+      const body = await this.request('/internal/v1/dependencies', {}, undefined, 5000);
+      if (!fields(body, ['intelligence', 'parser', 'postgresql', 'aiConfigured']) || Object.values(body).some(value => typeof value !== 'boolean')) throw invalid();
+      return body as { intelligence: boolean; parser: boolean; postgresql: boolean; aiConfigured: boolean };
+    } catch { return { intelligence: false, parser: false, postgresql: false, aiConfigured: false }; }
+  }
   async status(signal?: AbortSignal) {
     let available = false;
     if (this.configured) {
@@ -219,6 +227,22 @@ export class IntelligenceClient {
     return JobAnalysisVerifier.history(await this.request(`/internal/v1/jobs/${source.jobId}/analyses${query}`, {
       headers: this.jobHeaders(owner, source),
     }, signal), beforeVersion);
+  }
+  async startJobTask(owner: string, source: JobSource, options: { model: string; reasoning: string | null }, requestKey: string) {
+    const body = await this.request(`/internal/v1/jobs/${source.jobId}/tasks`, { method: 'POST',
+      headers: { ...this.jobHeaders(owner, source), 'Content-Type': 'application/json', 'X-LLM-Model': options.model, 'X-Request-Key': requestKey,
+        ...(options.reasoning === null ? {} : { 'X-LLM-Reasoning': options.reasoning }) }, body: JSON.stringify(source) });
+    if (!fields(body, ['taskId']) || !TaskVerifier.uuid(body.taskId)) throw invalid();
+    return body;
+  }
+  async tasks(owner: string, jobId?: string) {
+    return TaskVerifier.history(await this.request(jobId ? `/internal/v1/jobs/${jobId}/tasks` : '/internal/v1/tasks', { headers: { 'X-Owner-Id': owner } }));
+  }
+  async cancelTask(owner: string, id: string) {
+    if (!TaskVerifier.uuid(id)) throw new ApiError(400, 'INVALID_INPUT', 'Provide a valid task ID.');
+    const body = await this.request(`/internal/v1/tasks/${id}/cancel`, { method: 'POST', headers: { 'X-Owner-Id': owner } });
+    if (!fields(body, ['status']) || body.status !== 'cancelled') throw invalid();
+    return body;
   }
   async deleteJobAnalyses(owner: string, jobId: string) {
     const body = await this.request(`/internal/v1/jobs/${jobId}/analysis`, { method: 'DELETE', headers: { 'X-Owner-Id': owner } });

@@ -1,3 +1,4 @@
+import { RecoveryStore, type Trash } from '../recovery/store.js';
 import { randomUUID } from 'node:crypto';
 import { type Db, type Filter, MongoServerError } from 'mongodb';
 import { ApiError } from '../errors.js';
@@ -10,7 +11,7 @@ type Settings = { kind: 'bookmark' | 'job-source'; company: string; careerUrl: s
 type Source = Settings & {
   _id: string; ownerId: string; connection: SourceDefinition | null; registryVersion: number; board?: string | null; revision: string; createdAt: Date; updatedAt: Date;
   status: 'unchecked' | 'success' | 'failed'; lastCheckedAt: Date | null; importedAt: Date | null;
-  matchingCount: number; newCount: number; nextScanAt: Date; seenIds: string[];
+  matchingCount: number; newCount: number; nextScanAt: Date; seenIds: string[]; lastViewedAt?: Date; trash?: Trash;
   leaseUntil?: Date; leaseToken?: string; pendingNotice?: Notice;
 };
 const invalid = (message: string) => new ApiError(400, 'INVALID_CAREER_SOURCE', message);
@@ -65,16 +66,21 @@ function response(source: Source) {
   return { id: _id, kind, company, careerUrl, keywords, locations, scanHours, enabled, provider: connection?.provider ?? null, providerName: connection?.name ?? null, sourceId: connection?.sourceId ?? null, coverage: connection?.coverage ?? 'link', canRefresh, canEnableTracking: kind === 'bookmark' && Boolean(connection), revision, createdAt, updatedAt, status, lastCheckedAt, importedAt, matchingCount, newCount, nextScanAt: enabled && canRefresh && scanHours ? nextScanAt : null };
 }
 export class CareerSourceStore {
-  private sources; private initialized?: Promise<unknown>;
-  constructor(db: Db, private jobs: JobStore, private notifications: NotificationService, private adapter: (source: SourceDefinition) => JobSource = createSource) { this.sources = db.collection<Source>('career_sources'); }
+  private sources; private recovery; private initialized?: Promise<unknown>;
+  constructor(db: Db, private jobs: JobStore, private notifications: NotificationService, private adapter: (source: SourceDefinition) => JobSource = createSource) { this.sources = db.collection<Source>('career_sources'); this.recovery = new RecoveryStore(db); }
   initialize() {
     return this.initialized ??= Promise.all([
-      this.sources.createIndex({ ownerId: 1, careerUrl: 1 }, { unique: true }),
+      this.activeUrlIndex(),
       this.sources.createIndex({ enabled: 1, nextScanAt: 1 }),
       this.sources.createIndex({ ownerId: 1, createdAt: -1, _id: 1 }),
       this.sources.createIndex({ ownerId: 1, 'connection.sourceId': 1 }),
       this.sources.createIndex({ ownerId: 1, kind: 1, createdAt: -1, _id: 1 }),
     ]).then(() => this.upgradeLinks()).catch(error => { this.initialized = undefined; throw error; });
+  }
+  private async activeUrlIndex() {
+    const indexes = await this.sources.listIndexes().toArray().catch(error => { if (error.code === 26) return []; throw error; });
+    if (indexes.some(index => index.name === 'ownerId_1_careerUrl_1')) await this.sources.dropIndex('ownerId_1_careerUrl_1');
+    await this.sources.createIndex({ ownerId: 1, careerUrl: 1 }, { name: 'active_source_url', unique: true, partialFilterExpression: { trash: null } });
   }
   private async upgradeLinks() {
     // Keep original URLs to avoid collisions between old aliases; never recreate user records.
@@ -93,7 +99,7 @@ export class CareerSourceStore {
     }
   }
   private async uniqueConnection(owner: string, connection: SourceDefinition | null, id?: string) {
-    if (connection && await this.sources.findOne({ ownerId: owner, kind: 'job-source', 'connection.sourceId': connection.sourceId, ...(id ? { _id: { $ne: id } } : {}) })) throw new ApiError(409, 'SOURCE_EXISTS', 'You already saved this career page.');
+    if (connection && await this.sources.findOne({ ownerId: owner, trash: { $exists: false }, kind: 'job-source', 'connection.sourceId': connection.sourceId, ...(id ? { _id: { $ne: id } } : {}) })) throw new ApiError(409, 'SOURCE_EXISTS', 'You already saved this career page.');
   }
   private duplicate(error: unknown): never { if (error instanceof MongoServerError && error.code === 11000) throw new ApiError(409, 'SOURCE_EXISTS', 'You already saved this career page.'); throw error; }
   async create(owner: string, input: ReturnType<typeof parseSource>) {
@@ -103,7 +109,7 @@ export class CareerSourceStore {
     try { await this.sources.insertOne(source); } catch (error) { this.duplicate(error); }
     return response(source);
   }
-  private async owned(owner: string, id: string) { await this.initialize(); const source = await this.sources.findOne({ _id: id, ownerId: owner }); if (!source) throw new ApiError(404, 'SOURCE_NOT_FOUND', 'Career source not found.'); return source; }
+  private async owned(owner: string, id: string) { await this.initialize(); const source = await this.sources.findOne({ _id: id, ownerId: owner, trash: { $exists: false } }); if (!source) throw new ApiError(404, 'SOURCE_NOT_FOUND', 'Career source not found.'); return source; }
   async update(owner: string, id: string, input: ReturnType<typeof parseSource>) {
     if (!input.revision) throw invalid('Provide the source revision.');
     const current = await this.owned(owner, id); const { revision, ...settings } = input;
@@ -116,15 +122,15 @@ export class CareerSourceStore {
     if (input.kind === 'bookmark') { settings.keywords = current.keywords; settings.locations = current.locations; }
     const changedFilters = changedKind || changedProvider || JSON.stringify(current.keywords) !== JSON.stringify(settings.keywords) || JSON.stringify(current.locations) !== JSON.stringify(settings.locations);
     let result;
-    try { result = await this.sources.findOneAndUpdate({ _id: id, ownerId: owner, revision }, { $set: { ...settings, registryVersion, revision: randomUUID(), updatedAt: new Date(), nextScanAt: new Date(), ...(changedFilters ? { status: 'unchecked' as const, lastCheckedAt: null, matchingCount: 0, newCount: 0 } : {}), ...(changedProvider || changedKind ? { importedAt: null, seenIds: [] } : {}) }, $unset: { leaseUntil: '', leaseToken: '', ...(changedProvider || changedKind || input.kind === 'bookmark' ? { pendingNotice: '' } : {}) } }, { returnDocument: 'after' }); }
+    try { result = await this.sources.findOneAndUpdate({ _id: id, ownerId: owner, trash: { $exists: false }, revision }, { $set: { ...settings, registryVersion, revision: randomUUID(), updatedAt: new Date(), nextScanAt: new Date(), ...(changedFilters ? { status: 'unchecked' as const, lastCheckedAt: null, matchingCount: 0, newCount: 0 } : {}), ...(changedProvider || changedKind ? { importedAt: null, seenIds: [] } : {}) }, $unset: { leaseUntil: '', leaseToken: '', ...(changedProvider || changedKind || input.kind === 'bookmark' ? { pendingNotice: '' } : {}) } }, { returnDocument: 'after' }); }
     catch (error) { this.duplicate(error); }
     if (!result) throw new ApiError(409, 'SOURCE_CHANGED', 'This source changed. Reload before saving again.');
     return response(result);
   }
-  async remove(owner: string, id: string) { await this.initialize(); await this.sources.deleteOne({ _id: id, ownerId: owner }); }
+  async remove(owner: string, id: string) { await this.initialize(); await this.sources.updateOne({ _id: id, ownerId: owner, trash: { $exists: false } }, { $set: { trash: await this.recovery.marker(owner) }, $unset: { leaseToken: '', leaseUntil: '', pendingNotice: '' } }); }
   async list(owner: string, query: Record<string, unknown>) {
     await this.initialize();
-    const { page, limit } = pagination(query); const filter: Filter<Source> = { ownerId: owner };
+    const { page, limit } = pagination(query); const filter: Filter<Source> = { ownerId: owner, trash: { $exists: false } };
     if (query.kind !== undefined) { if (!['bookmark', 'job-source'].includes(query.kind as string)) throw invalid('Invalid source kind.'); filter.kind = query.kind as Settings['kind']; }
     if (query.q !== undefined) { if (typeof query.q !== 'string' || query.q.length > 200) throw invalid('Invalid search.'); if (query.q.trim()) filter.$or = [{ company: literal(query.q.trim()) }, { careerUrl: literal(query.q.trim()) }]; }
     if (query.filter !== undefined && !['', 'supported', 'reference', 'paused'].includes(query.filter as string)) throw invalid('Invalid source filter.');
@@ -142,17 +148,40 @@ export class CareerSourceStore {
   }
   async matchingJobs(owner: string, id: string, query: Record<string, unknown>) {
     const source = await this.owned(owner, id), { page, limit } = pagination(query);
-    if (source.kind !== 'job-source' || !source.connection) throw invalid('Enable job tracking on a supported career page before viewing matching jobs.');
+    if (source.kind !== 'job-source' || !source.connection) throw invalid('Enable job tracking before viewing jobs.');
     const overrides = queryFilters(query), filters = { keywords: source.keywords, locations: source.locations, ...overrides };
-    const filter = this.matches(source, filters);
-    const [total, rows] = await Promise.all([this.jobs.jobs.countDocuments(filter), this.jobs.jobs.find(filter).sort({ updatedAt: -1, _id: 1 }).skip((page - 1) * limit).limit(limit).toArray()]);
-    return { source: response(source), filters, temporary: Boolean(overrides), jobs: rows.map(publicJob), total, page, limit };
+    const filter = this.matches(source, filters), visitedAt = new Date();
+    const since = query.since === undefined ? source.lastViewedAt ?? new Date(0) : new Date(String(query.since));
+    if (!Number.isFinite(since.getTime()) || since > visitedAt) throw invalid('Invalid view boundary.');
+    const text = (key: string) => { const value = query[key]; if (value === undefined) return ''; if (typeof value !== 'string' || value.length > 100) throw invalid(`Invalid ${key}.`); return value.trim(); };
+    const q = text('q'), location = text('location');
+    if (q) filter.$and!.push({ $or: ['title', 'description', 'company', 'skills'].map(key => ({ [key]: literal(q) })) });
+    if (location) filter.$and!.push({ location: literal(location) });
+    const sort = text('sort') || 'newest';
+    if (!['newest', 'oldest', 'title', 'posted'].includes(sort)) throw invalid('Invalid sort.');
+    const sorting = { isNew: -1, ...(sort === 'title' ? { title: 1 } : sort === 'posted' ? { postedAt: -1 } : { createdAt: sort === 'oldest' ? 1 : -1 }), _id: 1 };
+    const newFilter = { $and: [filter, { createdAt: { $gt: since } }] };
+    const [total, newTotal, rows] = await Promise.all([
+      this.jobs.jobs.countDocuments(filter), this.jobs.jobs.countDocuments(newFilter),
+      this.jobs.jobs.aggregate<Job & { isNew: boolean }>([{ $match: filter }, { $set: { isNew: { $gt: ['$createdAt', since] } } }, { $sort: sorting }, { $skip: (page - 1) * limit }, { $limit: limit }]).toArray(),
+    ]);
+    return { source: response(source), filters, temporary: Boolean(overrides), jobs: rows.map(publicJob), total, newTotal, page, limit, since: since.toISOString(), visitedAt: visitedAt.toISOString() };
   }
   private async deliver(source: Source) {
     if (source.kind !== 'job-source' || !source.pendingNotice) return;
     await this.notifications.publish(source.ownerId, source.pendingNotice);
     await this.sources.updateOne({ _id: source._id, 'pendingNotice.key': source.pendingNotice.key }, { $unset: { pendingNotice: '' } });
   }
+  async viewed(owner: string, id: string, input: unknown) {
+    await this.owned(owner, id);
+    if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(key => key !== 'visitedAt')) throw invalid('Provide the visit time.');
+    const raw = (input as Record<string, unknown>).visitedAt;
+    const date = typeof raw === 'string' ? new Date(raw) : new Date(NaN);
+    if (!Number.isFinite(date.getTime()) || date.getTime() > Date.now() || date.getTime() < Date.now() - 3_600_000) throw invalid('Invalid visit time.');
+    await this.sources.updateOne({ _id: id, ownerId: owner }, { $max: { lastViewedAt: date } });
+    return { status: 'viewed' };
+  }
+
   async refresh(owner: string, id: string, overrides?: Partial<SourceFilters>) {
     const current = await this.owned(owner, id);
     if (current.kind !== 'job-source') throw invalid('Career bookmarks do not check jobs. Enable job tracking first.');
@@ -160,7 +189,7 @@ export class CareerSourceStore {
     if (!current.connection) throw invalid('This career page is saved as a link. Automatic job reading is not supported yet.');
     if (!overrides) await this.deliver(current);
     const now = new Date(), token = randomUUID();
-    const source = await this.sources.findOneAndUpdate({ _id: id, ownerId: owner, revision: current.revision, $or: [{ leaseUntil: { $exists: false } }, { leaseUntil: { $lte: now } }] }, { $set: { leaseUntil: new Date(now.getTime() + 60_000), leaseToken: token } }, { returnDocument: 'after' });
+    const source = await this.sources.findOneAndUpdate({ _id: id, ownerId: owner, trash: { $exists: false }, revision: current.revision, $or: [{ leaseUntil: { $exists: false } }, { leaseUntil: { $lte: now } }] }, { $set: { leaseUntil: new Date(now.getTime() + 60_000), leaseToken: token } }, { returnDocument: 'after' });
     if (!source) throw new ApiError(409, 'SOURCE_BUSY', 'This source is being checked or was changed. Try again shortly.');
     const adapter = this.adapter(current.connection); let importedAt: Date | null = null;
     let failure: unknown;
@@ -202,9 +231,9 @@ export class CareerSourceStore {
   }
   async refreshDue() {
     await this.initialize();
-    const pending = await this.sources.find({ kind: 'job-source', pendingNotice: { $exists: true } }).limit(25).toArray();
+    const pending = await this.sources.find({ trash: { $exists: false }, kind: 'job-source', pendingNotice: { $exists: true } }).limit(25).toArray();
     for (const source of pending) { try { await this.deliver(source); } catch { console.error(JSON.stringify({ event: 'notification_delivery_failed', source: source._id })); } }
-    const due = await this.sources.find({ kind: 'job-source', enabled: true, connection: { $ne: null }, scanHours: { $gt: 0 }, nextScanAt: { $lte: new Date() } }).sort({ nextScanAt: 1 }).limit(25).toArray();
+    const due = await this.sources.find({ trash: { $exists: false }, kind: 'job-source', enabled: true, connection: { $ne: null }, scanHours: { $gt: 0 }, nextScanAt: { $lte: new Date() } }).sort({ nextScanAt: 1 }).limit(25).toArray();
     for (const source of due) { try { await this.refresh(source.ownerId, source._id); } catch (error) { if (!(error instanceof ApiError && [404, 409].includes(error.status))) console.error(JSON.stringify({ event: 'career_source_refresh_failed', source: source._id })); } }
   }
 }

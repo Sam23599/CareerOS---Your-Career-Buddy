@@ -1,3 +1,4 @@
+import { TaskVerifier } from './tasks.js';
 import { ApiError } from '../errors.js';
 import { type JobStore } from '../jobs/store.js';
 import { type IntelligenceClient } from './client.js';
@@ -26,6 +27,17 @@ export class JobAnalysisService {
     const analysis = await this.client.analyzeJob(owner, source, options, signal);
     const current = await this.recheck(source);
     return { analysis, sourceStatus: { stale: false, expired: current.expired } };
+  }
+  async startTask(owner: string, id: string, input: unknown) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new ApiError(400, 'INVALID_INPUT', 'Provide task settings.');
+    const { requestKey, ...settings } = input as Record<string, unknown>;
+    if (!TaskVerifier.uuid(requestKey)) throw new ApiError(400, 'INVALID_INPUT', 'Provide a request key.');
+    const options = validateModel(settings), { source, expired } = await this.source(id);
+    if (expired) throw new ApiError(409, 'JOB_EXPIRED', 'This listing has expired.');
+    if (!source.sections[3].text.trim()) throw new ApiError(422, 'JOB_TEXT_EMPTY', 'No description is available.');
+    if (Buffer.byteLength(JSON.stringify(source)) > 60_000) throw new ApiError(413, 'LLM_BUDGET_LIMIT', 'This listing exceeds the AI input limit.');
+    await this.cleanup?.track(owner, id);
+    return this.client.startJobTask(owner, source, options, requestKey);
   }
   async get(owner: string, id: string, analysisId?: string, signal?: AbortSignal) {
     const { source } = await this.source(id);

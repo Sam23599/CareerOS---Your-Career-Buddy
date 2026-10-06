@@ -47,6 +47,20 @@ class IntelligenceController:
             raise IntelligenceError(503, "INTELLIGENCE_UNAVAILABLE")
         return {"status": "ready"}
 
+    async def dependencies(self, request: Request):
+        self.authenticate(request)
+        postgres = False
+        repository = self.drafts.repository
+        if repository.ready and repository.pool is not None:
+            try:
+                async with repository.pool.connection() as connection:
+                    await connection.execute("SELECT 1")
+                postgres = True
+            except Exception:
+                postgres = False
+        return {"intelligence": True, "parser": self.extraction.ready,
+                "postgresql": postgres, "aiConfigured": self.drafts.llm.available}
+
     async def capabilities(self, request: Request):
         self.authenticate(request)
         return {"available": self.extraction.ready and self.drafts.repository.ready and self.drafts.llm.available,

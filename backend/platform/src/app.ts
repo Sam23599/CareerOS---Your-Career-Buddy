@@ -1,3 +1,5 @@
+import { recoveryRouter } from './recovery/routes.js';
+import { type RecoveryStore } from './recovery/store.js';
 import { savedJobRouter } from './saved-jobs/routes.js';
 import { type SavedJobStore } from './saved-jobs/store.js';
 import { jobRouter } from './jobs/routes.js';
@@ -19,7 +21,7 @@ import { intelligenceRouter } from './intelligence/routes.js';
 import { IntelligenceClient } from './intelligence/client.js';
 import { type JobAnalysisCleanup } from './intelligence/job-cleanup.js';
 
-export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore, features?: { careerSources: CareerSourceStore; notifications: NotificationStore }, intelligence = new IntelligenceClient({}), jobCleanup?: JobAnalysisCleanup) {
+export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore, features?: { careerSources: CareerSourceStore; notifications: NotificationStore }, intelligence = new IntelligenceClient({}), jobCleanup?: JobAnalysisCleanup, recovery?: RecoveryStore) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -58,6 +60,12 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
   });
 
   if (auth) {
+    app.get('/api/v1/system/status', authenticate(auth.service), async (_req, res) => {
+      let mongodb = false;
+      try { await checkDatabase(); mongodb = true; } catch { /* Report, without hiding other services. */ }
+      res.json({ api: true, mongodb, ...await intelligence.dependencies(), aiProviderChecked: false });
+    });
+    if (recovery) app.use('/api/v1/recycle-bin', recoveryRouter(auth.service, recovery));
     if (features) {
       app.use('/api/v1/career-sources', careerSourceRouter(auth.service, features.careerSources));
       app.use('/api/v1/notifications', notificationRouter(auth.service, features.notifications));

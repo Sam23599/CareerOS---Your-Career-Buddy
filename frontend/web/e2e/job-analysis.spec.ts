@@ -29,11 +29,16 @@ test('job analysis requires an explicit click, reopens versions, labels stale da
   await page.route(`**/api/v1/intelligence/jobs/${job.id}/analyses`, route => route.fulfill({ json: {
     versions: [...versions].reverse().map(({ id, version, model, reasoning, createdAt, source }) => ({ id, version, model, reasoning, createdAt, sourceHash: source.sha256, stale })), nextBeforeVersion: null,
   } }));
-  await page.route(`**/api/v1/intelligence/jobs/${job.id}/analyze`, async route => {
-    generated++; expect(route.request().postDataJSON()).toEqual({ model: 'gpt-4.1', reasoning: null });
+  let task: { id: string; state: string; analysisId: string; jobId: string; sourceHash: string; createdAt: string; updatedAt: string; errorCode: null } | null = null;
+  await page.route(`**/api/v1/intelligence/jobs/${job.id}/tasks`, async route => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: { tasks: task ? [task] : [] } });
+    generated++;
+    const body = route.request().postDataJSON(); expect(body.model).toBe('gpt-4.1'); expect(body.reasoning).toBeNull(); expect(body.requestKey).toMatch(/^[a-f0-9-]{36}$/);
     if (failing) return route.fulfill({ status: 504, json: { error: { code: 'LLM_TIMEOUT', message: 'Analysis took too long. Try again.' } } });
     const record = { ...fixture, id: generated === 1 ? fixture.id : randomUUID(), version: generated, model: 'gpt-4.1', reasoning: null };
-    versions.push(record); await route.fulfill({ json: { analysis: record, sourceStatus: { stale: false, expired: false } } });
+    versions.push(record);
+    task = { id: randomUUID(), jobId: job.id, sourceHash: fixture.source.sha256, state: 'succeeded', analysisId: record.id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), errorCode: null };
+    await route.fulfill({ status: 202, json: { taskId: task.id } });
   });
   await page.goto(`/jobs/${job.id}`);
   const panel = page.getByRole('region', { name: 'Job analysis', exact: true });
@@ -43,9 +48,10 @@ test('job analysis requires an explicit click, reopens versions, labels stale da
   await expect(panel.getByLabel('Reasoning effort')).toHaveCount(0);
   await panel.getByRole('button', { name: 'Analyze job', exact: true }).click();
   await expect(panel.getByText(/^Saved analysis · Version 1/)).toBeVisible();
+  await panel.getByRole('button', { name: 'Expand all' }).click();
   await expect(panel.getByText('Python · required', { exact: true })).toBeVisible();
   await expect(panel.getByText('TypeScript · preferred', { exact: true })).toBeVisible();
-  await panel.locator('details').filter({ has: page.locator('summary', { hasText: 'Why this priority?' }) }).first().locator('summary').click();
+  await panel.locator('summary').filter({ hasText: 'Why this priority?' }).first().click();
   await expect(panel.getByText('Required qualifications:', { exact: true }).first()).toBeVisible();
   await expect(page.getByText(job.description, { exact: true })).toBeVisible();
   await panel.getByRole('button', { name: 'Analyze job again', exact: true }).click();

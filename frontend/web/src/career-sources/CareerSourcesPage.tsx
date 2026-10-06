@@ -37,7 +37,7 @@ function SourceCard({ source, reload, saved }: { source: CareerSource; reload: (
     finally { setBusy(false); }
   }
   async function remove() {
-    if (!window.confirm(`Remove ${source.company} from your ${bookmark ? 'career bookmarks' : 'job sources'}?`)) return;
+    if (!window.confirm(`Move ${source.company} to the recycle bin from from your ${bookmark ? 'career bookmarks' : 'job sources'}?`)) return;
     setBusy(true); setError('');
     try { await authenticatedRequest(`/career-sources/${source.id}`, { method: 'DELETE' }); reload(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove this source.'); }
@@ -51,7 +51,7 @@ function SourceCard({ source, reload, saved }: { source: CareerSource; reload: (
     {source.coverage === 'limited' && <p className="muted">{limitedCoverageMessage}</p>}
     <p className="muted workspace-card-meta">Saved filters · Keywords: {source.keywords.join(', ') || 'All roles'} · Locations: {source.locations.join(', ') || 'All locations'}</p>
     {source.canRefresh && <>
-      <p className="workspace-card-meta">{source.lastCheckedAt ? `Last check with saved filters: ${new Date(source.lastCheckedAt).toLocaleString()} · ${source.status === 'failed' ? 'Failed' : `${source.matchingCount} matches, ${source.newCount} newly found`}` : 'No checks with saved filters yet.'}</p>
+      <p className="workspace-card-meta">{source.lastCheckedAt ? `Last check with saved filters: ${new Date(source.lastCheckedAt).toLocaleString()} · ${source.status === 'failed' ? 'Failed' : `${source.matchingCount} matches, ${source.newCount} added on this check`}` : 'No checks with saved filters yet.'}</p>
       {source.importedAt && <p className="muted">Listings imported: {new Date(source.importedAt).toLocaleString()}</p>}
       <p className="muted">{source.scanHours ? `Every ${source.scanHours} hours${source.nextScanAt ? ` · Next due: ${new Date(source.nextScanAt).toLocaleString()}` : ''}` : 'Manual checks only'}</p>
       <Link className="workspace-inline-link" to={`/career-sources/${source.id}/jobs${matchQuery}`}>{checkedFilters ? 'View matches for this check' : 'View matching jobs'}<Icon name="arrow-right" /></Link>
@@ -60,7 +60,7 @@ function SourceCard({ source, reload, saved }: { source: CareerSource; reload: (
       <legend>Filters for Check now (optional)</legend>
       <div className="profile-grid"><label>Keywords for this check<input aria-describedby={`${filterId}-help`} maxLength={3000} placeholder="Engineer, Python, intern" value={quick.keywords} onChange={event => setQuick({ ...quick, keywords: event.target.value })} /></label>
         <label>Locations for this check<input aria-describedby={`${filterId}-help`} maxLength={3000} placeholder="India, Bengaluru, Remote" value={quick.locations} onChange={event => setQuick({ ...quick, locations: event.target.value })} /></label></div>
-      <p className="field-help" id={`${filterId}-help`}>Changes apply only to this check unless you choose Update saved filters. Separate values with commas; clear a field for all roles or locations. Saved filters also apply to scheduled checks and alerts, and remain editable in Edit source.</p>
+      <p className="field-help" id={`${filterId}-help`}>Comma-separated values; empty means all. These filters apply to this check only. Update saved filters also changes scheduled checks and alerts.</p>
       {(changedFilters || checkedFilters) && <div className="actions"><button type="button" className="secondary" onClick={resetFilters}>Reset to saved filters</button><button type="button" disabled={!changedFilters} onClick={updateFilters}>Update saved filters</button></div>}
       {checkedFilters && <p className="field-help">Last one-time check · Keywords: {checkedFilters.keywords.join(', ') || 'All roles'} · Locations: {checkedFilters.locations.join(', ') || 'All locations'}</p>}
     </fieldset>}
@@ -87,6 +87,7 @@ function SourceList() {
     <PageHeading eyebrow="Your discovery network" title="Career sources" description="Track jobs from supported sources or bookmark company career pages for manual visits. Your list and filters are private; imported public listings also appear in the job catalog." actions={!adding && <><button onClick={() => setAdding('job-source')}><Icon name="sources" />Add job source</button><button className="secondary" onClick={() => setAdding('bookmark')}><Icon name="bookmark" />Bookmark career page</button></>} />
     <nav className="profile-nav career-source-tabs" aria-label="Career source sections"><Link to="?kind=job-source" aria-current={!bookmark ? 'page' : undefined}>Job sources</Link><Link to="?kind=bookmark" aria-current={bookmark ? 'page' : undefined}>Career bookmarks</Link></nav>
     <p className="muted">{bookmark ? 'Bookmarks stay here until you choose to enable job tracking. They do not import jobs or send alerts.' : 'Greenhouse boards and Google Careers support refreshes; Google has limited coverage. Keywords and locations must both match when provided.'}</p>
+    <details className="compact-details"><summary>Other job platforms</summary><p><a href="https://www.linkedin.com/jobs/" target="_blank" rel="noopener noreferrer">Browse LinkedIn jobs</a> in a separate tab. You can bookmark company career pages below; unsupported pages do not import jobs.</p></details>
     {adding && <SourceForm kind={adding} onCancel={() => setAdding(null)} onSaved={saved} />}
     <form className="panel profile-section source-search workspace-filter-bar" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams({ kind }); for (const [key, value] of new FormData(event.currentTarget)) if (value) next.set(key, String(value)); if (next.toString() === query) reload(); else setParams(next); }}>
       <div className="profile-grid"><label>Search companies<input name="q" maxLength={200} defaultValue={params.get('q') ?? ''} placeholder="Company or career page…" /></label>

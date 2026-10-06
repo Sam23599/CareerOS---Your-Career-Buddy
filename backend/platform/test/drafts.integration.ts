@@ -138,19 +138,19 @@ test('source deletion during generation suppresses the result', async () => {
   await cleanup.flush();
 });
 
-test('deleting a resume queues durable cleanup during outage and retries after restart', async () => {
+test('trash retains analyses during an intelligence outage without scheduling erasure', async () => {
   const owner = await account();
   await request(owner.accessToken, owner.id, 'analyze', options);
   cleanupUnavailable = true;
   try {
     await resumes.remove(owner.user.id, owner.id); await cleanup.flush();
     assert.equal((await request(owner.accessToken, owner.id, 'draft')).status, 404);
-    assert.equal(await db.collection('intelligence_cleanup').countDocuments({ owner: owner.user.id }), 1);
+    assert.equal(await db.collection('intelligence_cleanup').countDocuments({ owner: owner.user.id }), 0);
   } finally { cleanupUnavailable = false; }
   const restarted = new AnalysisCleanup(db, intelligence);
   await restarted.flush(); await restarted.stop();
   assert.equal(await db.collection('intelligence_cleanup').countDocuments(), 0);
-  assert.equal(intelligence.records.has(`${owner.user.id}:${owner.id}`), false);
+  assert.equal(intelligence.records.has(`${owner.user.id}:${owner.id}`), true);
 });
 
 test('an earlier reviewed model draft remains importable after another model creates a newer draft', async () => {
@@ -190,5 +190,5 @@ test('repeated analysis saves versions and history/old version reads are owned, 
   assert.equal(calls, generated);
   await resumes.remove(owner.user.id, owner.id); await cleanup.flush();
   assert.equal((await request(owner.accessToken, owner.id, 'drafts')).status, 404);
-  assert.equal([...intelligence.history].some(([key, item]) => key.startsWith(`${owner.user.id}:`) && item.source.resumeId === owner.id), false);
+  assert.equal([...intelligence.history].some(([key, item]) => key.startsWith(`${owner.user.id}:`) && item.source.resumeId === owner.id), true);
 });

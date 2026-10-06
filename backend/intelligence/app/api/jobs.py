@@ -57,6 +57,46 @@ class JobAnalysisController:
             raise IntelligenceError(400, "INVALID_INPUT") from None
         return await self.cancellation.run(request, self.jobs.analyze(owner, source, model, reasoning))
 
+    async def start_task(self, job_id: str, request: Request):
+        owner = self.identity(request, job_id)
+        if request.headers.get('content-type', '').split(';', 1)[0] != 'application/json':
+            raise IntelligenceError(415, 'JSON_REQUIRED')
+        model = request.headers.get('x-llm-model', self.settings.model)
+        reasoning = request.headers.get('x-llm-reasoning')
+        self.jobs.llm.models.validate(model, reasoning)
+        try:
+            key = request.headers.get('x-request-key', '')
+            if str(UUID(key)) != key:
+                raise ValueError()
+            data = bytearray()
+            async for chunk in request.stream():
+                if len(data) + len(chunk) > self.settings.max_input_bytes:
+                    raise IntelligenceError(413, 'LLM_BUDGET_LIMIT')
+                data.extend(chunk)
+            source = JobSource.model_validate_json(bytes(data))
+            if source.jobId != job_id or source.sha256 != request.headers.get('x-source-sha256'):
+                raise ValueError()
+        except (ValueError, ValidationError):
+            raise IntelligenceError(400, 'INVALID_INPUT') from None
+        if self.jobs.evidence.source_hash(source) != source.sha256:
+            raise IntelligenceError(400, 'INVALID_INPUT')
+        task_id = await request.app.state.tasks.start(owner, source, {'model': model, 'reasoning': reasoning}, key)
+        return {'taskId': task_id}
+
+    async def tasks(self, request: Request, job_id: str | None = None):
+        owner = self.identity(request, job_id if job_id is not None else '0' * 64)
+        return await request.app.state.tasks.history(owner, job_id)
+
+    async def cancel_task(self, task_id: str, request: Request):
+        owner = self.identity(request, '0' * 64)
+        try:
+            if str(UUID(task_id)) != task_id:
+                raise ValueError()
+        except ValueError:
+            raise IntelligenceError(400, 'INVALID_INPUT') from None
+        await request.app.state.tasks.cancel(owner, task_id)
+        return {'status': 'cancelled'}
+
     async def get(self, job_id: str, request: Request):
         owner = self.identity(request, job_id)
         source_hash = request.headers.get("x-source-sha256", "")

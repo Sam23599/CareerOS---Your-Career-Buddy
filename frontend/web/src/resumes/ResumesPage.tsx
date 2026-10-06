@@ -76,8 +76,8 @@ export function ResumesPage() {
           setResumes((await authenticatedRequest<Library>(`/resumes/${resume.id}/active`, { method: 'PUT' })).resumes); setMessage('Active resume updated.');
         })}>Make active</button>}
         <button className="secondary" disabled={busy || loading} onClick={() => {
-          if (!window.confirm(`Delete ${resume.name}?${resume.active ? ' You will have no active resume until you select or upload another.' : ''} This cannot be undone.`)) return;
-          void action(async () => { setResumes((await authenticatedRequest<Library>(`/resumes/${resume.id}`, { method: 'DELETE' })).resumes); setMessage('Resume deleted.'); });
+          if (!window.confirm(`Move ${resume.name} to the recycle bin?${resume.active ? ' You will have no active resume until you select or upload another.' : ''} You can restore it from the recycle bin during its retention window.`)) return;
+          void action(async () => { setResumes((await authenticatedRequest<Library>(`/resumes/${resume.id}`, { method: 'DELETE' })).resumes); setMessage('Resume moved to the recycle bin.'); });
         }}>Delete</button>
       </div>
     </article>)}

@@ -79,6 +79,7 @@ test('draft generation is explicit, shows evidence, keeps review edits on confli
   await dialog.locator('summary').filter({ hasText: /^Source evidence$/ }).first().click();
   await expect(dialog.getByText('Page 1', { exact: true }).first()).toBeVisible();
   await dialog.getByLabel('Apply Headline', { exact: true }).check();
+  await dialog.getByRole('button', { name: 'Expand all fields' }).click();
   await dialog.getByLabel('Headline', { exact: true }).fill('Reviewed engineer');
   await dialog.getByLabel('Apply Skills', { exact: true }).check();
   await dialog.getByRole('button', { name: 'Preview selected changes', exact: true }).click();

@@ -81,24 +81,21 @@ test('another user including ADMIN cannot download, select or delete owned resum
     assert.equal((await request(second.accessToken, path, method)).status, 404);
   }
 });
-test('deletion removes bytes, clears active selection and keeps version numbers increasing', async () => {
+test('deletion retains bytes, clears active selection and keeps version numbers increasing', async () => {
   const deleted = await request(first.accessToken, `/${secondId}`, 'DELETE'); assert.equal(deleted.status, 200);
   assert.equal((await deleted.json()).resumes.some((item: { active: boolean }) => item.active), false);
   assert.equal((await request(first.accessToken, `/${secondId}/download`)).status, 404);
-  assert.deepEqual(await readdir(directory), [firstId]);
+  assert.deepEqual((await readdir(directory)).sort(), [firstId, secondId].sort());
   const next = (await (await request(first.accessToken, '?name=third.pdf', 'POST', pdf)).json()).resumes[0];
   assert.equal(next.version, 3); assert.equal(next.active, true);
 });
-test('failed deletion hides the file and a retry completes cleanup', async () => {
-  let fail = true;
+test('trash hides a resume without calling destructive storage cleanup', async () => {
   const disk = new LocalResumeStorage(directory);
-  const store = new ResumeStore(db, { put: (key, data) => disk.put(key, data), get: key => disk.get(key), remove: async key => { if (fail) throw new Error('Storage unavailable'); await disk.remove(key); } });
-  await assert.rejects(store.remove(first.user.id, firstId));
+  const store = new ResumeStore(db, { put: (key, data) => disk.put(key, data), get: key => disk.get(key), remove: async () => { throw new Error('Destructive cleanup must not run'); } });
+  await store.remove(first.user.id, firstId);
   await assert.rejects(store.download(first.user.id, firstId));
   await assert.rejects(store.activate(first.user.id, firstId));
-  fail = false;
-  await store.remove(first.user.id, firstId);
-  assert.equal((await readdir(directory)).includes(firstId), false);
+  assert.equal((await readdir(directory)).includes(firstId), true);
 });
 
 test('concurrent uploads allocate distinct versions and keep one active selection', async () => {

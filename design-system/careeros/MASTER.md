@@ -38,9 +38,13 @@ UI UX Pro Max searches informed flat, clear workspace styling and semantic React
 navigation. Its marketing-page layouts were not applicable to this signed-in app;
 the existing green brand, visible filters and native controls guided this design.
 
-## Preservation boundary
+## Historical redesign preservation boundary
 
 The job-description-analysis changes staged before this redesign are protected.
 The original `styles.css`, job pages, job-analysis panel and every other staged
 path remain byte-for-byte unchanged. The product theme is imported after the
 existing stylesheet. These UI changes stay unstaged, with no backend or API changes.
+
+## Notebook refinement (2026-10-07)
+
+The original boundary above describes the earlier staged-only redesign. The current approved notebook batch adds shared dark tokens, compact/native disclosure controls, settings and recovery/task navigation. Existing scoring and profile-import confirmation remain intact. Clearly labelled sample credits are allowed only in the user-requested demo settings; payment actions remain disabled. Runtime dark tokens are in workspace.css.

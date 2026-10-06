@@ -12,6 +12,8 @@ export class JobAnalysisRoutes {
       if (typeof req.params.id !== 'string' || !/^[a-f0-9]{64}$/.test(req.params.id)) throw new ApiError(400, 'INVALID_INPUT', 'Provide a valid job ID.');
       next();
     });
+    router.get('/jobs/:id/tasks', async (req, res) => { await this.analysis.source(req.params.id as string); res.json(await this.client.tasks(res.locals.user.id, req.params.id as string)); });
+    router.post('/jobs/:id/tasks', throttle, async (req, res) => res.status(202).json(await this.analysis.startTask(res.locals.user.id, req.params.id as string, req.body)));
     router.get('/jobs/:id/analysis', async (req, res) => res.json(await this.analysis.get(res.locals.user.id, req.params.id, AnalysisQueries.id(req.query))));
     router.get('/jobs/:id/analyses', async (req, res) => res.json(await this.analysis.history(res.locals.user.id, req.params.id, AnalysisQueries.before(req.query))));
     router.post('/jobs/:id/analyze', throttle, async (req, res) => {

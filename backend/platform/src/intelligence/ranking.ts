@@ -6,7 +6,7 @@ import { type MatchResult } from './matching.js';
 
 export type RankingInput = {
   resumeId: string; draftId: string; includeProfileSkills: boolean; usePreferences: boolean;
-  filters: { status: string; priority: string };
+  filters: { status: string; priority: string; location?: string; postedFrom?: string; postedTo?: string; applicationStatus?: string; companyHistory?: string };
 };
 export type RankingJob = {
   jobId: string; title: string; company: string; location: string; priority: string; savedAt: string;
@@ -48,7 +48,7 @@ export class SavedJobRanker {
     if ([input.resumeId, input.draftId].some(id => typeof id !== 'string' || !uuid.test(id))
       || typeof input.includeProfileSkills !== 'boolean' || typeof input.usePreferences !== 'boolean'
       || !input.filters || typeof input.filters !== 'object' || Array.isArray(input.filters)
-      || Object.keys(input.filters).sort().join(',') !== 'priority,status'
+      || Object.keys(input.filters).some(key => !['status', 'priority', 'location', 'postedFrom', 'postedTo', 'applicationStatus', 'companyHistory'].includes(key))
       || typeof input.filters.status !== 'string' || typeof input.filters.priority !== 'string') throw bad();
     parseSavedQuery({ ...input.filters, limit: '50' });
     return input;

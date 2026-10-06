@@ -1,3 +1,4 @@
+import { type AnalysisTask } from '../src/intelligence/tasks.js';
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -27,6 +28,14 @@ let beforeReply: (() => Promise<void>) | undefined;
 let waitForAbort: { started: () => void; stopped: () => void } | undefined;
 class JobClient extends IntelligenceClient {
   records = new Map<string, JobAnalysisRecord>();
+  queued = new Map<string, AnalysisTask>();
+  override async startJobTask(owner: string, source: JobSource, _options: { model: string; reasoning: string | null }, requestKey: string) {
+    const key = owner + ':' + requestKey;
+    if (!this.queued.has(key)) this.queued.set(key, { id: randomUUID(), jobId: source.jobId, sourceHash: source.sha256, state: 'queued', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), analysisId: null, errorCode: null });
+    return { taskId: this.queued.get(key)!.id };
+  }
+  override async tasks(owner: string, jobId?: string) { return { tasks: [...this.queued].filter(([key, value]) => key.startsWith(owner + ':') && (!jobId || value.jobId === jobId)).map(([, value]) => value) }; }
+
   constructor() { super({ url: 'http://test.local', token: 'ab'.repeat(32) }); }
   override async analyzeJob(owner: string, source: JobSource, options: { model: string; reasoning: string | null }, signal: AbortSignal) {
     calls++;
@@ -177,4 +186,17 @@ test('browser cancellation aborts upstream generation without saving a partial r
     await Promise.race([cancelled, new Promise((_, reject) => setTimeout(() => reject(new Error('Upstream did not cancel')), 2000))]);
     assert.equal([...intelligence.records.values()].some(item => item.source.jobId === owner.id), false);
   } finally { waitForAbort = undefined; }
+});
+
+test('background submission binds source and owner, deduplicates clicks and keeps task reads private', async () => {
+  const owner = await account(), other = await account(), input = { ...options, requestKey: randomUUID() };
+  assert.equal((await request('', owner.id, 'tasks', input)).status, 401);
+  for (const body of [{ ...options }, { ...input, ownerId: other.user.id }, { ...input, text: 'injected' }]) assert.equal((await request(owner.accessToken, owner.id, 'tasks', body)).status, 400);
+  const first = await request(owner.accessToken, owner.id, 'tasks', input); assert.equal(first.status, 202);
+  const firstId = (await first.json()).taskId;
+  assert.equal((await (await request(owner.accessToken, owner.id, 'tasks', input)).json()).taskId, firstId);
+  assert.equal((await (await request(owner.accessToken, owner.id, 'tasks')).json()).tasks.length, 1);
+  assert.equal((await (await request(other.accessToken, owner.id, 'tasks')).json()).tasks.length, 0);
+  await jobs.jobs.updateOne({ _id: owner.id }, { $set: { expiresAt: new Date(0) } });
+  assert.equal((await request(owner.accessToken, owner.id, 'tasks', { ...input, requestKey: randomUUID() })).status, 409);
 });

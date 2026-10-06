@@ -1,3 +1,4 @@
+import { RecoveryStore } from './recovery/store.js';
 import { SavedJobStore } from './saved-jobs/store.js';
 import { startJobScheduler } from './jobs/scheduler.js';
 import { JobStore } from './jobs/store.js';
@@ -43,7 +44,7 @@ const app = createApp(async () => {
   await careerSources.initialize();
   await notifications.initialize();
   await client.db().command({ ping: 1 }, { timeoutMS: 2000 });
-}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes'), analysisCleanup), { store: jobs, sources: jobSources }, savedJobs, { careerSources, notifications }, intelligence, jobCleanup);
+}, { service, allowedOrigins: config.allowedOrigins, secureCookie: config.secureCookie, oauth: { providers: createOAuthProviders(config.oauth), publicOrigin: config.oauth.publicOrigin } }, new ProfileStore(client.db()), new ResumeStore(client.db(), new LocalResumeStorage(process.env.RESUME_STORAGE_DIR || './data/resumes'), analysisCleanup), { store: jobs, sources: jobSources }, savedJobs, { careerSources, notifications }, intelligence, jobCleanup, new RecoveryStore(client.db()));
 const server = app.listen(config.port, config.host, () => {
   console.info(JSON.stringify({ event: 'server_started', host: config.host, port: config.port }));
 });

@@ -8,9 +8,9 @@ Open `/resumes` from the dashboard or profile. All endpoints below require a JWT
 | `POST /api/v1/resumes?name=resume.pdf` | Raw PDF body with `Content-Type: application/pdf`; returns the updated list, status 201. URL-encode the filename. |
 | `PUT /api/v1/resumes/:id/active` | Selects one owned, available version as active; returns the list. |
 | `GET /api/v1/resumes/:id/download` | Downloads the original bytes as an attachment. |
-| `DELETE /api/v1/resumes/:id` | Deletes the file and metadata; returns the list. |
+| `DELETE /api/v1/resumes/:id` | Moves the version to the recovery bin, retaining bytes/analyses; returns the active list. |
 
-Metadata includes `id`, `name`, `size` in bytes, monotonic `version`, `uploadedAt`, and `active`. A failed deletion also exposes `deleting: true` so the UI can retry cleanup. No filesystem paths are exposed.
+Metadata includes `id`, `name`, `size` in bytes, monotonic `version`, `uploadedAt`, and `active`. Historical interrupted hard deletions may carry `deleting: true`; newly removed versions use recovery markers and are hidden. No filesystem paths are exposed.
 
 PDF only, nonempty, maximum 5 MiB (5,242,880 bytes). Filenames must end in `.pdf`, be at most 200 characters, and contain no path separators/control characters. The API checks the PDF header and end marker; this is basic format validation, not parsing or malware scanning. The download API returns attachments. The View button fetches the same private bytes using JWT authentication and displays a temporary blob URL in an in-page PDF dialog. Closing the dialog or leaving the page releases that URL; unsupported browsers have a download fallback.
 
@@ -20,4 +20,8 @@ Invalid input returns 400, oversize bodies 413, unsupported content types 415, a
 
 Files use the `ResumeStorage` interface with `LocalResumeStorage`. Docker mounts `resume_data` at `/data/resumes`; MongoDB stores metadata in `resume_libraries`. For host development, `RESUME_STORAGE_DIR` defaults to `./data/resumes` relative to the API process working directory (normally `backend/platform`). Keep database and file-volume backups together.
 
-Deletion first marks a version unavailable, then removes bytes and metadata. If storage fails, Delete can be retried. A crash or uncertain database response during upload may leave an unreferenced file; files are deliberately retained to avoid deleting a possibly committed upload. Automated orphan reconciliation, quotas and DOCX support remain deferred. Private text extraction and structured drafts are implemented through the [intelligence gateway](intelligence.md). Deletion queues durable analysis cleanup after marking the source unavailable and before removing bytes/metadata; downstream outages are retried without exposing the deleted source.
+Removal marks a version unavailable immediately and clears its active selection. The default 30-day bin window is configurable for future removals; restoring preserves the original version and requires an explicit active selection. After expiry, data stays stored and only audited support routes can recover it. New removals do not enqueue derived-analysis erasure; historical hard-delete cleanup work remains supported. A crash or uncertain database response during upload may leave an unreferenced file; files are deliberately retained to avoid deleting a possibly committed upload. Automated orphan reconciliation, quotas and DOCX support remain deferred. Private text extraction and structured drafts are implemented through the [intelligence gateway](intelligence.md).
+
+## Current recovery behavior (2026-10-07)
+
+See the [recycle bin contract](../notes-improvements.md#recovery-and-manual-tracking) for owner/support routes and retention settings. Already-erased historical versions cannot be recovered.

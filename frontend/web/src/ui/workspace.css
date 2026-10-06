@@ -451,3 +451,25 @@ blockquote p { margin: 8px 0 0; }
   .saved-ranking > summary span { display: block; margin: 6px 0 0; }
   .ranking-list summary { gap: 8px; padding: 12px; }
 }
+
+/* Compact refinement and shared dark appearance. */
+.compact-details { margin-block: 12px; }
+.compact-details > summary, .feed-group-heading { font-weight: 600; }
+.feed-group-heading { font-size: 16px; margin-block: 24px 12px; }
+.details-tools { display: flex; gap: 8px; margin-block: 12px; flex-wrap: wrap; }
+:root { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; --brand: #9dccad; --brand-deep: #b8dfc5; --brand-soft: #20372b; --canvas: #131b17; --surface: #1c2720; --text: #ecf2ed; --muted: #b1beb5; --border: #3c5142; --control-border: #839b8b; --danger: #ffb4ad; }
+[data-theme='dark'] :is(.panel, dialog, input, textarea, select, .profile-entry, .profile-hero, form[aria-label='Job search'], .job-analysis fieldset, .resume-text-pages pre) { background: var(--surface); color: var(--text); border-color: var(--border); }
+[data-theme='dark'] :is(.workspace-sidebar, .workspace-topbar, .workspace-mobile-navigation) { background: var(--surface); }
+[data-theme='dark'] button { background: var(--brand); color: #13281b; }
+[data-theme='dark'] :is(button.secondary, .button-link, .profile-edit-link) { background: var(--surface); color: var(--brand); border-color: var(--control-border); }
+[data-theme='dark'] :is(.profile-tags li, .workspace-badge, .workspace-card-icon, blockquote, .job-analysis thead, .workspace-account-avatar, .profile-avatar) { background: var(--brand-soft); color: var(--text); border-color: var(--border); }
+[data-theme='dark'] :is(.workspace-sidebar-note, .workspace-sidebar a.active, .workspace-mobile-navigation a.active) { background: var(--brand-soft); color: var(--text); }
+[data-theme='dark'] :is(.workspace-account, .workspace-breadcrumb strong, summary, label, h1, h2, h3, h4) { color: var(--text); }
+[data-theme='dark'] :is(.resume-actions button:last-child, .career-source-card > .actions button:last-child, .saved-job-card form .actions button:last-child) { background: #342320; color: var(--danger); border-color: #a66c62; }
+[data-theme='dark'] :is(.form-error, .down) { color: var(--danger); }
+[data-theme='dark'] .up { color: #a3dfb7; }
+[data-theme='dark'] .checking { color: #edce8a; }
+
+.workspace-card-heading.compact-card-heading { grid-template-columns: minmax(0, 1fr) auto; }
+.compact-card-heading > h2 { margin: 0; }

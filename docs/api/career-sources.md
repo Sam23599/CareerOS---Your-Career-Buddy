@@ -24,11 +24,12 @@ Google uses shared source ID `google-careers` and marks jobs with `metadata.cove
 | `GET /detect?url=...` | Authenticated, read-only URL recognition: `{ provider, providerName, sourceId, careerUrl, coverage, canRefresh, message }`. Makes no external requests. Invalid/repeated URLs return 400. |
 | `POST /` | Create a bookmark or job source with explicit `kind`; 201 `{ source }`. Duplicate owner/URL pairs and job-source connections return 409. |
 | `PATCH /:id` | Replace settings with explicit `kind` and current `revision`; `{ source }`. Also supports enabling job tracking on a bookmark. Stale revisions return 409. |
-| `DELETE /:id` | Remove only the owner's source; idempotent 204. Imported public jobs and existing notifications remain. |
+| `DELETE /:id` | Move only the owner's source/bookmark to the recovery bin; idempotent 204. Imported public jobs and existing notifications remain. |
 | `POST /:id/refresh` | Optional `{ filters: { keywords, locations } }`; `{ source, cached, failed, temporary, filters, matchingCount }`. Without filter overrides, checks the saved filters. Bookmarks and unsupported/paused sources return 400; an overlapping check or provider import returns 409. |
-| `GET /:id/jobs` | Owner-only matches; `{ source, filters, temporary, jobs, total, page, limit }`. Optional `keywords`/`locations` query parameters are JSON arrays for temporary matching. Bookmarks and unsupported sources return 400. |
+| `GET /:id/jobs` | Owner-only matches; `{ source, filters, temporary, jobs, total, newTotal, page, limit, since, visitedAt }`. Optional `keywords`/`locations` are JSON arrays; `q`/`location` refine results, `sort` chooses newest/oldest/title/posted, and `since` pins the visit boundary. Each job includes `isNew`. Bookmarks and unsupported sources return 400. |
+| `POST /:id/view` | Acknowledge the server-issued `visitedAt` after results display; monotonically updates that owner's source view marker. |
 
-Lists use `page` 1–1000 and `limit` 1–50 (default 20). Sources sort newest first with an ID tie-breaker; matching jobs sort by import update time and ID. Unknown/unowned sources return 404 on reads/edits/checks. JSON is required for creation/edits. Unknown fields and user-supplied ownership fail validation.
+Lists use `page` 1–1000 and `limit` 1–50 (default 20). Sources sort newest first with an ID tie-breaker; matching jobs put New before Earlier, then the chosen order and stable ID. New uses immutable discovery time against the previous view, not every import; first visit treats all matches as new. Unknown/unowned/trashed sources return 404 on reads/edits/checks. JSON is required for creation/edits. Unknown fields and user-supplied ownership fail validation.
 
 Create/edit job-source settings:
 
@@ -56,7 +57,7 @@ Create/edit bookmark settings:
 
 Edits also require the last returned UUID `revision`. Company labels allow 200 characters; HTTPS URLs allow 2048 characters without embedded credentials. Job sources require native support and all tracking settings; each keyword/location list allows 30 trimmed values of up to 100 characters, and `scanHours` is `0` (manual), `4`, `12`, or `24`. Bookmark requests reject tracking fields and store `enabled: false`, `scanHours: 0`; existing legacy filters are retained internally on edits for future tracking setup. Bookmark URLs keep their original query rather than being canonicalized to a provider root. Enabling tracking requires a full `kind: "job-source"` edit; the UI starts with manual frequency and Enabled checked. Tracking transitions preserve the ID/creation date and clear prior check summaries, leases and pending notices. Filter changes invalidate the previous check summary. Revisions protect concurrent edits and prevent an old in-progress check from applying results to new settings.
 
-Matches are case-insensitive literal substrings: **any keyword** in title/description/skills AND **any location** in the supplied location name. Empty groups impose no restriction. Matching uses saved filters unless temporary overrides are supplied; it does not use the profile, resume, AI, or inferred work mode. Greenhouse does not reliably provide posted dates, employment type, work mode, or skills through this listing contract; unavailable fields stay null/unknown/empty.
+Matches are case-insensitive literal substrings: **any keyword** in title/description/skills AND **any location** in the supplied location name. Empty groups impose no restriction. Matching uses saved filters unless temporary overrides are supplied; it does not use the profile, resume, AI, or inferred work mode. Greenhouse does not reliably provide posted dates, employment type, work mode, or skills through this listing contract. The shared catalogue normalizer now derives unambiguous missing metadata from listing text with provenance; unresolved facts stay null/unknown/empty. See [notebook changes](../notes-improvements.md).
 
 ### Optional filters for Check now
 

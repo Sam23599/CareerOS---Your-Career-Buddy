@@ -1,3 +1,4 @@
+import { type AnalysisTask } from '../../../../backend/platform/src/intelligence/tasks';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { authenticatedRequest, RequestError, useSession } from '../auth/session';
@@ -29,6 +30,8 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
   const [reasoning, setReasoning] = useState<string | null>('medium');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [task, setTask] = useState<AnalysisTask | null>(null);
+  const pending = task?.state === 'queued' || task?.state === 'running';
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [viewedAt] = useState(Date.now);
@@ -44,10 +47,11 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
         throw cause;
       }),
       authenticatedRequest<History>(`${base}/analyses`, options),
-    ]).then(([settings, record, versions]) => {
+      authenticatedRequest<{ tasks: AnalysisTask[] }>(`${base}/tasks`, options),
+    ]).then(([settings, record, versions, tasks]) => {
       if (controller.signal.aborted) return;
       setCapabilities(settings); setModel(settings.defaultModel); setReasoning(settings.defaultReasoning);
-      setSaved(record); setHistory(versions);
+      setSaved(record); setHistory(versions); setTask(tasks.tasks.find(item => ['queued', 'running'].includes(item.state)) ?? null);
     }).catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Could not load job analysis.'); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => { controller.abort(); active.current?.abort(); };
@@ -59,14 +63,41 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
     catch (cause) { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Job analysis could not be completed.'); }
     finally { if (!controller.signal.aborted) setBusy(false); }
   }
+  useEffect(() => {
+    if (!pending || !task) return;
+    const controller = new AbortController();
+    let reading = false;
+    const timer = setInterval(() => {
+      if (reading) return;
+      reading = true;
+      void authenticatedRequest<{ tasks: AnalysisTask[] }>(`${base}/tasks`, { signal: controller.signal }).then(async result => {
+        if (controller.signal.aborted) return;
+        const current = result.tasks.find(item => item.id === task.id);
+        if (!current) return;
+        if (current.state === 'succeeded' && current.analysisId) {
+          const [record, versions] = await Promise.all([
+            authenticatedRequest<SavedAnalysis>(`${base}/analysis?analysisId=${current.analysisId}`, { signal: controller.signal }),
+            authenticatedRequest<History>(`${base}/analyses`, { signal: controller.signal }),
+          ]);
+          if (!controller.signal.aborted) { setSaved(record); setHistory(versions); onSaved?.(); }
+        }
+        if (!controller.signal.aborted) { setTask(current); if (current.state === 'failed') setError(`Analysis could not finish (${current.errorCode ?? 'unknown'}). Check task history for diagnostics.`); }
+      }).catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Could not check task.'); }).finally(() => { reading = false; });
+    }, 2000);
+    return () => { clearInterval(timer); controller.abort(); };
+  }, [pending, task, base, onSaved]);
   function analyze() {
     void run(async signal => {
-      const result = await authenticatedRequest<SavedAnalysis>(`${base}/analyze`, { method: 'POST', body: JSON.stringify({ model, reasoning }), signal });
+      const result = await authenticatedRequest<{ taskId: string }>(`${base}/tasks`, { method: 'POST', body: JSON.stringify({ model, reasoning, requestKey: crypto.randomUUID() }), signal });
+      const history = await authenticatedRequest<{ tasks: AnalysisTask[] }>(`${base}/tasks`, { signal });
       if (signal.aborted) return;
-      setSaved(result);
-      onSaved?.();
-      const { id, version, createdAt, source } = result.analysis;
-      setHistory(current => ({ ...current, versions: [{ id, version, model: result.analysis.model, reasoning: result.analysis.reasoning, createdAt, sourceHash: source.sha256, stale: false }, ...current.versions.filter(item => item.id !== id)] }));
+      const current = history.tasks.find(item => item.id === result.taskId) ?? null;
+      setTask(current);
+      if (current?.state === 'succeeded' && current.analysisId) {
+        const record = await authenticatedRequest<SavedAnalysis>(`${base}/analysis?analysisId=${current.analysisId}`, { signal });
+        const versions = await authenticatedRequest<History>(`${base}/analyses`, { signal });
+        if (!signal.aborted) { setSaved(record); setHistory(versions); onSaved?.(); }
+      } else if (current?.state === 'failed') setError(`Analysis could not finish (${current.errorCode ?? 'unknown'}). Check task history for diagnostics.`);
     });
   }
   function openVersion(id: string) {
@@ -91,11 +122,12 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
   ] : [];
   const wordingDiffers = comparisons.some(item => item.listing && item.extracted && item.listing.trim().toLowerCase() !== item.extracted.trim().toLowerCase());
   return <section id="job-analysis" className="panel profile-section job-analysis" aria-label="Job analysis"><h2>Job analysis</h2>
-    <p>Analyze job sends this listing’s text to OpenAI and incurs provider charges. Each successful click saves a new version. Saved versions open without another AI call.</p>
+    <p>Analyze job sends this listing’s text to OpenAI and incurs provider charges. Accepted tasks continue in the background and save a new version when successful. Saved versions open without another AI call.</p>
+    {task && <p role="status">Task: {task.state}. {pending && 'You can leave this page; analysis will continue.'} <Link to="/tasks">Task history</Link></p>}
     {loading && <p role="status">Loading saved analysis…</p>}
     {error && <p className="form-error" role="alert">{error}</p>}
     {!loading && !capabilities && <button onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1); }}>Retry loading analysis</button>}
-    {capabilities && <fieldset disabled={busy}><legend>Job analysis settings</legend><div className="profile-grid">
+    {capabilities && <fieldset disabled={busy || pending}><legend>Job analysis settings</legend><div className="profile-grid">
       <label>AI model<select value={model} onChange={event => {
         setModel(event.target.value);
         setReasoning(capabilities.models.find(item => item.id === event.target.value)?.reasoningOptions.includes('medium') ? 'medium' : null);
@@ -106,9 +138,9 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
       {!job.description.trim() && <p className="muted">This listing has no description to analyze. Check the original listing.</p>}
       <button disabled={!capabilities.available || expired || saved?.sourceStatus.expired || !job.description.trim()} onClick={analyze}>{record ? 'Analyze job again' : 'Analyze job'}</button>
     </fieldset>}
-    {busy && <><p role="status">Working… Analysis may take up to 90 seconds.</p><button className="secondary" onClick={() => { active.current?.abort(); setBusy(false); }}>Cancel processing</button></>}
+    {busy && <><p role="status">Submitting or loading analysis…</p><button className="secondary" onClick={() => { active.current?.abort(); setBusy(false); setError('Stopped waiting. An accepted task may still continue; check task history before retrying.'); }}>Stop waiting</button></>}
     {record && <>
-      <fieldset disabled={busy}><legend>Saved job analyses</legend><label>Saved analysis version<select value={record.id} onChange={event => openVersion(event.target.value)}>
+      <fieldset disabled={busy || pending}><legend>Saved job analyses</legend><label>Saved analysis version<select value={record.id} onChange={event => openVersion(event.target.value)}>
         {[...(history.versions.some(item => item.id === record.id) ? [] : [{ ...record, stale: saved!.sourceStatus.stale }]), ...history.versions].map(item =>
           <option key={item.id} value={item.id}>Version {item.version} · {item.model}{item.reasoning ? ` · ${item.reasoning}` : ''} · {new Date(item.createdAt).toLocaleString()}{item.stale ? ' · Listing changed' : ''}</option>)}
       </select></label>{history.nextBeforeVersion !== null && <button className="secondary" onClick={loadOlder}>Load older analyses</button>}</fieldset>
@@ -121,9 +153,10 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
       </table>
       {(record.analysis.warnings as JobWarning[]).map((warning, index) => <div className="extraction-warning" key={index}><p>{warning.message}</p><details><summary>Warning evidence</summary><Evidence items={warning.evidence} /></details></div>)}
       <p className="muted">Required/preferred labels use explicit English wording or headings. Unspecified means the priority could not be established. These results do not change the original listing or your profile.</p>
-      {Object.entries(record.analysis).filter(([key]) => key !== 'warnings').map(([key, value]) => <section key={key}><h3>{label(key)}</h3>
+      <div className="details-tools">{[true, false].map(open => <button type="button" className="secondary" key={String(open)} onClick={event => event.currentTarget.closest('.job-analysis')?.querySelectorAll<HTMLDetailsElement>('[data-analysis-section]').forEach(section => { section.open = open; })}>{open ? 'Expand all' : 'Collapse all'}</button>)}</div>
+      {Object.entries(record.analysis).filter(([key]) => key !== 'warnings').map(([key, value]) => <details data-analysis-section className="compact-details" key={key}><summary>{label(key)}{Array.isArray(value) ? ` (${value.length})` : ''}</summary>
         {Array.isArray(value) ? value.length ? (value as JobFact[]).map((item, index) => <Fact key={index} item={item} />) : <p className="muted">Not stated</p> : <Fact item={value as JobFact} />}
-      </section>)}
+      </details>)}
     </>}
   </section>;
 }

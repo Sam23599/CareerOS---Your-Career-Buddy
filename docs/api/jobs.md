@@ -8,9 +8,9 @@
 - `GET /api/v1/jobs/sources`: `{ sources }`, the distinct active catalog source IDs used by the search dropdown. Includes imported Greenhouse boards and `google-careers` without any user's private settings.
 - `GET /api/v1/jobs/:id`: `{ job }`; unknown IDs return 404.
 
-Filters: `q` (title, company, description or skills), `location`, `company`, `skill`, `source`, `employmentType`, `remoteType`, `page` (1–1000), `limit` (1–50; default 20). Text filters are case-insensitive literal substrings, not regular expressions. `source` is an exact source identifier. Text inputs allow 100 characters. Repeated values and invalid pagination/enums return 400.
+Filters: `q` (title, company, description or skills), `location`, `company`, `skill` (tags or description keyword), `source`, `employmentType`, `remoteType`, `page` (1–1000), `limit` (1–50; default 20). Text filters are case-insensitive literal substrings, not regular expressions. `source` is an exact source identifier. Text inputs allow 100 characters. Repeated values and invalid pagination/enums return 400.
 
-Employment types: `FULL_TIME`, `PART_TIME`, `CONTRACT`, `INTERNSHIP`, `TEMPORARY`, `OTHER`, `UNKNOWN`. Work modes: `REMOTE`, `HYBRID`, `ONSITE`, `UNKNOWN`. Missing values remain unknown/empty instead of being inferred. Remote location restrictions are displayed verbatim.
+Employment types: `FULL_TIME`, `PART_TIME`, `CONTRACT`, `INTERNSHIP`, `TEMPORARY`, `OTHER`, `UNKNOWN`. Work modes: `REMOTE`, `HYBRID`, `ONSITE`, `UNKNOWN`. Missing fields are conservatively extracted from unambiguous listing text; inferred fields are labelled and ambiguous values stay UNKNOWN. Explicit provider fields win. Remote location restrictions are displayed verbatim.
 
 Results exclude explicitly expired jobs and sort by posted date descending, then stable ID. Detail pages remain available for expired records with an expiry notice. Missing expiry is not a guarantee that a vacancy remains open. Remotive does not supply expiry dates; check the original listing.
 
@@ -39,3 +39,5 @@ Google jobs carry `metadata.coverage: "limited"`: imports read the first 20 unfi
 `job_ingestion_runs` records the source status, timestamps, imported count and next allowed refresh; `jobs` stores normalized records. The fixture adapter exists for tests and explicit demos only. Remotive refresh is admin/CLI/scheduler controlled. Users can manage and check their own [career sources](career-sources.md). Manual editing/deletion of provider-owned jobs is not exposed.
 
 Provider contract: [Remotive API documentation](https://github.com/remotive-com/remote-jobs-api) and [source terms](https://remotive.com/remote-jobs/api). Listings are delayed 24 hours; attribution, original links, and ungated listing access are retained. Do not redistribute this feed to third-party job boards.
+
+See [notebook improvements](../notes-improvements.md) for metadata provenance, source browsing and published-contact handling.

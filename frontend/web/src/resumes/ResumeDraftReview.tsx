@@ -187,11 +187,12 @@ export function ResumeDraftReview({ resume, onClose }: { resume: { id: string; n
       <p className="muted">Review edits are kept in this dialog until applied. The saved source draft and PDF remain available when you reopen.</p>
       <form onSubmit={(event: FormEvent) => { event.preventDefault(); setError(''); setPreview(true); }}>
         <fieldset disabled={busy}>
+          <div className="details-tools">{[true, false].map(open => <button type="button" className="secondary" key={String(open)} onClick={event => event.currentTarget.closest('.draft-review')?.querySelectorAll<HTMLDetailsElement>('[data-analysis-section]').forEach(section => { section.open = open; })}>{open ? 'Expand all fields' : 'Collapse all fields'}</button>)}</div>
           {supportedFields.map(key => <section className="draft-field" key={key}>
             <label className="check-label"><input type="checkbox" checked={selected.includes(key)} onChange={event => {
               setSelected(current => event.target.checked ? [...current, key] : current.filter(item => item !== key)); setPreview(false);
             }} />Apply {fieldLabels[key]}</label>
-            {selected.includes(key) && <>
+            {selected.includes(key) && <details data-analysis-section className="compact-details"><summary>Edit {fieldLabels[key]}</summary>
               {key === 'summary' ? <label>Professional summary<textarea rows={5} maxLength={5000} value={values.summary} onChange={event => change({ summary: event.target.value })} /></label>
                 : ['fullName', 'headline', 'location', 'phone'].includes(key) ? <label>{fieldLabels[key]}<input required={key === 'fullName'} maxLength={key === 'fullName' ? 100 : key === 'phone' ? 40 : 200} value={values[key] as string} onChange={event => change({ [key]: event.target.value })} /></label>
                   : key === 'skills' ? <TagsInput key={`skills-${record.id}`} label="Skills to save" values={values.skills} onChange={skills => change({ skills })} />
@@ -203,7 +204,7 @@ export function ResumeDraftReview({ resume, onClose }: { resume: { id: string; n
                           fields={[{ key: 'name', label: 'Certification name', required: true, maxLength: 200 }, { key: 'issuer', label: 'Issuer', maxLength: 200 }, { key: 'issuedDate', label: 'Issue date', type: 'month' }, { key: 'url', label: 'Credential URL', type: 'url', maxLength: 2048 }]} />
                           : key === 'links' ? <Entries label="Professional link" max={20} items={values.links} onChange={links => change({ links })} create={() => ({ label: '', url: '' })}
                             fields={[{ key: 'label', label: 'Link label', required: true, maxLength: 100 }, { key: 'url', label: 'Profile URL', type: 'url', required: true, maxLength: 2048 }]} /> : null}
-            </>}
+            </details>}
           </section>)}
           <button disabled={!selected.length || conflict}>Preview selected changes</button>
           {conflict && <button type="button" className="secondary" onClick={() => void reloadProfile()}>Reload latest profile</button>}

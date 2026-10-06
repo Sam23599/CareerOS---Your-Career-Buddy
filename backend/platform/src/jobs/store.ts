@@ -1,3 +1,4 @@
+import { JobMetadataNormalizer } from './normalizer.js';
 import { createHash } from 'node:crypto';
 import { type Db, type Filter, MongoServerError } from 'mongodb';
 import { ApiError } from '../errors.js';
@@ -23,6 +24,11 @@ export class JobStore {
   private async createIndexes() {
     await this.jobs.createIndex({ source: 1, sourceId: 1 }, { unique: true });
     await this.jobs.createIndex({ postedAt: -1, _id: 1 });
+    const normalizer = new JobMetadataNormalizer();
+    for await (const job of this.jobs.find({ 'metadata.normalizationVersion': { $ne: JobMetadataNormalizer.version } })) {
+      const normalized = normalizer.normalize(job);
+      await this.jobs.updateOne({ _id: job._id, updatedAt: job.updatedAt }, { $set: { skills: normalized.skills, employmentType: normalized.employmentType, remoteType: normalized.remoteType, metadata: normalized.metadata } });
+    }
   }
   async refreshState(source: string) { const run = await this.runs.findOne({ _id: source }); return run ? { status: run.status, finishedAt: run.finishedAt ?? null } : null; }
   async sources() { return (await this.jobs.distinct('source', { $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] })).sort(); }
@@ -42,7 +48,7 @@ export class JobStore {
       throw error;
     }
     try {
-      const incoming = await source.fetchJobs();
+      const incoming = (await source.fetchJobs()).map(raw => { validateJob(raw); return new JobMetadataNormalizer().normalize(raw); });
       const seen = new Set<string>();
       for (const job of incoming) { validateJob(job); if (seen.has(job.sourceId)) throw new Error('Duplicate source IDs.'); seen.add(job.sourceId); }
       if (incoming.length) await this.jobs.bulkWrite(incoming.map(job => ({ updateOne: {
@@ -59,11 +65,12 @@ export class JobStore {
     }
   }
   async list(query: ReturnType<typeof parseSearch>) {
+    await this.initialize();
     const filter: Filter<Job> = { $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] };
     const literal = (value: string) => ({ $regex: value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' });
     if (query.q) filter.$and = [{ $or: ['title', 'company', 'description', 'skills'].map(key => ({ [key]: literal(query.q) })) }];
     for (const key of ['location', 'company'] as const) if (query[key]) filter[key] = literal(query[key]);
-    if (query.skill) filter.skills = literal(query.skill);
+    if (query.skill) (filter.$and ??= []).push({ $or: [{ skills: literal(query.skill) }, { description: literal(query.skill) }] });
     if (query.source) filter.source = query.source;
     if (query.employmentType) filter.employmentType = query.employmentType as Job['employmentType'];
     if (query.remoteType) filter.remoteType = query.remoteType as Job['remoteType'];

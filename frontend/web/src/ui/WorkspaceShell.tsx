@@ -12,6 +12,9 @@ const destinations: { to: string; label: string; icon: IconName; end?: boolean }
   { to: '/resumes', label: 'Documents', icon: 'resume' },
   { to: '/career-sources', label: 'Company feeds', icon: 'sources' },
   { to: '/notifications', label: 'Activity', icon: 'bell' },
+  { to: '/settings', label: 'Settings', icon: 'settings' },
+  { to: '/recycle-bin', label: 'Recycle bin', icon: 'bookmark' },
+  { to: '/tasks', label: 'Task history', icon: 'bell' },
   { to: '/profile', label: 'Career profile', icon: 'profile' },
 ];
 

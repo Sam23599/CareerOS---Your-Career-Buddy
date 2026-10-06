@@ -24,6 +24,8 @@ import { SavedJobRankingRoutes } from './ranking-routes.js';
 export function intelligenceRouter(auth: AuthService, resumes: ResumeStore | undefined, client: IntelligenceClient, profiles?: ProfileStore, jobs?: JobStore, cleanup?: JobAnalysisCleanup, saved?: SavedJobStore) {
   const router = Router();
   router.use(authenticate(auth), requireRoles('USER', 'ADMIN'));
+  router.get('/tasks', async (_req, res) => res.json(await client.tasks(res.locals.user.id)));
+  router.post('/tasks/:id/cancel', async (req, res) => res.json(await client.cancelTask(res.locals.user.id, req.params.id)));
   router.get('/status', async (_req, res) => res.json(await client.status()));
   router.get('/capabilities', async (_req, res) => res.json(await client.capabilities()));
   const throttle = rateLimit({

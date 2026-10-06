@@ -81,7 +81,7 @@ An analysis record needs owner ID, resume ID/version/content hash, extractor/mod
 
 Applying a draft reuses existing profile validation and revision checks through an owner/source-checked draft-import endpoint. The user selects fields to import, sees changes and confirms them. Do not overwrite a manually edited profile or create unsupported fields silently. Projects can remain in the analysis draft until the profile schema explicitly supports them.
 
-Source deletion suppresses access immediately and writes a durable MongoDB cleanup item. Node retries Python deletion every 30 seconds while running; PostgreSQL tombstones prevent late writes. Stale source/draft/profile versions are rejected. Any reuse of results must include owner, content hash and analyzer version; matching also includes profile version and job-content version.
+Source removal suppresses access immediately. The approved notebook batch now retains resumes and derived records in a default 30-day recovery window, then a support-only retained archive. Historical hard deletions still use the durable MongoDB cleanup outbox and PostgreSQL tombstones. Stale source/draft/profile versions are rejected. Any reuse of results must include owner, content hash and analyzer version; matching also includes profile version and job-content version.
 
 ## Decisions needed later
 
@@ -91,6 +91,6 @@ Source deletion suppresses access immediately and writes a durable MongoDB clean
 | Rules versus model extraction | Batch 2 settled | LLM creates rich typed drafts; deterministic source-quote/value verification and explicit user review guard profile imports |
 | OCR and DOCX | After text-PDF extraction works | Separate extension; no promise of scanned-document support in batch 1 |
 | Matching formula and ranking weights | Batches 4 and 6 saved-job baseline settled | Required/unspecified/preferred skill weights 3/2/1; coverage leads ranking, explicit preferences then saved priority/date break ties; other requirements reviewed; no hiring probability or employer ATS claim |
-| Analysis retention and deletion | Batch 2 settled | Owner-scoped PostgreSQL records tied to source lifetime; durable Node cleanup outbox; minimal deletion tombstones |
+| Analysis retention and deletion | Notebook follow-up settled | Owner-scoped records; recoverable source removal and support-only recovery after bin expiry; historical hard-deletion outbox/tombstones retained |
 
-Google live sign-in and the UI/source/filter requests in [project notes](project-notes.md) remain separately prioritized work. Application tracking remains Phase 3, community Phase 5 and production deployment Phase 7. This extraction batch does not implement those requests.
+The approved UI/source/filter/recovery/task-history requests have an implemented [notebook batch](notes-improvements.md). Google live sign-in verification and supported native LinkedIn/contact/review access remain pending prerequisites. Saved jobs now include manual application progress/history as a small foundation; the full application workflow remains Phase 3, community Phase 5 and production deployment Phase 7. Personalized AI preparation remains deferred.

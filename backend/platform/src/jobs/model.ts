@@ -3,7 +3,7 @@ export const remoteTypes = ['REMOTE', 'HYBRID', 'ONSITE', 'UNKNOWN'] as const;
 export type JobInput = {
   sourceId: string; title: string; company: string; description: string; location: string;
   employmentType: typeof employmentTypes[number]; remoteType: typeof remoteTypes[number]; skills: string[];
-  sourceUrl: string; postedAt: Date | null; expiresAt: Date | null; metadata: { category?: string; salary?: string; coverage?: 'limited' };
+  sourceUrl: string; postedAt: Date | null; expiresAt: Date | null; metadata: { category?: string; salary?: string; coverage?: 'limited'; normalizationVersion?: number; inferredFields?: string[]; contactEmails?: string[] };
 };
 export type Job = JobInput & { _id: string; source: string; createdAt: Date; updatedAt: Date };
 export interface JobSource { id: string; name: string; cooldownMs: number; reconcileMissing?: boolean; fetchJobs(): Promise<JobInput[]> }

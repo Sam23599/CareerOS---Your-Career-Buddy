@@ -11,7 +11,7 @@ const reasons: Record<DeferredJob['reason'], string> = {
   not_interested: 'Marked not interested', no_scorable_skills: 'No clear skills to score — review manually',
 };
 
-function RankingControls({ filters, canLeave }: { filters: { status: string; priority: string }; canLeave: () => boolean }) {
+function RankingControls({ filters, canLeave }: { filters: { status: string; priority: string; location?: string; postedFrom?: string; postedTo?: string; applicationStatus?: string; companyHistory?: string }; canLeave: () => boolean }) {
   const [resumes, setResumes] = useState<Resume[] | null>(null);
   const [resumeId, setResumeId] = useState('');
   const [history, setHistory] = useState<DraftHistory | null>(null);
@@ -61,8 +61,8 @@ function RankingControls({ filters, canLeave }: { filters: { status: string; pri
   }
   const jobLink = (job: { jobId: string; title: string }) => <Link to={`/jobs/${job.jobId}`} onClick={event => { if (!canLeave()) event.preventDefault(); }}>{job.title}</Link>;
   return <>
-    <p className="muted">Skill coverage comes first. Matching role, location and work-mode preferences break ties, followed by saved priority and date. Uses saved analyses; no new AI call.</p>
-    <p className="muted">Ranks all jobs matching the applied filters, across pages (up to 50). Not-interested jobs stay outside the ranking.</p>
+    <p className="muted">Compare your shortlist with a saved CV analysis. No new AI call.</p>
+    <details className="compact-details"><summary>How ranking works</summary><p>Skill coverage first; your preferences, priority and saved date break ties. All filtered pages are included, up to 50 jobs. Not-interested jobs are excluded. This is not a hiring probability or an employer ATS score.</p></details>
     {error && <p ref={errorFocus} tabIndex={-1} role="alert" className="form-error">{error}</p>}
     {!resumes && !error && <p role="status">Loading resumes…</p>}
     {resumes?.length === 0 && <p>Upload and analyze a CV first. <Link to="/resumes" onClick={event => { if (!canLeave()) event.preventDefault(); }}>Open resumes</Link></p>}
@@ -78,8 +78,8 @@ function RankingControls({ filters, canLeave }: { filters: { status: string; pri
       </div>
       {history?.versions.length === 0 && <p>Analyze this resume before ranking. <Link to="/resumes" onClick={event => { if (!canLeave()) event.preventDefault(); }}>Open resumes</Link></p>}
       <div className="ranking-options">
-        <label className="checkbox-label"><input type="checkbox" checked={usePreferences} onChange={event => { clear(); setUsePreferences(event.target.checked); }} />Use my saved role, location and work-mode preferences</label>
-        <label className="checkbox-label"><input type="checkbox" checked={includeProfileSkills} onChange={event => { clear(); setIncludeProfileSkills(event.target.checked); }} />Include my saved profile skills</label>
+        <label className="checkbox-label"><input type="checkbox" checked={usePreferences} onChange={event => { clear(); setUsePreferences(event.target.checked); }} />Use profile preferences</label>
+        <label className="checkbox-label"><input type="checkbox" checked={includeProfileSkills} onChange={event => { clear(); setIncludeProfileSkills(event.target.checked); }} />Include profile skills</label>
       </div>
       <div className="actions"><button disabled={!draftId}>Rank saved jobs</button>
         {history?.nextBeforeVersion !== null && history?.nextBeforeVersion !== undefined && <button type="button" className="secondary" onClick={() => void run(async signal => {
@@ -96,7 +96,7 @@ function RankingControls({ filters, canLeave }: { filters: { status: string; pri
     {result && <section className="ranking-report" aria-label="Saved-job ranking results">
       <p role="status">{result.ranked.length} ranked · {result.unranked.length} need attention or are excluded</p>
       <p className="muted">CV analysis v{result.source.draftVersion}{result.source.profileVersion !== null ? ` · Profile v${result.source.profileVersion}` : ''} · {new Date(result.createdAt).toLocaleString()}. Results are a snapshot; rank again after changing inputs.</p>
-      <p className="muted">This measures stated skills, not hiring likelihood. Salary, experience, eligibility and other requirements still need review. Preference matches use literal phrases.</p>
+      <details className="compact-details"><summary>Score limits</summary><p className="muted">This measures stated skills, not hiring likelihood. Salary, experience, eligibility and other requirements still need review. Preference matches use literal phrases.</p></details>
       {!result.ranked.length && <p>No jobs can be ranked yet. Review the actions below.</p>}
       <ol className="ranking-list">{(showAll ? result.ranked : result.ranked.slice(0, 5)).map(job => <li key={job.jobId}>
         <details><summary><span className="ranking-number">{job.rank}</span><span className="ranking-title">{job.title}<small>{job.company} · {job.location || 'Location not specified'}</small></span><strong>{job.score}%<small>skill coverage</small></strong></summary>
@@ -117,7 +117,7 @@ function RankingControls({ filters, canLeave }: { filters: { status: string; pri
   </>;
 }
 
-export function SavedJobRanking({ filters, revision, canLeave }: { filters: { status: string; priority: string }; revision: number; canLeave: () => boolean }) {
+export function SavedJobRanking({ filters, revision, canLeave }: { filters: { status: string; priority: string; location?: string; postedFrom?: string; postedTo?: string; applicationStatus?: string; companyHistory?: string }; revision: number; canLeave: () => boolean }) {
   const [open, setOpen] = useState(false);
   return <details className="panel profile-section saved-ranking" onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>Rank your shortlist <span className="muted">Choose a CV and see what fits</span></summary>
