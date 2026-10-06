@@ -11,6 +11,10 @@ Batch 2, 2026-10-03. See [ADR-011](adr/011-structured-resume-drafts.md) and the 
 5. Inspect **All extracted details and source evidence** and parser warnings. Choose fields, correct suggestions/dates, preview the changes and confirm. Existing list entries are included. A profile conflict retains edits and asks you to reload and compare again.
 6. Each successful analysis saves **Version 1, Version 2, …** for that uploaded resume. Use **Saved draft version** to reopen earlier results; **Load older versions** retrieves history beyond the newest twenty. Reopening makes no AI call. Switching versions asks before discarding selected review edits.
 
+Batch 5 adds **Check resume** beside the library actions, using a selected saved
+analysis without a new AI call. See [resume checks and job preparation](resume-checks.md)
+for compact findings, PDF warnings, job terminology and prioritized evidence gaps.
+
 Generated drafts are saved; review edits remain in the dialog until applied. Profiles currently support full name, headline, summary, location, phone, skills, experience, education, certifications and links. Email/projects/languages/other details remain in the draft. The PDF stays authoritative. Year-only dates are visible in the evidence but cannot import into month-based profile fields without your correction. Lists over profile limits and invalid/incomplete rows must be corrected; content is never silently shortened to pass validation.
 
 Remove the temporary key from `.env` and recreate intelligence when done. New generation becomes unavailable; saved drafts still open. Core authentication/profile/job/resume functionality and Node readiness do not depend on the AI provider or analysis database.

@@ -1,6 +1,7 @@
 import { ResumePreview } from './ResumePreview';
 import { ResumeTextPreview } from './ResumeTextPreview';
 import { ResumeDraftReview } from './ResumeDraftReview';
+import { ResumeChecks } from './ResumeChecks';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
@@ -12,6 +13,7 @@ export function ResumesPage() {
   const [preview, setPreview] = useState<Resume | null>(null);
   const [textPreview, setTextPreview] = useState<Resume | null>(null);
   const [draftReview, setDraftReview] = useState<Resume | null>(null);
+  const [checks, setChecks] = useState<Resume | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,7 @@ export function ResumesPage() {
         <button className="secondary" disabled={busy || loading || resume.deleting} onClick={() => setPreview(resume)}>View</button>
         <button className="secondary" disabled={busy || loading || resume.deleting} onClick={() => setTextPreview(resume)}>Extract text</button>
         <button className="secondary" disabled={busy || loading || resume.deleting} onClick={() => setDraftReview(resume)}>Resume draft</button>
+        <button className="secondary" disabled={busy || loading || resume.deleting} onClick={() => setChecks(resume)}>Check resume</button>
         <button disabled={busy || loading || resume.deleting} onClick={() => void action(async () => {
           const blob = await authenticatedRequest<Blob>(`/resumes/${resume.id}/download`, {}, true);
           const url = URL.createObjectURL(blob); const link = document.createElement('a');
@@ -81,5 +84,6 @@ export function ResumesPage() {
     {preview && <ResumePreview key={preview.id} resume={preview} onClose={() => setPreview(null)} />}
     {textPreview && <ResumeTextPreview key={textPreview.id} resume={textPreview} onClose={() => setTextPreview(null)} />}
     {draftReview && <ResumeDraftReview key={draftReview.id} resume={draftReview} onClose={() => setDraftReview(null)} />}
+    {checks && <ResumeChecks key={checks.id} resume={checks} onClose={() => setChecks(null)} onAnalyze={() => { setDraftReview(checks); setChecks(null); }} />}
   </div>;
 }

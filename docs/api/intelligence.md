@@ -184,3 +184,65 @@ repositories and rejects changed inputs. It receives no user JWT, MongoDB
 connection, original PDF, external URL or OpenAI credential for this request.
 Node independently validates result schema, identity, evidence and arithmetic,
 then rechecks source availability/current content and optional profile revision.
+
+## Resume checks and preparation
+
+Batch 5 baseline, 2026-10-06. See [ADR-014](../adr/014-resume-checks.md) and
+[use/rules/limits](../resume-checks.md). No new AI call or saved report.
+
+`POST /api/v1/intelligence/resumes/:id/review` requires a CareerOS USER/ADMIN session
+and JSON with exactly these keys:
+
+```json
+{
+  "draftId": "owned-saved-cv-analysis-uuid",
+  "job": null
+}
+```
+
+For a job-specific report, replace `job: null` with:
+
+```json
+{
+  "jobId": "catalogue-job-64-character-hex-id",
+  "jobAnalysisId": "owned-saved-job-analysis-uuid",
+  "includeProfileSkills": false
+}
+```
+
+No query parameters or caller-supplied owner, source text, profile skills/revisions,
+hashes, model settings or URLs are accepted. Node resolves the exact owned PDF and
+saved analyses plus an optional authoritative profile snapshot.
+
+Response: `{ report: ReviewReport, sourceStatus: { expired: boolean } }`.
+The [generated schema](../../backend/platform/src/intelligence/resume-review.schema.json)
+defines `schemaVersion: 1`, `reviewerVersion: resume-checks-v1`, PDF identity/hash,
+selected CV ID/version, six recognized-section checks, findings, optional existing
+`MatchResult`, preparation references and keyword checks. Standalone reports return
+`match: null`, empty preparation/keywords and `expired: false`.
+
+Findings contain code, warning/suggestion severity, title, message, action, checked
+draft fields and exact observed-CV evidence. Absence findings have no invented
+quotes; parser warnings refer to saved extraction metadata. Preparation contains
+`matchIndex`, `kind: not_found | profile_only | review` and a bounded action. Keywords
+contain the saved job fact, `found | not_found` status and at most one exact CV page
+quote. Phrases are case-insensitive/whitespace-tolerant literal mentions, not skill
+proficiency; neither keywords nor findings modify the existing skill score.
+
+Missing/foreign/deleting sources use existing 404 codes. Stale job analyses return
+409 `JOB_ANALYSIS_STALE`; source edits during work return `JOB_CHANGED` or
+`MATCH_SOURCE_CHANGED`. Expired unchanged jobs remain reference-only. Oversized
+reviews return 413 `REVIEW_LIMIT`; invalid upstream source/evidence/schema returns
+502 `INTELLIGENCE_RESPONSE_INVALID`. Storage/unavailable/timeout mappings remain
+unchanged. Reviews have their own sixty/user/fifteen-minute throttle, with
+`Retry-After: 900`, independent of paid processing/comparisons. Maximum output is
+2 MiB and each Node upstream call has a fifteen-second deadline.
+
+`POST /internal/v1/resumes/review` authenticates the service token and canonical
+`X-Owner-Id` before reading up to 16 KB JSON:
+`{ resume: Source, draftId, job: null | { jobId, jobHash, jobAnalysisId, profile: null | { version, skills } } }`.
+Python resolves exact owner-scoped PostgreSQL records, checks the supplied job hash,
+reuses `skill-coverage-v1` and returns the bounded report. Node validates evidence,
+keyword and preparation provenance plus source binding/arithmetic, then rechecks
+current source lifetime/content/profile revision. No report persistence, automatic
+retry, external-model call or original-data mutation occurs.

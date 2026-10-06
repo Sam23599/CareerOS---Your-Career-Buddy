@@ -402,4 +402,27 @@ blockquote p { margin: 8px 0 0; }
 .match-item-heading { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
 .match-item-heading > strong { flex: 1 1 160px; }
 .match-item .workspace-badge { margin-left: 0; white-space: normal; }
+.resume-check-report { margin: 20px 0; padding: 20px; border: 1px solid var(--border); border-radius: 12px; overflow-wrap: anywhere; }
+.resume-check-report .section-heading { flex-wrap: wrap; gap: 12px; }
+.resume-check-report .workspace-badge { margin-left: 0; white-space: normal; }
+.review-sections { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.review-section { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: .85rem; }
+.review-section.recognized { background: var(--brand-soft); }
+.review-group { border-top: 1px solid var(--border); margin-top: 8px; }
+.review-group > summary, .review-method > summary { min-height: 44px; padding: 12px 0; cursor: pointer; font-weight: 600; }
+.review-list { list-style: none; padding: 0; margin: 0; }
+.review-finding { padding: 0 12px; border-top: 1px solid var(--border); }
+.review-finding > summary { min-height: 44px; padding: 12px 0; cursor: pointer; }
+.review-finding > summary .workspace-badge { margin-left: 12px; }
+.preparation-report { margin-top: 20px; }
+.review-method { margin-top: 12px; }
+.review-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 16px 0; }
+.review-controls label { flex: 1 1 240px; min-width: 0; }
+.resume-check-dialog { width: min(760px, calc(100vw - 32px)); height: auto; max-height: calc(100dvh - 32px); overflow: auto; }
+.resume-check-dialog[open] { display: block; }
+.resume-check-dialog .preview-heading { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .resume-check-report { padding: 14px; }
+  .review-controls > button { width: 100%; }
+}
 .job-matching details summary { min-height: 44px; display: list-item; align-content: center; }

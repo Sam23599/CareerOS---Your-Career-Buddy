@@ -5,6 +5,7 @@ import { JobAnalysisVerifier, type JobSource } from './jobs.js';
 import { MatchVerifier, type ProfileSkills } from './matching.js';
 import { type DraftRecord } from './drafts.js';
 import { type JobAnalysisRecord } from './jobs.js';
+import { ReviewVerifier } from './reviews.js';
 
 const MAX_OUTPUT = 2 * 1024 * 1024;
 const MAX_CHARACTERS = 200_000;
@@ -40,6 +41,7 @@ const upstreamErrors: Record<string, [number, string]> = {
   JOB_ANALYSIS_STALE: [409, 'This listing changed. Analyze its current description before matching.'],
   MATCH_SOURCE_CHANGED: [409, 'A comparison input changed. Reload the inputs and compare again.'],
   MATCHING_LIMIT: [413, 'This comparison exceeds the supported size limit.'],
+  REVIEW_LIMIT: [413, 'This review exceeds the supported size limit.'],
 };
 
 function fields(value: unknown, names: string[]): value is Record<string, unknown> {
@@ -227,6 +229,14 @@ export class IntelligenceClient {
       method: 'POST', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' },
       body: JSON.stringify({ resume: resume.source, draftId: resume.id, jobId: job.source.jobId,
         jobHash: job.source.sha256, jobAnalysisId: job.id, profile }),
+    }, signal), resume, job, profile);
+  }
+  async review(owner: string, resume: DraftRecord, job: JobAnalysisRecord | null, profile: ProfileSkills | null, signal: AbortSignal) {
+    return ReviewVerifier.result(await this.request('/internal/v1/resumes/review', {
+      method: 'POST', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resume: resume.source, draftId: resume.id, job: job ? {
+        jobId: job.source.jobId, jobHash: job.source.sha256, jobAnalysisId: job.id, profile,
+      } : null }),
     }, signal), resume, job, profile);
   }
 }

@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "reviewerVersion": "resume-checks-v1",
+  "source": {
+    "resume": {
+      "resumeId": "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb",
+      "resumeVersion": 1,
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "draftId": "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+    "draftVersion": 1
+  },
+  "sections": [
+    {
+      "section": "fullName",
+      "present": true
+    },
+    {
+      "section": "contact",
+      "present": false
+    },
+    {
+      "section": "summary",
+      "present": false
+    },
+    {
+      "section": "skills",
+      "present": true
+    },
+    {
+      "section": "experience",
+      "present": false
+    },
+    {
+      "section": "education",
+      "present": false
+    }
+  ],
+  "findings": [
+    {
+      "code": "CONTACT_NOT_FOUND",
+      "severity": "warning",
+      "title": "Contact details not recognized",
+      "message": "Not found in the selected saved analysis. Check the original PDF before making changes.",
+      "action": "Check that a current email address or phone number is readable in the PDF.",
+      "fields": [
+        "email",
+        "phone"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "SUMMARY_NOT_FOUND",
+      "severity": "suggestion",
+      "title": "Summary not recognized",
+      "message": "Not found in the selected saved analysis. Check the original PDF before making changes.",
+      "action": "Consider a short, truthful summary of your experience and target role if it would help this application.",
+      "fields": [
+        "summary"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "EXPERIENCE_NOT_FOUND",
+      "severity": "suggestion",
+      "title": "Work experience not recognized",
+      "message": "Not found in the selected saved analysis. Check the original PDF before making changes.",
+      "action": "Review the original PDF. If you are early in your career, relevant projects or education may be more useful than a work section.",
+      "fields": [
+        "experience"
+      ],
+      "evidence": []
+    },
+    {
+      "code": "EDUCATION_NOT_FOUND",
+      "severity": "suggestion",
+      "title": "Education not recognized",
+      "message": "Not found in the selected saved analysis. Check the original PDF before making changes.",
+      "action": "Check whether relevant qualifications should be included for this role; this section may be unnecessary for some applications.",
+      "fields": [
+        "education"
+      ],
+      "evidence": []
+    }
+  ],
+  "match": {
+    "schemaVersion": 1,
+    "matcherVersion": "skill-coverage-v1",
+    "source": {
+      "resume": {
+        "resumeId": "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb",
+        "resumeVersion": 1,
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "draftId": "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+      "draftVersion": 1,
+      "jobId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "jobHash": "bf0ad60deadb0e7d9a09edee5bfabf23b3b4ccb0bb73d45ca5c9759339cc0a71",
+      "jobAnalysisId": "11111111-1111-1111-1111-111111111111",
+      "jobAnalysisVersion": 1,
+      "profileVersion": null
+    },
+    "score": 75,
+    "matchedWeight": 3,
+    "totalWeight": 4,
+    "items": [
+      {
+        "category": "skills",
+        "requirement": {
+          "value": "Python",
+          "evidence": [
+            {
+              "section": "description",
+              "quote": "Python",
+              "start": 39,
+              "end": 45
+            }
+          ],
+          "priority": "required",
+          "priorityEvidence": [
+            {
+              "section": "description",
+              "quote": "Required qualifications:",
+              "start": 14,
+              "end": 38
+            }
+          ]
+        },
+        "status": "matched",
+        "weight": 3,
+        "candidate": {
+          "source": "resume",
+          "field": "skills",
+          "value": "Python",
+          "evidence": [
+            {
+              "page": 1,
+              "quote": "Python"
+            }
+          ]
+        }
+      },
+      {
+        "category": "technologies",
+        "requirement": {
+          "value": "TypeScript",
+          "evidence": [
+            {
+              "section": "description",
+              "quote": "TypeScript",
+              "start": 87,
+              "end": 97
+            }
+          ],
+          "priority": "preferred",
+          "priorityEvidence": [
+            {
+              "section": "description",
+              "quote": "Preferred skills:",
+              "start": 69,
+              "end": 86
+            }
+          ]
+        },
+        "status": "not_found",
+        "weight": 1,
+        "candidate": null
+      },
+      {
+        "category": "experience",
+        "requirement": {
+          "value": "3+ years of experience",
+          "evidence": [
+            {
+              "section": "description",
+              "quote": "3+ years of experience",
+              "start": 46,
+              "end": 68
+            }
+          ],
+          "priority": "required",
+          "priorityEvidence": [
+            {
+              "section": "description",
+              "quote": "Required qualifications:",
+              "start": 14,
+              "end": 38
+            }
+          ]
+        },
+        "status": "needs_review",
+        "weight": 0,
+        "candidate": null
+      },
+      {
+        "category": "location",
+        "requirement": {
+          "value": "Europe",
+          "evidence": [
+            {
+              "section": "location",
+              "quote": "Europe",
+              "start": 0,
+              "end": 6
+            }
+          ],
+          "priority": "unspecified",
+          "priorityEvidence": []
+        },
+        "status": "needs_review",
+        "weight": 0,
+        "candidate": null
+      },
+      {
+        "category": "workMode",
+        "requirement": {
+          "value": "Remote within Europe",
+          "evidence": [
+            {
+              "section": "description",
+              "quote": "Remote within Europe",
+              "start": 127,
+              "end": 147
+            }
+          ],
+          "priority": "unspecified",
+          "priorityEvidence": []
+        },
+        "status": "needs_review",
+        "weight": 0,
+        "candidate": null
+      }
+    ],
+    "notStated": [
+      "education",
+      "certifications",
+      "languages",
+      "eligibility",
+      "applicationRequirements",
+      "additionalRequirements",
+      "employmentType",
+      "compensation"
+    ]
+  },
+  "preparation": [
+    {
+      "matchIndex": 1,
+      "kind": "not_found",
+      "action": "First check whether you already have this skill. If so, add a truthful work or project example to your CV. Otherwise, review its fundamentals and practise it in a small project before claiming it."
+    },
+    {
+      "matchIndex": 2,
+      "kind": "review",
+      "action": "Read the quoted requirement and compare it with your circumstances. This rule-based report cannot decide whether you meet it."
+    },
+    {
+      "matchIndex": 3,
+      "kind": "review",
+      "action": "Read the quoted requirement and compare it with your circumstances. This rule-based report cannot decide whether you meet it."
+    },
+    {
+      "matchIndex": 4,
+      "kind": "review",
+      "action": "Read the quoted requirement and compare it with your circumstances. This rule-based report cannot decide whether you meet it."
+    }
+  ],
+  "keywords": []
+}

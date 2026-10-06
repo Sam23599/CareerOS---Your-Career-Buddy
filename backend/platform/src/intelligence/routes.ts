@@ -15,6 +15,8 @@ import { JobAnalysisRoutes } from './job-routes.js';
 import { AnalysisQueries } from './queries.js';
 import { MatchingService } from './match-service.js';
 import { MatchingRoutes } from './match-routes.js';
+import { ResumeReviewService } from './review-service.js';
+import { ResumeReviewRoutes } from './review-routes.js';
 
 export function intelligenceRouter(auth: AuthService, resumes: ResumeStore | undefined, client: IntelligenceClient, profiles?: ProfileStore, jobs?: JobStore, cleanup?: JobAnalysisCleanup) {
   const router = Router();
@@ -32,6 +34,14 @@ export function intelligenceRouter(auth: AuthService, resumes: ResumeStore | und
   if (jobs) new JobAnalysisRoutes(new JobAnalysisService(jobs, client, cleanup), client).register(router, throttle);
   if (!resumes) return router;
   const analysis = new ResumeAnalysisService(resumes, client, profiles);
+  new ResumeReviewRoutes(new ResumeReviewService(analysis, client, jobs ? new JobAnalysisService(jobs, client) : undefined, profiles)).register(router, rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false,
+    keyGenerator: (_req, res) => res.locals.user.id,
+    handler: (_req, res, next) => {
+      res.setHeader('Retry-After', '900');
+      next(new ApiError(429, 'RATE_LIMITED', 'Too many reviews. Please try again later.'));
+    },
+  }));
   if (jobs) new MatchingRoutes(new MatchingService(analysis, new JobAnalysisService(jobs, client), client, profiles)).register(router, rateLimit({
     windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false,
     keyGenerator: (_req, res) => res.locals.user.id,

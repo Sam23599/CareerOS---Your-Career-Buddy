@@ -53,15 +53,18 @@ test('CV matching selects saved versions, explains evidence, supplements profile
   await panel.getByRole('button', { name: 'Compare CV to job', exact: true }).click();
   await expect(panel.getByRole('status')).toHaveText('75%');
   await expect(panel.getByText('3 of 4 weighted points matched')).toBeVisible();
+  await panel.getByText('Skills not found (1)', { exact: true }).click();
   await expect(panel.getByText('Not found in selected inputs', { exact: true })).toBeVisible();
   await panel.getByText('How is this score calculated?', { exact: true }).click();
   await expect(panel.getByText(/Required skills count 3 points/)).toBeVisible();
+  await panel.getByText('Matched skills (1)', { exact: true }).click();
   await panel.getByText('View comparison evidence', { exact: true }).first().click();
   await expect(panel.getByText('Page 1', { exact: true })).toBeVisible();
   await panel.getByLabel('Include my saved profile skills').check();
   await expect(panel.locator('.match-result')).toHaveCount(0);
   await panel.getByRole('button', { name: 'Compare CV to job', exact: true }).click();
   await expect(panel.getByRole('status')).toHaveText('100%');
+  await panel.getByText('Matched skills (2)', { exact: true }).click();
   await expect(panel.getByText(/your profile skills \(self-reported\)/)).toBeVisible();
   await page.setViewportSize({ width: 375, height: 812 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

@@ -341,7 +341,7 @@ At this point, CareerOS should already be usable without AI.
 
 # 5. Phase 2 — Intelligence & AI
 
-The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Batches 1–4 are implemented locally: private PDF extraction ([ADR-010](adr/010-resume-intelligence-foundation.md)), OpenAI-assisted structured drafts with explicit profile import ([ADR-011](adr/011-structured-resume-drafts.md)), job-description requirements/evidence with private version history ([ADR-012](adr/012-job-description-analysis.md)), and [explainable CV-to-job skill matching](cv-job-matching.md) ([ADR-013](adr/013-cv-job-matching.md)). Matching compares saved analyses without new AI calls. Resume checks/skill gaps, ranking and Cady remain planned. See the [API contract](api/intelligence.md).
+The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Batches 1–4 and the batch 5 baseline are implemented locally: private PDF extraction ([ADR-010](adr/010-resume-intelligence-foundation.md)), OpenAI-assisted structured drafts with explicit profile import ([ADR-011](adr/011-structured-resume-drafts.md)), job-description requirements/evidence with private version history ([ADR-012](adr/012-job-description-analysis.md)), [explainable CV-to-job skill matching](cv-job-matching.md) ([ADR-013](adr/013-cv-job-matching.md)), and [resume checks/preparation](resume-checks.md) ([ADR-014](adr/014-resume-checks.md)). Matching and checks reuse saved analyses without new AI calls. Ranking, personalized AI preparation and Cady remain planned. See the [API contract](api/intelligence.md).
 
 ## Technology
 

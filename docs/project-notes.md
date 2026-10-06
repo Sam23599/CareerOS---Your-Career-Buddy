@@ -18,36 +18,36 @@ One ongoing notebook for the whole project: bugs, rough ideas, UX observations, 
 Add entries below. Dates, screenshots/paths, expected behavior, and examples help, but are optional. If you change your mind, append a follow-up referencing the earlier note.
 
 <!-- Write freely below this line. The reviewer will add IDs without changing your words. -->
-improve the main header bar sections and overall feel of the app. (just the ui/ux and frontend changes needed mainly) to give a modern fresh and user friendly look.
-add support for dark mode so user can pick between the two.
-implement a removed/deleted option as well for almost everywhere where the user has deleted anything. this allows them to restore in future in-case if they want to, with a custom (default 30 day) bin cleanup as well. bin cleanup will only soft delete it, allowing the data to persist in db even after delete and bin cleanup. so basically we would be needing 2 type deletes.
-an additioanl section of settings should be added to app for some custom user related settings for dashboard/ui/app token/credit usages, recharge/autofil credit etc things. 
-add a new window for user to track failure tasks or logs, that they can navigate or mail us, the careerOS developers for to debug and fix.
-add compress/expand button for the analyzed jobs/cv etc. currently it occupies the whole window, making the UI inconvinent.
+- improve the main header bar sections and overall feel of the app. (just the ui/ux and frontend changes needed mainly) to give a modern fresh and user friendly look.
+- add support for dark mode so user can pick between the two.
+- implement a removed/deleted option as well for almost everywhere where the user has deleted anything. this allows them to restore in future in-case if they want to, with a custom (default 30 day) bin cleanup as well. bin cleanup will only soft delete it, allowing the data to persist in db even after delete and bin cleanup. so basically we would be needing 2 type deletes.
+- an additioanl section of settings should be added to app for some custom user related settings for dashboard/ui/app token/credit usages, recharge/autofil credit etc things. 
+- add a new window for user to track failure tasks or logs, that they can navigate or mail us, the careerOS developers for to debug and fix.
+- add compress/expand button for the analyzed jobs/cv etc. currently it occupies the whole window, making the UI inconvinent.
 
 auth:
-add cache for continued session scheck if security-vise applicable.
-google auth proper addition still remains.
-current card for 'continue as' still require password. we should be able to to sign-in directly in that case, like upto 7 days. in this case, user will be asked for password only when he hasnt logged in since last 7 days.
+- add cache for continued session scheck if security-vise applicable.
+- google auth proper addition still remains.
+- current card for 'continue as' still require password. we should be able to to sign-in directly in that case, like upto 7 days. in this case, user will be asked for password only when he hasnt logged in since last 7 days.
 
 Jobs and ingestion:
-proper separator in jobs section for different jobs platforms that'll be added in future, along with the user custom career pages. and note, user may be adding a lot of dream companies so we need a proper platform and interface for that. 
-filters on main job page like skills, employment type, work mode, etc doesnt exactly work. or you may say, they cant filter properly because the original jobs fetched were parsed or structured improperly for filters to apply. maybe using llms to structure it properly would be better.(lets discuss it first with brain bombarding) 
-improve job's detail properly with divided sections of like role, responsibility, skills, experience/education, company, employee reviews (use glassdoor, ambitionbox, 6figures, etc).
-MAJOR: add a major feature to find emails of the HR or recuiters or of the people (may try linkedln and apollo extension feature) from those companies to show in the job-detail section. may require R&D here as where and how can we fetch those details.
+- proper separator in jobs section for different jobs platforms that'll be added in future, along with the user custom career pages. and note, user may be adding a lot of dream companies so we need a proper platform and interface for that. 
+- filters on main job page like skills, employment type, work mode, etc doesnt exactly work. or you may say, they cant filter properly because the original jobs fetched were parsed or structured improperly for filters to apply. maybe using llms to structure it properly would be better.(lets discuss it first with brain bombarding) 
+- improve job's detail properly with divided sections of like role, responsibility, skills, experience/education, company, employee reviews (use glassdoor, ambitionbox, 6figures, etc).
+- MAJOR: add a major feature to find emails of the HR or recuiters or of the people (may try linkedln and apollo extension feature) from those companies to show in the job-detail section. may require R&D here as where and how can we fetch those details.
 
 Saved jobs:
-more filters by location, date post range, new apply/already applied to that company (this checks and allow the user if he is applying for the first time or not: this is because, a person would be ok to apply casually and be added in company's data records (company he is applying to), and also he might would like to be prepared for some specific ones first then only apply so his record stays fresh and new the company.) 
-one more filter for if the user has applied to the job, application in progress, being interviewed, etc status. this will then later help to track its appliation. (this can be in saved jobs as well or in a better suited place in future)
+- more filters by location, date post range, new apply/already applied to that company (this checks and allow the user if he is applying for the first time or not: this is because, a person would be ok to apply casually and be added in company's data records (company he is applying to), and also he might would like to be prepared for some specific ones first then only apply so his record stays fresh and new the company.) 
+- one more filter for if the user has applied to the job, application in progress, being interviewed, etc status. this will then later help to track its appliation. (this can be in saved jobs as well or in a better suited place in future)
 
 custom career sources and notifications:
-functionality vise it works perfect. just some ui/ux improvements are needed for much cleaner ui and flow.
-add linkedln jobs as well for common job sources. my R&D suggests linkedln supports public job search (for example: https://www.linkedin.com/jobs/jobs-in-pune-division?trk=homepage-jobseeker_brand-discovery_intent-module-secondBtn&position=1&pageNum=0), but for easy apply or more diverse search, a linkedln account sign-in is required.So we'll support both. default public search that linkedln allows, then for advance search ask user to sign-in to linkedln through our platform and allow the access to their linkedln, then use it for search and list available jobs. note, for sensitive platforms like this, we'll give user a specific guideline and prompt if they want a more faster scheduled search like every hour or every 30 mins with a warning that that particular platform might limit this feature or is against this type of heavy crawling. 
-the newly added jobs should be at the top of the list on '/career-sources/{id}' page. also add sorting and filter as you type on that page
+- functionality vise it works perfect. just some ui/ux improvements are needed for much cleaner ui and flow.
+- add linkedln jobs as well for common job sources. my R&D suggests linkedln supports public job search (for example: https://www.linkedin.com/jobs/jobs-in-pune-division?trk=homepage-jobseeker_brand-discovery_intent-module-secondBtn&position=1&pageNum=0), but for easy apply or more diverse search, a linkedln account sign-in is required.So we'll support both. default public search that linkedln allows, then for advance search ask user to sign-in to linkedln through our platform and allow the access to their linkedln, then use it for search and list available jobs. note, for sensitive platforms like this, we'll give user a specific guideline and prompt if they want a more faster scheduled search like every hour or every 30 mins with a warning that that particular platform might limit this feature or is against this type of heavy crawling. 
+- the newly added jobs should be at the top of the list on '/career-sources/{id}' page. there should be a samll ui separation between old jobs and new jobs so it easier to pinpoint the exact new jobs. also add sorting and filter on top as you type on that page.
 
 nits:
-"/status" currently ony have support for only 3 service's status. should track all services.
-in docker or services, service name should be more defined for better understanding. intelligence-db-1 should be renamed to better service. 
+- "/status" currently ony have support for only 3 service's status. should track all services.
+- in docker or services, service name should be more defined for better understanding. intelligence-db-1 should be renamed to better service. 
 
 ## Refined notes
 

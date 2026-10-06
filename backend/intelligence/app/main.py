@@ -19,6 +19,8 @@ from app.storage.jobs_postgres import PostgresJobAnalysisRepository
 from app.jobs.service import JobAnalysisService
 from app.api.matching import MatchingController
 from app.matching.service import MatchingService
+from app.api.reviews import ResumeReviewController
+from app.reviews.service import ResumeReviewService
 
 
 class IntelligenceApplication:
@@ -38,6 +40,7 @@ class IntelligenceApplication:
         app.state.controller = IntelligenceController(settings, self.extraction, self.drafts)
         app.state.jobs = JobAnalysisController(settings, self.jobs)
         app.state.matching = MatchingController(settings.service_token, MatchingService(self.repository, self.jobs.repository))
+        app.state.reviews = ResumeReviewController(settings.service_token, ResumeReviewService(self.repository, self.jobs.repository))
         app.state.extraction = self.extraction
         await self.extraction.start()
         await self.repository.start()
@@ -71,6 +74,7 @@ class IntelligenceApplication:
         async def job_history(job_id: str, request: Request): return await request.app.state.jobs.history(job_id, request)
         async def delete_job(job_id: str, request: Request): return await request.app.state.jobs.delete(job_id, request)
         async def match(request: Request): return await request.app.state.matching.compare(request)
+        async def review(request: Request): return await request.app.state.reviews.review(request)
         for path, method, handler in (
             ("health", "GET", health), ("ready", "GET", ready), ("capabilities", "GET", capabilities),
             ("resumes/extract", "POST", extract), ("resumes/analyze", "POST", analyze),
@@ -80,6 +84,7 @@ class IntelligenceApplication:
             ("jobs/{job_id}/analysis", "GET", get_job), ("jobs/{job_id}/analyses", "GET", job_history),
             ("jobs/{job_id}/analysis", "DELETE", delete_job),
             ("matching/compare", "POST", match),
+            ("resumes/review", "POST", review),
         ):
             app.add_api_route("/internal/v1/" + path, handler, methods=[method])
         return app

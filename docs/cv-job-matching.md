@@ -86,8 +86,10 @@ If there are no scorable requirements, the score is null rather than an invented
   versions, job content hash and optional profile revision. Future ranking/cache work
   must use this full identity and current authorization, not just a job ID.
 
-Ranking, embeddings, semantic scoring, ATS checks, preparation recommendations and
-Cady remain their later planned batches. Notify the user before any new AI stage.
+The [batch 5 resume-checks/preparation baseline](resume-checks.md) now reuses this
+matcher through **Review resume & gaps** in the same panel. Comparison groups are
+collapsed initially to keep reports compact. Ranking, embeddings, semantic scoring,
+personalized AI preparation and Cady remain planned; notify before any new AI stage.
 
 ## Verification
 

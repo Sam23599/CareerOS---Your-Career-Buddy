@@ -1,0 +1,683 @@
+{
+  "$defs": {
+    "CandidateEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "enum": [
+            "resume",
+            "profile"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "field": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Field",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 6000,
+          "title": "Value",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 4,
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source",
+        "field",
+        "value",
+        "evidence"
+      ],
+      "title": "CandidateEvidence",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Page",
+          "type": "integer"
+        },
+        "quote": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "page",
+        "quote"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "JobEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "section": {
+          "enum": [
+            "title",
+            "company",
+            "location",
+            "description"
+          ],
+          "title": "Section",
+          "type": "string"
+        },
+        "quote": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        },
+        "start": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "maximum": 100000,
+          "minimum": 1,
+          "title": "End",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "section",
+        "quote",
+        "start",
+        "end"
+      ],
+      "title": "JobEvidence",
+      "type": "object"
+    },
+    "JobFact": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "maxLength": 6000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/JobEvidence"
+          },
+          "maxItems": 4,
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value",
+        "evidence"
+      ],
+      "title": "JobFact",
+      "type": "object"
+    },
+    "KeywordCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "term": {
+          "$ref": "#/$defs/JobFact"
+        },
+        "status": {
+          "enum": [
+            "found",
+            "not_found"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "term",
+        "status",
+        "evidence"
+      ],
+      "title": "KeywordCheck",
+      "type": "object"
+    },
+    "MatchItem": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "enum": [
+            "skills",
+            "technologies",
+            "experience",
+            "education",
+            "certifications",
+            "languages",
+            "eligibility",
+            "applicationRequirements",
+            "additionalRequirements",
+            "location",
+            "workMode",
+            "employmentType",
+            "compensation"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "requirement": {
+          "$ref": "#/$defs/Requirement"
+        },
+        "status": {
+          "enum": [
+            "matched",
+            "not_found",
+            "needs_review"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "weight": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "title": "Weight",
+          "type": "integer"
+        },
+        "candidate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CandidateEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "category",
+        "requirement",
+        "status",
+        "weight",
+        "candidate"
+      ],
+      "title": "MatchItem",
+      "type": "object"
+    },
+    "MatchResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "default": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "matcherVersion": {
+          "const": "skill-coverage-v1",
+          "default": "skill-coverage-v1",
+          "title": "Matcherversion",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/MatchSource"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Score"
+        },
+        "matchedWeight": {
+          "maximum": 300,
+          "minimum": 0,
+          "title": "Matchedweight",
+          "type": "integer"
+        },
+        "totalWeight": {
+          "maximum": 300,
+          "minimum": 0,
+          "title": "Totalweight",
+          "type": "integer"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/MatchItem"
+          },
+          "maxItems": 350,
+          "title": "Items",
+          "type": "array"
+        },
+        "notStated": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 13,
+          "title": "Notstated",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source",
+        "score",
+        "matchedWeight",
+        "totalWeight",
+        "items",
+        "notStated"
+      ],
+      "title": "MatchResult",
+      "type": "object"
+    },
+    "MatchSource": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "$ref": "#/$defs/Source"
+        },
+        "draftId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Draftid",
+          "type": "string"
+        },
+        "draftVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Draftversion",
+          "type": "integer"
+        },
+        "jobId": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobid",
+          "type": "string"
+        },
+        "jobHash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobhash",
+          "type": "string"
+        },
+        "jobAnalysisId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Jobanalysisid",
+          "type": "string"
+        },
+        "jobAnalysisVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Jobanalysisversion",
+          "type": "integer"
+        },
+        "profileVersion": {
+          "anyOf": [
+            {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Profileversion"
+        }
+      },
+      "required": [
+        "resume",
+        "draftId",
+        "draftVersion",
+        "jobId",
+        "jobHash",
+        "jobAnalysisId",
+        "jobAnalysisVersion",
+        "profileVersion"
+      ],
+      "title": "MatchSource",
+      "type": "object"
+    },
+    "PreparationItem": {
+      "additionalProperties": false,
+      "properties": {
+        "matchIndex": {
+          "maximum": 349,
+          "minimum": 0,
+          "title": "Matchindex",
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "not_found",
+            "profile_only",
+            "review"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "action": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "matchIndex",
+        "kind",
+        "action"
+      ],
+      "title": "PreparationItem",
+      "type": "object"
+    },
+    "Requirement": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "maxLength": 6000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/JobEvidence"
+          },
+          "maxItems": 4,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "priority": {
+          "enum": [
+            "required",
+            "preferred",
+            "unspecified"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "priorityEvidence": {
+          "items": {
+            "$ref": "#/$defs/JobEvidence"
+          },
+          "maxItems": 4,
+          "title": "Priorityevidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value",
+        "evidence",
+        "priority",
+        "priorityEvidence"
+      ],
+      "title": "Requirement",
+      "type": "object"
+    },
+    "ResumeFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "NAME_NOT_FOUND",
+            "CONTACT_NOT_FOUND",
+            "SUMMARY_NOT_FOUND",
+            "SKILLS_NOT_FOUND",
+            "EXPERIENCE_NOT_FOUND",
+            "EDUCATION_NOT_FOUND",
+            "EXPERIENCE_DETAILS_INCOMPLETE",
+            "ACHIEVEMENTS_NOT_FOUND",
+            "PAGES_WITHOUT_TEXT",
+            "PDF_STRUCTURE_REPAIRED",
+            "NO_EXTRACTABLE_TEXT"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "warning",
+            "suggestion"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "action": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        },
+        "fields": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 60,
+          "minItems": 1,
+          "title": "Fields",
+          "type": "array"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 8,
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "title",
+        "message",
+        "action",
+        "fields",
+        "evidence"
+      ],
+      "title": "ResumeFinding",
+      "type": "object"
+    },
+    "ReviewSource": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "$ref": "#/$defs/Source"
+        },
+        "draftId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Draftid",
+          "type": "string"
+        },
+        "draftVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Draftversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "resume",
+        "draftId",
+        "draftVersion"
+      ],
+      "title": "ReviewSource",
+      "type": "object"
+    },
+    "SectionCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "section": {
+          "enum": [
+            "fullName",
+            "contact",
+            "summary",
+            "skills",
+            "experience",
+            "education"
+          ],
+          "title": "Section",
+          "type": "string"
+        },
+        "present": {
+          "title": "Present",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "section",
+        "present"
+      ],
+      "title": "SectionCheck",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "resumeId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Resumeid",
+          "type": "string"
+        },
+        "resumeVersion": {
+          "minimum": 1,
+          "title": "Resumeversion",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resumeId",
+        "resumeVersion",
+        "sha256"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "reviewerVersion": {
+      "const": "resume-checks-v1",
+      "default": "resume-checks-v1",
+      "title": "Reviewerversion",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/ReviewSource"
+    },
+    "sections": {
+      "items": {
+        "$ref": "#/$defs/SectionCheck"
+      },
+      "maxItems": 6,
+      "minItems": 6,
+      "title": "Sections",
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/ResumeFinding"
+      },
+      "maxItems": 11,
+      "title": "Findings",
+      "type": "array"
+    },
+    "match": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MatchResult"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "preparation": {
+      "items": {
+        "$ref": "#/$defs/PreparationItem"
+      },
+      "maxItems": 350,
+      "title": "Preparation",
+      "type": "array"
+    },
+    "keywords": {
+      "items": {
+        "$ref": "#/$defs/KeywordCheck"
+      },
+      "maxItems": 50,
+      "title": "Keywords",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source",
+    "sections",
+    "findings",
+    "match",
+    "preparation",
+    "keywords"
+  ],
+  "title": "ReviewReport",
+  "type": "object"
+}

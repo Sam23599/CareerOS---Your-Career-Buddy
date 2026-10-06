@@ -760,7 +760,7 @@ The architecture, service boundaries, technology choices, and feature set are ex
 
 The [development plan](docs/development-plan.md) defines the roadmap. The [Phase 1 backlog](docs/phase-1-backlog.md) tracks the first release, and the [review and next steps](docs/implementation-next-steps.md) define the proposed implementation sequence.
 
-The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts, job-description analysis and explainable CV-to-job matching are implemented; later checks, ranking and Cady remain planned.
+The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts, job-description analysis, explainable CV-to-job matching and the [resume-checks/preparation baseline](docs/resume-checks.md) are implemented. Checks reuse saved analyses without new AI calls; ranking, personalized AI preparation and Cady remain planned.
 
 The first release focuses on the core job workflow; community belongs to Phase 5. This README describes the product vision and planned architecture.
 
@@ -775,3 +775,11 @@ On a job detail page, use **Analyze job** to extract source-backed requirements,
 ## CV-to-job matching
 
 On a job detail page, choose saved resume/job analysis versions and click **Compare CV to job**. See weighted skill coverage, quoted matches, skills not found and other requirements to review. Profile skills are an optional self-reported supplement. Matching itself makes no AI call, and the score is not a hiring probability or employer ATS score. See [formula, boundaries and checks](docs/cv-job-matching.md).
+
+## Resume checks and preparation
+
+Choose **Check resume** in the resume library, or **Review resume & gaps** in the
+job comparison panel. Compact, expandable reports show recognized sections,
+PDF-reading warnings, prioritized missing evidence, profile-only claims and literal
+job terminology. Checks reuse saved versions without new AI calls or automatic
+edits. See [use, rules and limits](docs/resume-checks.md) and [ADR-014](docs/adr/014-resume-checks.md).

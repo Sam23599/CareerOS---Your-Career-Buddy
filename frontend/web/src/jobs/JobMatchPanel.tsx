@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { authenticatedRequest, useSession } from '../auth/session';
 import { type DraftHistory } from '../../../../backend/platform/src/intelligence/drafts';
 import { type JobAnalysisSummary } from '../../../../backend/platform/src/intelligence/jobs';
 import { type MatchItem, type MatchResponse } from '../../../../backend/platform/src/intelligence/matching';
+import { type ReviewReport, type ReviewResponse } from '../../../../backend/platform/src/intelligence/reviews';
+import { ResumeCheckReport } from '../resumes/ResumeCheckReport';
 
 type Resume = { id: string; name: string; version: number; active: boolean; deleting?: boolean };
 type JobHistory = { versions: (JobAnalysisSummary & { stale: boolean })[]; nextBeforeVersion: number | null };
@@ -35,6 +37,7 @@ function Comparison({ jobId }: { jobId: string }) {
   const [jobAnalysisId, setJobAnalysisId] = useState('');
   const [includeProfileSkills, setIncludeProfileSkills] = useState(false);
   const [result, setResult] = useState<MatchResponse | null>(null);
+  const [report, setReport] = useState<ReviewReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [draftLoading, setDraftLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -75,12 +78,23 @@ function Comparison({ jobId }: { jobId: string }) {
     catch (cause) { if (!controller.signal.aborted) setError(errorMessage(cause)); }
     finally { if (!controller.signal.aborted) setBusy(false); }
   }
-  function compare(event: FormEvent) {
-    event.preventDefault(); setResult(null);
+  function compare() {
+    clearResult();
     void run(async signal => {
       const response = await authenticatedRequest<MatchResponse>(`${base}/match`, { method: 'POST',
         body: JSON.stringify({ resumeId, draftId, jobAnalysisId, includeProfileSkills }), signal });
       if (!signal.aborted) setResult(response);
+    });
+  }
+  function clearResult() { setResult(null); setReport(null); }
+  function review() {
+    clearResult();
+    void run(async signal => {
+      const response = await authenticatedRequest<ReviewResponse>(`/intelligence/resumes/${resumeId}/review`, { method: 'POST',
+        body: JSON.stringify({ draftId, job: { jobId, jobAnalysisId, includeProfileSkills } }), signal });
+      if (!signal.aborted && response.report.match) {
+        setReport(response.report); setResult({ match: response.report.match, sourceStatus: response.sourceStatus });
+      }
     });
   }
   function older(kind: 'resume' | 'job') {
@@ -107,26 +121,26 @@ function Comparison({ jobId }: { jobId: string }) {
     {loading && <p role="status">Loading comparison inputs…</p>}
     {error && <p role="alert" className="form-error">{error}</p>}
     <button className="secondary" disabled={loading || busy || draftLoading} onClick={() => {
-      setResult(null); setError(''); setLoading(true); setDrafts({ versions: [], nextBeforeVersion: null }); setDraftId(''); setJobAnalysisId(''); setAttempt(value => value + 1);
+      clearResult(); setError(''); setLoading(true); setDrafts({ versions: [], nextBeforeVersion: null }); setDraftId(''); setJobAnalysisId(''); setAttempt(value => value + 1);
     }}>Refresh comparison inputs</button>
     {!loading && <>
       {!resumes.length && <p><Link to="/resumes">Upload and analyze a resume</Link> to prepare your comparison.</p>}
       {!jobAnalysisId && <p className="extraction-warning"><a href="#job-analysis">Analyze the current job description</a> before comparing. Older analyses of changed listings cannot be used.</p>}
-      <form onSubmit={compare}><fieldset disabled={busy}><legend>Comparison inputs</legend><div className="profile-grid">
+      <form onSubmit={event => { event.preventDefault(); review(); }}><fieldset disabled={busy}><legend>Comparison inputs</legend><div className="profile-grid">
         <label>Resume version<select value={resumeId} onChange={event => {
-          setResumeId(event.target.value); setDrafts({ versions: [], nextBeforeVersion: null }); setDraftId(''); setDraftLoading(true); setResult(null); setError('');
+          setResumeId(event.target.value); setDrafts({ versions: [], nextBeforeVersion: null }); setDraftId(''); setDraftLoading(true); clearResult(); setError('');
         }} disabled={!resumes.length}><option value="" disabled>Select a resume</option>{resumes.map(item => <option key={item.id} value={item.id}>{item.name} · PDF version {item.version}{item.active ? ' · Active' : ''}</option>)}</select></label>
-        <label>CV analysis version<select value={draftId} disabled={draftLoading || !drafts.versions.length} onChange={event => { setDraftId(event.target.value); setResult(null); }}>
+        <label>CV analysis version<select value={draftId} disabled={draftLoading || !drafts.versions.length} onChange={event => { setDraftId(event.target.value); clearResult(); setError(''); }}>
           <option value="" disabled>{draftLoading ? 'Loading analyses…' : 'No saved analysis'}</option>{drafts.versions.map(item => <option key={item.id} value={item.id}>Version {item.version} · {item.model} · {new Date(item.createdAt).toLocaleString()}</option>)}</select></label>
-        <label>Job analysis for comparison<select value={jobAnalysisId} onChange={event => { setJobAnalysisId(event.target.value); setResult(null); }}>
+        <label>Job analysis for comparison<select value={jobAnalysisId} onChange={event => { setJobAnalysisId(event.target.value); clearResult(); setError(''); }}>
           <option value="" disabled>No current saved analysis</option>{jobs.versions.map(item => <option key={item.id} value={item.id} disabled={item.stale}>Version {item.version} · {item.model}{item.stale ? ' · Listing changed' : ''}</option>)}</select></label>
       </div>
         {draftLoading && <p role="status">Loading saved CV analyses…</p>}
         {resumeId && !draftLoading && !drafts.versions.length && <p><Link to="/resumes">Analyze this resume</Link> first, then refresh these inputs.</p>}
         <div className="actions">{drafts.nextBeforeVersion !== null && <button type="button" className="secondary" onClick={() => older('resume')}>Load older CV analyses</button>}{jobs.nextBeforeVersion !== null && <button type="button" className="secondary" onClick={() => older('job')}>Load older job analyses</button>}</div>
-        <label className="check-label"><input type="checkbox" checked={includeProfileSkills} onChange={event => { setIncludeProfileSkills(event.target.checked); setResult(null); }} />Include my saved profile skills</label>
+        <label className="check-label"><input type="checkbox" checked={includeProfileSkills} onChange={event => { setIncludeProfileSkills(event.target.checked); clearResult(); setError(''); }} />Include my saved profile skills</label>
         <p className="muted">Profile skills are self-reported and labelled separately from quoted CV evidence.</p>
-        <button disabled={draftLoading || !draftId || !jobAnalysisId}>Compare CV to job</button>
+        <div className="actions"><button disabled={draftLoading || !draftId || !jobAnalysisId}>Review resume & gaps</button><button type="button" className="secondary" disabled={draftLoading || !draftId || !jobAnalysisId} onClick={compare}>Compare CV to job</button></div>
       </fieldset></form>
     </>}
     {busy && <p role="status">Working on your comparison…</p>}
@@ -135,8 +149,9 @@ function Comparison({ jobId }: { jobId: string }) {
       <div className="match-score"><div><p className="eyebrow">Skill coverage</p><p className="match-score-value" role="status">{match.score === null ? 'Not enough information to score' : `${match.score}%`}</p></div><p>{match.matchedWeight} of {match.totalWeight} weighted points matched</p></div>
       <p>A skills checklist, not a hiring probability or employer ATS score. “Not found” means absent from the selected inputs, not that you lack the skill.</p>
       <p className="muted">PDF version {match.source.resume.resumeVersion} · CV analysis {match.source.draftVersion} · Job analysis {match.source.jobAnalysisVersion}{match.source.profileVersion !== null ? ` · Profile version ${match.source.profileVersion}` : ''}</p>
+      {report && <ResumeCheckReport report={report} />}
       <details><summary>How is this score calculated?</summary><p>Matched points ÷ total points × 100, rounded to the nearest whole percent. Required skills count 3 points, unspecified 2, preferred 1. Repeated skills count once at their strongest priority. Exact names and a small documented alias list are compared. Ambiguous phrases and other requirements need your review and do not count toward the score.</p></details>
-      {groups.map(group => <details className="match-group" key={group.title} open><summary>{group.title} ({group.items.length})</summary>{group.items.length ? <ul className="match-items">{group.items.map((item, index) => <MatchRow key={index} item={item} />)}</ul> : <p className="muted">No items in this group.</p>}</details>)}
+      {groups.map(group => <details className="match-group" key={group.title}><summary>{group.title} ({group.items.length})</summary>{group.items.length ? <ul className="match-items">{group.items.map((item, index) => <MatchRow key={index} item={item} />)}</ul> : <p className="muted">No items in this group.</p>}</details>)}
       {match.notStated.length > 0 && <p className="muted">Not stated in the saved job analysis: {match.notStated.map(label).join(', ')}.</p>}
       <p className="muted">This comparison is shown for the selected versions. Compare again after updating your inputs.</p>
     </div>}

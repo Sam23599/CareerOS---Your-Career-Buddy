@@ -8,8 +8,9 @@ sys.path.insert(0, str(root / "backend/intelligence"))
 from app.resumes.models import DraftRecord
 from app.jobs.models import JobAnalysisRecord
 from app.matching.models import MatchResult
+from app.reviews.models import ReviewReport
 
-for name, model in [("resume-draft", DraftRecord), ("job-analysis", JobAnalysisRecord), ("matching", MatchResult)]:
+for name, model in [("resume-draft", DraftRecord), ("job-analysis", JobAnalysisRecord), ("matching", MatchResult), ("resume-review", ReviewReport)]:
     path = root / f"backend/platform/src/intelligence/{name}.schema.json"
     content = json.dumps(model.model_json_schema(), indent=2) + "\n"
     if "--check" in sys.argv:

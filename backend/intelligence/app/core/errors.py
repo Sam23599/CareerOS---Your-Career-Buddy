@@ -32,4 +32,5 @@ ERRORS = {
     "JOB_ANALYSIS_STALE": "This listing changed. Analyze its current description before matching.",
     "MATCH_SOURCE_CHANGED": "A comparison input changed. Reload the inputs and compare again.",
     "MATCHING_LIMIT": "This comparison exceeds the supported size limit.",
+    "REVIEW_LIMIT": "This review exceeds the supported size limit.",
 }
