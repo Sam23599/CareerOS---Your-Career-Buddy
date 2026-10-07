@@ -77,5 +77,7 @@ class PostgresJobAnalysisRepository(JobAnalysisRepository):
                     await self.database._lock(connection, owner, "job:" + job_id)
                     await connection.execute("INSERT INTO deleted_job_sources (owner_id,job_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", [owner, job_id])
                     await connection.execute("DELETE FROM job_analyses WHERE owner_id = %s AND job_id = %s", [owner, job_id])
+                    await connection.execute("DELETE FROM preparation_plans WHERE owner_id=%s AND job_id=%s", [owner, job_id])
+                    await connection.execute("UPDATE analysis_tasks SET state='cancelled',updated_at=NOW() WHERE owner_id=%s AND job_id=%s AND state='queued'", [owner, job_id])
         except (Error, PoolTimeout):
             raise IntelligenceError(503, "ANALYSIS_UNAVAILABLE") from None

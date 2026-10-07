@@ -1,0 +1,443 @@
+{
+  "$defs": {
+    "GapChoice": {
+      "additionalProperties": false,
+      "properties": {
+        "matchIndex": {
+          "maximum": 349,
+          "minimum": 0,
+          "title": "Matchindex",
+          "type": "integer"
+        },
+        "classification": {
+          "enum": [
+            "already_know",
+            "need_evidence",
+            "want_to_learn",
+            "unsure"
+          ],
+          "title": "Classification",
+          "type": "string"
+        }
+      },
+      "required": [
+        "matchIndex",
+        "classification"
+      ],
+      "title": "GapChoice",
+      "type": "object"
+    },
+    "MatchSource": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "$ref": "#/$defs/Source"
+        },
+        "draftId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Draftid",
+          "type": "string"
+        },
+        "draftVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Draftversion",
+          "type": "integer"
+        },
+        "jobId": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobid",
+          "type": "string"
+        },
+        "jobHash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobhash",
+          "type": "string"
+        },
+        "jobAnalysisId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Jobanalysisid",
+          "type": "string"
+        },
+        "jobAnalysisVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Jobanalysisversion",
+          "type": "integer"
+        },
+        "profileVersion": {
+          "anyOf": [
+            {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Profileversion"
+        }
+      },
+      "required": [
+        "resume",
+        "draftId",
+        "draftVersion",
+        "jobId",
+        "jobHash",
+        "jobAnalysisId",
+        "jobAnalysisVersion",
+        "profileVersion"
+      ],
+      "title": "MatchSource",
+      "type": "object"
+    },
+    "PlanAction": {
+      "additionalProperties": false,
+      "properties": {
+        "matchIndex": {
+          "maximum": 349,
+          "minimum": 0,
+          "title": "Matchindex",
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "learn",
+            "practice",
+            "project",
+            "checkpoint",
+            "interview",
+            "cv_evidence",
+            "verify"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "week": {
+          "maximum": 12,
+          "minimum": 1,
+          "title": "Week",
+          "type": "integer"
+        },
+        "hours": {
+          "maximum": 40,
+          "minimum": 1,
+          "title": "Hours",
+          "type": "integer"
+        },
+        "title": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^action-[1-9][0-9]{0,2}$",
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "matchIndex",
+        "kind",
+        "week",
+        "hours",
+        "title",
+        "detail",
+        "id"
+      ],
+      "title": "PlanAction",
+      "type": "object"
+    },
+    "PlanContent": {
+      "additionalProperties": false,
+      "properties": {
+        "overview": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Overview",
+          "type": "string"
+        },
+        "actions": {
+          "items": {
+            "$ref": "#/$defs/PlanAction"
+          },
+          "maxItems": 60,
+          "minItems": 1,
+          "title": "Actions",
+          "type": "array"
+        },
+        "cautions": {
+          "items": {
+            "maxLength": 1200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Cautions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "overview",
+        "actions",
+        "cautions"
+      ],
+      "title": "PlanContent",
+      "type": "object"
+    },
+    "PlanReview": {
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "actions": {
+          "items": {
+            "$ref": "#/$defs/ReviewedAction"
+          },
+          "maxItems": 60,
+          "title": "Actions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "revision",
+        "actions"
+      ],
+      "title": "PlanReview",
+      "type": "object"
+    },
+    "PreparationGoals": {
+      "additionalProperties": false,
+      "properties": {
+        "choices": {
+          "items": {
+            "$ref": "#/$defs/GapChoice"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Choices",
+          "type": "array"
+        },
+        "hoursPerWeek": {
+          "maximum": 40,
+          "minimum": 1,
+          "title": "Hoursperweek",
+          "type": "integer"
+        },
+        "weeks": {
+          "maximum": 12,
+          "minimum": 1,
+          "title": "Weeks",
+          "type": "integer"
+        },
+        "goal": {
+          "maxLength": 1000,
+          "title": "Goal",
+          "type": "string"
+        }
+      },
+      "required": [
+        "choices",
+        "hoursPerWeek",
+        "weeks",
+        "goal"
+      ],
+      "title": "PreparationGoals",
+      "type": "object"
+    },
+    "ReviewedAction": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^action-[1-9][0-9]{0,2}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "skipped",
+            "done"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "detail",
+        "status"
+      ],
+      "title": "ReviewedAction",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "resumeId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Resumeid",
+          "type": "string"
+        },
+        "resumeVersion": {
+          "minimum": 1,
+          "title": "Resumeversion",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resumeId",
+        "resumeVersion",
+        "sha256"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Usage": {
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": {
+          "minimum": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "outputTokens": {
+          "minimum": 0,
+          "title": "Outputtokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "inputTokens",
+        "outputTokens"
+      ],
+      "title": "Usage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "plannerVersion": {
+      "const": "preparation-v1",
+      "default": "preparation-v1",
+      "title": "Plannerversion",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "version": {
+      "maximum": 2147483647,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "source": {
+      "$ref": "#/$defs/MatchSource"
+    },
+    "goals": {
+      "$ref": "#/$defs/PreparationGoals"
+    },
+    "provider": {
+      "const": "openai",
+      "default": "openai",
+      "title": "Provider",
+      "type": "string"
+    },
+    "model": {
+      "enum": [
+        "gpt-4.1",
+        "gpt-6-luna",
+        "gpt-6.1-sol"
+      ],
+      "title": "Model",
+      "type": "string"
+    },
+    "reasoning": {
+      "anyOf": [
+        {
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reasoning"
+    },
+    "usage": {
+      "$ref": "#/$defs/Usage"
+    },
+    "createdAt": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Createdat",
+      "type": "string"
+    },
+    "plan": {
+      "$ref": "#/$defs/PlanContent"
+    },
+    "review": {
+      "$ref": "#/$defs/PlanReview"
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "source",
+    "goals",
+    "model",
+    "reasoning",
+    "usage",
+    "createdAt",
+    "plan",
+    "review"
+  ],
+  "title": "PreparationRecord",
+  "type": "object"
+}

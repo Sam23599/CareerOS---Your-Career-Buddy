@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "assistantVersion": "cady-v1",
+  "resume": {
+    "resumeId": "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb",
+    "resumeVersion": 1,
+    "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "draftId": "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+  "draftVersion": 1,
+  "sources": [
+    {
+      "resume": {
+        "resumeId": "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb",
+        "resumeVersion": 1,
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "draftId": "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+      "draftVersion": 1,
+      "jobId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "jobHash": "bf0ad60deadb0e7d9a09edee5bfabf23b3b4ccb0bb73d45ca5c9759339cc0a71",
+      "jobAnalysisId": "11111111-1111-1111-1111-111111111111",
+      "jobAnalysisVersion": 1,
+      "profileVersion": null
+    }
+  ],
+  "profileVersion": null,
+  "answer": {
+    "paragraphs": [
+      {
+        "text": "Your CV includes Python. Advice: practice TypeScript for this role.",
+        "references": [
+          "cv-0",
+          "job-0-requirement-1"
+        ]
+      }
+    ],
+    "followUps": [
+      "What would you like to practice first?"
+    ]
+  },
+  "references": [
+    {
+      "id": "cv-0",
+      "label": "Selected CV skill",
+      "text": "Python"
+    },
+    {
+      "id": "job-0-requirement-1",
+      "label": "Job 1 requirement",
+      "text": "TypeScript"
+    }
+  ],
+  "model": "gpt-6-luna",
+  "reasoning": "medium",
+  "usage": {
+    "inputTokens": 30,
+    "outputTokens": 60
+  }
+}

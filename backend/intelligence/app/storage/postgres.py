@@ -120,6 +120,8 @@ class PostgresDraftRepository(DraftRepository):
                                              "ON CONFLICT DO NOTHING", [owner, resume_id])
                     await connection.execute("DELETE FROM resume_drafts WHERE owner_id = %s AND resume_id = %s",
                                              [owner, resume_id])
+                    await connection.execute("DELETE FROM preparation_plans WHERE owner_id=%s AND resume_id=%s", [owner, resume_id])
+                    await connection.execute("UPDATE analysis_tasks SET state='cancelled',updated_at=NOW() WHERE owner_id=%s AND kind='preparation' AND payload->'context'->'resume'->>'resumeId'=%s AND state='queued'", [owner, resume_id])
         except (Error, PoolTimeout):
             raise IntelligenceError(503, "ANALYSIS_UNAVAILABLE") from None
 

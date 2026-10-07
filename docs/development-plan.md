@@ -349,7 +349,7 @@ matching/checks inline. See the [migration inventory and sequence](intelligence-
 This is planned infrastructure, separate from Phase 4 Kafka domain events; it is
 not implemented or required for the current local stack.
 
-The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Batches 1–4, the batch 5 baseline and batch 6 saved-job baseline are implemented locally: private PDF extraction ([ADR-010](adr/010-resume-intelligence-foundation.md)), OpenAI-assisted structured drafts with explicit profile import ([ADR-011](adr/011-structured-resume-drafts.md)), job-description requirements/evidence with private version history ([ADR-012](adr/012-job-description-analysis.md)), [explainable CV-to-job skill matching](cv-job-matching.md) ([ADR-013](adr/013-cv-job-matching.md)), [resume checks/preparation](resume-checks.md) ([ADR-014](adr/014-resume-checks.md)), and [saved-job ranking](job-ranking.md) ([ADR-015](adr/015-saved-job-ranking.md)). Matching, checks and ranking reuse saved analyses without new AI calls. The [personalized AI preparation extension](personalized-preparation-plan.md) is planned next, followed by initial Cady. See the [API contract](api/intelligence.md).
+The [Phase 2 implementation backlog](phase-2-backlog.md) defines the executable sequence. Batches 1–4, the batch 5 baseline and batch 6 saved-job baseline are implemented locally: private PDF extraction ([ADR-010](adr/010-resume-intelligence-foundation.md)), OpenAI-assisted structured drafts with explicit profile import ([ADR-011](adr/011-structured-resume-drafts.md)), job-description requirements/evidence with private version history ([ADR-012](adr/012-job-description-analysis.md)), [explainable CV-to-job skill matching](cv-job-matching.md) ([ADR-013](adr/013-cv-job-matching.md)), [resume checks/preparation](resume-checks.md) ([ADR-014](adr/014-resume-checks.md)), and [saved-job ranking](job-ranking.md) ([ADR-015](adr/015-saved-job-ranking.md)). Matching, checks and ranking reuse saved analyses without new AI calls. The [personalized AI preparation extension and initial Cady](personalized-preparation.md) are now implemented; [ADR-017](adr/017-personalized-preparation-and-initial-cady.md) records the scope. Celery remains a separately planned migration. See the [API contract](api/intelligence.md).
 
 ## Technology
 
@@ -1287,14 +1287,14 @@ The goal is to progressively turn CareerOS into a unified career platform rather
 | Repository setup      | Local foundation implemented |
 | README                | Initial version |
 | Development plan      | Initial version |
-| Architecture          | Implemented decisions recorded in ADR-001 through ADR-013 |
-| Frontend              | Auth, profiles, resumes, jobs, saved jobs, career sources, and in-app notifications implemented |
+| Architecture          | Implemented decisions recorded in ADR-001 through ADR-017 |
+| Frontend              | Auth, profiles, resumes, jobs, saved jobs, career sources, notifications, reviewed preparation plans and initial Cady implemented |
 | Node.js platform      | JWT/RBAC, profiles, resumes, jobs/ingestion, saved jobs, private career-source checks, and notifications implemented |
-| Python intelligence   | Private PDF extraction, shared OpenAI layer, saved CV/JD analyses, reviewed profile import and deterministic skill matching implemented |
+| Python intelligence   | PDF extraction, shared OpenAI, saved CV/JD analyses, profile import, deterministic matching/checks/ranking, versioned preparation and initial Cady implemented |
 | Java workflows        | Not started     |
 | Kafka                 | Future phase    |
 | Community             | Planned         |
-| Cady                  | Planned         |
+| Cady                  | Initial read-only assistant implemented; advanced tools remain future |
 | Production deployment | Future phase    |
 
 This document should be updated continuously as implementation progresses and architectural decisions are made.

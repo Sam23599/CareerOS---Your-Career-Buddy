@@ -1,9 +1,19 @@
 # Personalized AI preparation — next implementation plan
 
-Status: **Planned, not implemented**. Prepared 2026-10-06; updated 2026-10-07 (IST) for Celery planning.
+Status: **Initial implementation complete locally**. Prepared 2026-10-06; selected and implemented 2026-10-07 (IST). See [current use and limits](personalized-preparation.md) and [ADR-017](adr/017-personalized-preparation-and-initial-cady.md).
 Follows saved-job ranking and extends [resume checks](resume-checks.md), before
 the original roadmap's initial Cady. No endpoint, background generation or paid
-provider call is enabled by this document.
+provider call was enabled by the original planning document. Implementation now enables explicit generation, verified with mocks only.
+
+## Implementation decisions (2026-10-07)
+
+The user resumed the original preparation → Cady sequence. Extend the existing
+PostgreSQL worker now; defer the separate Celery migration. The proposed contracts
+below are implemented; [the guide](personalized-preparation.md) describes current
+limits. Output caps are 8,192 preparation / 4,096 Cady tokens. Keep twenty selected
+requirements, immutable generated content and revisioned reviewed actions.
+Cady is a read-only context assistant with transient conversation. Earlier Celery
+wording below describes future executor replacement, not a current prerequisite.
 
 ## First outcome and review flow
 
@@ -46,13 +56,13 @@ provider/model and processing notice before submission.
   unrelated CV/job history or entire profile. Contacts are not needed for this task.
 - **Controls:** reuse the shared generation gate, strict structured output,
   `store:false`, fixed input/output/deadline limits and safe error mapping. The
-  [Celery execution plan](intelligence-background-processing-plan.md) makes this
-  optional long-running action a worker task with PostgreSQL-backed status/results
-  when implemented; enforce the shared generation limit across processes. Add
-  a separate per-user preparation limiter and input bounds; fail before provider
+  current PostgreSQL worker executes this optional long-running action with
+  durable status/results. The [Celery execution plan](intelligence-background-processing-plan.md)
+  later preserves these contracts and the shared generation limit across processes.
+  A separate per-user preparation limiter and input bounds fail before provider
   calls on missing/stale/foreign inputs. No automatic generation or retries.
-  Decide a smaller task-specific token cap after mocked sizing, within current
-  60 KB input / 16,384 output token / 90-second shared ceilings.
+  The task cap is 8,192 output tokens, within current
+  60 KB input / 16,384 global output token / 90-second shared ceilings.
 - Exact monetary cost is model/usage dependent. Show that generation may incur
   cost; expose safe token usage metadata only if available. Configure provider
   project spending limits before live verification. Do not invent dollar estimates.
@@ -61,11 +71,11 @@ provider/model and processing notice before submission.
 
 Reuse infrastructure instead of creating a Cady-only AI subsystem:
 
-| Responsibility | Proposed location |
+| Responsibility | Implemented location |
 | --- | --- |
 | Typed request/result, source refs, user context, milestones | `backend/intelligence/app/preparation/models.py` |
 | Owner-scoped CV/JD loading, matcher/check reuse, orchestration | `app/preparation/service.py` (`PreparationService`) |
-| Minimal context projection and prompt construction | `app/preparation/context.py`, `prompts.py` |
+| Minimal context projection and prompt construction | `app/preparation/context.py`, `prompt.py` |
 | Requirement-reference/source validation and budget checks | `app/preparation/validation.py` |
 | Shared provider execution and configurable reasoning | Existing `app/llm/service.py` and `providers/` |
 | Versioned derived plan repository | `app/storage/preparation_base.py`, `preparation_postgres.py` |
@@ -74,18 +84,19 @@ Reuse infrastructure instead of creating a Cady-only AI subsystem:
 | Thin authenticated routes and compact review dialog | Node preparation routes; React preparation components |
 
 Future Gemini/Grok providers implement the existing provider interface/capability
-contract. No feature may hard-code a provider SDK. Future Cady calls the same
-preparation service through authorized context; it cannot bypass ownership,
+contract. No feature may hard-code a provider SDK. Initial Cady shares context
+projection and the LLM service; future tools may call preparation through authorized context, preserving ownership,
 processing notice, cost controls or confirmation for user-data changes.
 
 ## Proposed contracts and storage
 
-Public paths are proposals, not current API routes:
+Public paths below are implemented; see the [API contract](api/intelligence.md#personalized-preparation-and-initial-cady):
 
 - `POST /api/v1/intelligence/jobs/:id/preparation-plans`: explicit owned resume/CV
   and current job-analysis IDs, profile opt-in, capability-backed model/reasoning,
   confirmed per-requirement classifications, hours/week, weeks and bounded goal.
-  Node derives owner/hash/profile version; browser-supplied facts/owner are rejected.
+  Node derives owner/hash/profile facts; the browser supplies the compared profile
+  revision for validation. Browser-supplied facts/owner are rejected.
   Return HTTP 202 and an owned task ID; task polling exposes the generated plan ID.
   The accepted generation continues after navigation; review/save remains explicit.
 - `GET .../preparation-plans` and `GET .../preparation-plans/:planId`: private
@@ -103,8 +114,9 @@ checkpoints, cautions and provider/model/reasoning/createdAt metadata. Source re
 are server-generated; the model returns only bounded advice fields.
 
 Require every job-specific action to reference a real selected requirement.
-Validate time allocations and classification membership, reject invented source
-facts/credentials/results, and quote only exact observed facts. New practice ideas
+Validate time allocations and classification membership, reject unknown source
+references and instruct the model to avoid invented credentials/results. This
+cannot prove every prose suggestion truthful; user review is required. New practice ideas
 are explicitly advice, not claims about the user's past. Do not generate resource
 URLs or claim courses have been verified; resource discovery is a later feature.
 
@@ -115,10 +127,10 @@ not implicit regeneration. Resume/job removal must suppress access immediately
 and follow the [current recovery lifecycle](notes-improvements.md#recovery-and-manual-tracking)
 for retained derived plans; historical hard erasure retains cleanup/tombstones.
 Profile-only changes label old context rather than silently rewriting plans.
-No vectors are needed; use the planned shared Celery/Redis execution foundation
-instead of introducing a separate preparation queue framework.
+No vectors are needed. The current shared PostgreSQL worker executes preparation;
+the planned Celery/Redis foundation can replace that executor later.
 
-## Implementable batches and acceptance
+## Completed batches and acceptance
 
 1. **Contract/context first:** settle typed action/time/source models and generated
    Node schema; build deterministic minimal context projection. Validate with
@@ -136,6 +148,6 @@ instead of introducing a separate preparation queue framework.
    prove no generation on reads and no silent profile mutation. With explicit
    authorization, run one small synthetic live call after model/key/budget checks.
 
-Initial Cady follows as batch 7 after this reusable preparation flow. Tracking
+Initial Cady is now implemented as batch 7 using this reusable context foundation. Tracking
 applications remains Phase 3; arbitrary company-page browsing and notebook requests
 stay separately prioritized. This plan does not authorize implementing those items.

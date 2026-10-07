@@ -51,7 +51,7 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
     ]).then(([settings, record, versions, tasks]) => {
       if (controller.signal.aborted) return;
       setCapabilities(settings); setModel(settings.defaultModel); setReasoning(settings.defaultReasoning);
-      setSaved(record); setHistory(versions); setTask(tasks.tasks.find(item => ['queued', 'running'].includes(item.state)) ?? null);
+      setSaved(record); setHistory(versions); setTask(tasks.tasks.find(item => !item.kind && ['queued', 'running'].includes(item.state)) ?? null);
     }).catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Could not load job analysis.'); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => { controller.abort(); active.current?.abort(); };

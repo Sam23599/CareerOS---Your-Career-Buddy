@@ -6,6 +6,7 @@ import { type JobAnalysisSummary } from '../../../../backend/platform/src/intell
 import { type MatchItem, type MatchResponse } from '../../../../backend/platform/src/intelligence/matching';
 import { type ReviewReport, type ReviewResponse } from '../../../../backend/platform/src/intelligence/reviews';
 import { ResumeCheckReport } from '../resumes/ResumeCheckReport';
+import { PreparationPanel } from '../preparation/PreparationPanel';
 
 type Resume = { id: string; name: string; version: number; active: boolean; deleting?: boolean };
 type JobHistory = { versions: (JobAnalysisSummary & { stale: boolean })[]; nextBeforeVersion: number | null };
@@ -115,7 +116,7 @@ function Comparison({ jobId }: { jobId: string }) {
     { title: 'Skills not found', items: match.items.filter(item => item.status === 'not_found') },
     { title: 'Requirements to review', items: match.items.filter(item => item.status === 'needs_review') },
   ] : [];
-  return <section className="panel profile-section job-matching" aria-label="CV-to-job matching">
+  return <><section className="panel profile-section job-matching" aria-label="CV-to-job matching">
     <div className="section-heading"><div><p className="eyebrow">Understand your fit</p><h2>Compare your CV to this job</h2></div></div>
     <p>Use saved resume and job analyses to compare skills and review other requirements. Comparing makes no new AI call.</p>
     {loading && <p role="status">Loading comparison inputs…</p>}
@@ -155,7 +156,7 @@ function Comparison({ jobId }: { jobId: string }) {
       {match.notStated.length > 0 && <p className="muted">Not stated in the saved job analysis: {match.notStated.map(label).join(', ')}.</p>}
       <p className="muted">This comparison is shown for the selected versions. Compare again after updating your inputs.</p>
     </div>}
-  </section>;
+  </section><PreparationPanel jobId={jobId} match={match ?? null} /></>;
 }
 
 export function JobMatchPanel({ jobId, revision }: { jobId: string; revision: number }) {

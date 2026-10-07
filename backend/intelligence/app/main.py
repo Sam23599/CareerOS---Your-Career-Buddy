@@ -23,6 +23,12 @@ from app.api.matching import MatchingController
 from app.matching.service import MatchingService
 from app.api.reviews import ResumeReviewController
 from app.reviews.service import ResumeReviewService
+from app.api.preparation import PreparationController
+from app.preparation.service import PreparationService
+from app.preparation.source_guard import PlatformSourceGuard
+from app.storage.preparation_postgres import PostgresPreparationRepository
+from app.api.cady import CadyController
+from app.cady.service import CadyService
 
 
 class IntelligenceApplication:
@@ -47,7 +53,11 @@ class IntelligenceApplication:
         await self.extraction.start()
         await self.repository.start()
         app.state.tasks = AnalysisTaskRepository(self.repository)
-        self.worker = AnalysisTaskWorker(app.state.tasks, self.jobs)
+        preparation = PreparationService(self.llm, PostgresPreparationRepository(self.repository), self.repository, self.jobs.repository,
+            PlatformSourceGuard(settings.platform_url, settings.service_token))
+        app.state.preparation = PreparationController(settings.service_token, preparation)
+        app.state.cady = CadyController(settings.service_token, CadyService(self.llm, self.repository, self.jobs.repository))
+        self.worker = AnalysisTaskWorker(app.state.tasks, self.jobs, preparation)
         self.worker.start()
         try:
             yield
@@ -86,6 +96,11 @@ class IntelligenceApplication:
         async def cancel_task(task_id: str, request: Request): return await request.app.state.jobs.cancel_task(task_id, request)
         async def match(request: Request): return await request.app.state.matching.compare(request)
         async def review(request: Request): return await request.app.state.reviews.review(request)
+        async def prepare(job_id: str, request: Request): return await request.app.state.preparation.start(job_id, request)
+        async def plans(job_id: str, request: Request): return await request.app.state.preparation.history(job_id, request)
+        async def plan(job_id: str, plan_id: str, request: Request): return await request.app.state.preparation.get(job_id, plan_id, request)
+        async def plan_review(job_id: str, plan_id: str, request: Request): return await request.app.state.preparation.review(job_id, plan_id, request)
+        async def cady(request: Request): return await request.app.state.cady.ask(request)
         for path, method, handler in (
             ("dependencies", "GET", dependencies), ("health", "GET", health), ("ready", "GET", ready), ("capabilities", "GET", capabilities),
             ("resumes/extract", "POST", extract), ("resumes/analyze", "POST", analyze),
@@ -98,6 +113,9 @@ class IntelligenceApplication:
             ("jobs/{job_id}/tasks", "POST", start_task), ("jobs/{job_id}/tasks", "GET", job_tasks),
             ("matching/compare", "POST", match),
             ("resumes/review", "POST", review),
+            ("jobs/{job_id}/preparation-plans", "POST", prepare), ("jobs/{job_id}/preparation-plans", "GET", plans),
+            ("jobs/{job_id}/preparation-plans/{plan_id}", "GET", plan), ("jobs/{job_id}/preparation-plans/{plan_id}/review", "PATCH", plan_review),
+            ("cady/ask", "POST", cady),
         ):
             app.add_api_route("/internal/v1/" + path, handler, methods=[method])
         return app

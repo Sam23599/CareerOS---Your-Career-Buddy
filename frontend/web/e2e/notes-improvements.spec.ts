@@ -63,6 +63,7 @@ test('an accepted job task survives navigation and its saved result reopens with
     }
     if (path.endsWith('/analysis')) return completed ? route.fulfill({ json: { analysis: fixture, sourceStatus: { stale: false, expired: false } } }) : route.fulfill({ status: 404, json: { error: { code: 'JOB_ANALYSIS_NOT_FOUND', message: 'No saved analysis.' } } });
     if (path.endsWith('/analyses')) return route.fulfill({ json: { versions: [], nextBeforeVersion: null } });
+    if (path.endsWith('/preparation-plans')) return route.fulfill({ json: { versions: [], nextBeforeVersion: null } });
     return route.fulfill({ json: { savedJob: null, resumes: [], unread: 0 } });
   });
   await page.goto(`/jobs/${job.id}`);

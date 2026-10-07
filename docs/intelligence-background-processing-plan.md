@@ -3,7 +3,7 @@
 Status: **Planning approved; implementation not started.** Updated 2026-10-07 (IST).
 The user requested adding Celery to the intelligence direction and identifying
 current migration candidates. This document enables no worker, broker, schedule,
-new AI feature or paid verification. Existing execution remains unchanged.
+new AI feature or paid verification. Later on 2026-10-07 the user selected preparation/Cady separately; [ADR-017](adr/017-personalized-preparation-and-initial-cady.md) extends the current worker while this executor migration remains planned.
 
 ## Direction and current boundary
 
@@ -33,9 +33,9 @@ task IDs, histories, versioning, cancellation and provider-cost controls.
 | Resume checks and preparation baseline | [ResumeReviewService.review](../backend/intelligence/app/reviews/service.py#L15); deterministic checks on saved inputs | **Keep synchronous.** Preserve current bounded reports and transient results. |
 | Saved-job ranking | [SavedJobRanker](../backend/platform/src/intelligence/ranking.ts#L41); Node orchestrates bounded Python comparisons | **Keep current flow.** A future large batch may delegate Python computations, but Node retains shortlist/preferences and source/revision validation. |
 | Task delivery recovery / expired execution leases | Current repository lease recovery happens during `claim()` | **Include in migration.** A small dispatcher/reconciler handles pending delivery and interrupted states without repeating uncertain paid work. |
-| Personalized AI preparation | [Planned extension](personalized-preparation-plan.md), not implemented | **Use Celery when implemented.** Explicit generation returns a task ID and produces source-bound versions; review/save remains separate. This feature stays deferred. |
+| Personalized AI preparation | [Implemented](personalized-preparation.md) with the existing durable worker and source-bound PostgreSQL plans | **Migrate alongside job tasks.** Preserve explicit generation, source checks, versioned output and separate review/save contracts; avoid introducing a second executor. |
 | OCR, embeddings, indexing and larger AI workflows | Not implemented | **Future candidates.** Separate queues/resources only when the feature and AI/data/cost scope are approved. |
-| Cady conversation | Not implemented | **Keep interactive replies/streaming responsive.** Only explicitly approved long-running tools/workflows become tasks; Celery is not the default path for every chat turn. |
+| Cady conversation | Initial bounded read-only assistant implemented; long-running tools remain future | **Keep interactive replies/streaming responsive.** Only explicitly approved long-running tools/workflows become tasks; Celery is not the default path for every chat turn. |
 | Remotive/source refreshes, notifications and historical cleanup outboxes | Node scheduler and Node-owned source/outbox records | **Keep in Node.** Python receives authorized domain requests if needed later; do not move ownership or give workers direct MongoDB access. |
 
 ## Proposed execution path

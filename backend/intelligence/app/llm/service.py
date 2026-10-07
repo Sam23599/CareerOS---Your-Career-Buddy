@@ -18,7 +18,7 @@ class LLMService:
     def available(self):
         return self.providers.get(self.settings.provider) is not None
 
-    async def generate(self, model, reasoning, instructions, text, schema):
+    async def generate(self, model, reasoning, instructions, text, schema, *, output_tokens=None):
         self.models.validate(model, reasoning, self.settings.provider)
         provider = self.providers.get(self.settings.provider)
         if provider is None:
@@ -28,4 +28,4 @@ class LLMService:
         if size > self.settings.max_input_bytes:
             raise IntelligenceError(413, "LLM_BUDGET_LIMIT")
         return await provider.generate(StructuredRequest(model, reasoning, instructions, text, schema,
-                                                         self.settings.max_output_tokens))
+                                                         min(output_tokens or self.settings.max_output_tokens, self.settings.max_output_tokens)))

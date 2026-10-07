@@ -3,14 +3,16 @@ import logging
 
 from app.core.errors import ERRORS, IntelligenceError
 from app.jobs.models import JobSource
+from app.preparation.models import PreparationInput
 
 logger = logging.getLogger(__name__)
 
 
 class AnalysisTaskWorker:
-    def __init__(self, repository, jobs):
+    def __init__(self, repository, jobs, preparation=None):
         self.repository, self.jobs = repository, jobs
         self.task = None
+        self.preparation = preparation
 
     def start(self):
         self.task = asyncio.create_task(self.run())
@@ -37,7 +39,10 @@ class AnalysisTaskWorker:
 
     async def process(self, task_id, owner, payload):
         try:
-            record = await self.jobs.analyze(owner, JobSource.model_validate(payload['source']), payload['model'], payload['reasoning'])
+            if payload.get('_kind') == 'preparation':
+                record = await self.preparation.generate(owner, PreparationInput.model_validate({key: value for key, value in payload.items() if key != '_kind'}))
+            else:
+                record = await self.jobs.analyze(owner, JobSource.model_validate(payload['source']), payload['model'], payload['reasoning'])
             await self.repository.finish(task_id, 'succeeded', record.id)
         except asyncio.CancelledError:
             await self.repository.finish(task_id, 'failed', error_code='LLM_TIMEOUT')

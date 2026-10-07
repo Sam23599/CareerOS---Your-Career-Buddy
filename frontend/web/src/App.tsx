@@ -1,4 +1,5 @@
 import { TasksPage } from './tasks/TasksPage';
+import { CadyPage } from './cady/CadyPage';
 import { SettingsPage } from './settings/SettingsPage';
 import { RecycleBinPage } from './recovery/RecycleBinPage';
 import { SavedJobsPage } from './saved-jobs/SavedJobsPage';
@@ -33,6 +34,7 @@ function AccountRoutes() {
   );
   const destination = session.state === 'authenticated' ? '/dashboard' : '/login';
   return <Routes>
+    <Route path="/cady" element={session.state === 'authenticated' ? <CadyPage key={session.user?.id} /> : <Navigate to="/login" replace />} />
     <Route path="/tasks" element={session.state === 'authenticated' ? <TasksPage /> : <Navigate to="/login" replace />} />
     <Route path="/settings" element={session.state === 'authenticated' ? <SettingsPage /> : <Navigate to="/login" replace />} />
     <Route path="/recycle-bin" element={session.state === 'authenticated' ? <RecycleBinPage /> : <Navigate to="/login" replace />} />

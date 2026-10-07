@@ -78,6 +78,7 @@ services:
     environment:
       INTELLIGENCE_SERVICE_TOKEN: ${INTELLIGENCE_SERVICE_TOKEN:-}
       INTELLIGENCE_DATABASE_URL: postgresql://intelligence:${INTELLIGENCE_DB_PASSWORD}@intelligence-postgres:5432/careeros_intelligence
+      INTELLIGENCE_PLATFORM_URL: http://api:3000
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-gpt-6-luna}
       LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT:-medium}

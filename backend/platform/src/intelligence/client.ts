@@ -7,6 +7,8 @@ import { MatchVerifier, type ProfileSkills } from './matching.js';
 import { type DraftRecord } from './drafts.js';
 import { type JobAnalysisRecord } from './jobs.js';
 import { ReviewVerifier } from './reviews.js';
+import { PreparationVerifier, type PreparationInput, type PlanReview } from './preparation.js';
+import { CadyVerifier, type CadyInput } from './cady.js';
 
 const MAX_OUTPUT = 2 * 1024 * 1024;
 const MAX_CHARACTERS = 200_000;
@@ -43,6 +45,8 @@ const upstreamErrors: Record<string, [number, string]> = {
   MATCH_SOURCE_CHANGED: [409, 'A comparison input changed. Reload the inputs and compare again.'],
   MATCHING_LIMIT: [413, 'This comparison exceeds the supported size limit.'],
   REVIEW_LIMIT: [413, 'This review exceeds the supported size limit.'],
+  PREPARATION_NOT_FOUND: [404, 'No saved preparation plan is available.'],
+  PREPARATION_CHANGED: [409, 'This plan was edited elsewhere. Reload it before saving.'],
 };
 
 function fields(value: unknown, names: string[]): value is Record<string, unknown> {
@@ -254,6 +258,23 @@ export class IntelligenceClient {
       body: JSON.stringify({ resume: resume.source, draftId: resume.id, jobId: job.source.jobId,
         jobHash: job.source.sha256, jobAnalysisId: job.id, profile }),
     }, signal), resume, job, profile);
+  }
+  async startPreparation(owner: string, jobId: string, input: PreparationInput) {
+    const body = await this.request(`/internal/v1/jobs/${jobId}/preparation-plans`, { method: 'POST', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
+    if (!fields(body, ['taskId']) || !TaskVerifier.uuid(body.taskId)) throw invalid();
+    return body as { taskId: string };
+  }
+  async preparation(owner: string, jobId: string, planId: string) {
+    return PreparationVerifier.record(await this.request(`/internal/v1/jobs/${jobId}/preparation-plans/${planId}`, { headers: { 'X-Owner-Id': owner } }), jobId, planId);
+  }
+  async preparationHistory(owner: string, jobId: string, before?: number) {
+    return PreparationVerifier.history(await this.request(`/internal/v1/jobs/${jobId}/preparation-plans${before ? `?beforeVersion=${before}` : ''}`, { headers: { 'X-Owner-Id': owner } }), jobId, before);
+  }
+  async reviewPreparation(owner: string, jobId: string, planId: string, review: PlanReview) {
+    return PreparationVerifier.record(await this.request(`/internal/v1/jobs/${jobId}/preparation-plans/${planId}/review`, { method: 'PATCH', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' }, body: JSON.stringify(review) }), jobId, planId);
+  }
+  async askCady(owner: string, input: CadyInput, resume: DraftRecord, jobs: JobAnalysisRecord[], signal: AbortSignal) {
+    return CadyVerifier.result(await this.request('/internal/v1/cady/ask', { method: 'POST', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' }, body: JSON.stringify(input) }, signal, 110_000), resume, jobs, input.profile, input);
   }
   async review(owner: string, resume: DraftRecord, job: JobAnalysisRecord | null, profile: ProfileSkills | null, signal: AbortSignal) {
     return ReviewVerifier.result(await this.request('/internal/v1/resumes/review', {

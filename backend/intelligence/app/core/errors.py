@@ -33,4 +33,6 @@ ERRORS = {
     "MATCH_SOURCE_CHANGED": "A comparison input changed. Reload the inputs and compare again.",
     "MATCHING_LIMIT": "This comparison exceeds the supported size limit.",
     "REVIEW_LIMIT": "This review exceeds the supported size limit.",
+    "PREPARATION_NOT_FOUND": "No saved preparation plan is available.",
+    "PREPARATION_CHANGED": "This plan was edited elsewhere. Reload it before saving.",
 }

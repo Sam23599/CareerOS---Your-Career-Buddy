@@ -20,6 +20,7 @@ import { type NotificationStore } from './notifications/store.js';
 import { intelligenceRouter } from './intelligence/routes.js';
 import { IntelligenceClient } from './intelligence/client.js';
 import { type JobAnalysisCleanup } from './intelligence/job-cleanup.js';
+import { SourceGuardRoutes } from './intelligence/source-guard-routes.js';
 
 export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions, profiles?: ProfileStore, resumes?: ResumeStore, jobs?: { store: JobStore; sources: JobSource[] }, savedJobs?: SavedJobStore, features?: { careerSources: CareerSourceStore; notifications: NotificationStore }, intelligence = new IntelligenceClient({}), jobCleanup?: JobAnalysisCleanup, recovery?: RecoveryStore) {
   const app = express();
@@ -42,6 +43,7 @@ export function createApp(checkDatabase: () => Promise<void>, auth?: AuthOptions
     next();
   });
   app.use(express.json({ limit: '100kb' }));
+  if (resumes && jobs) new SourceGuardRoutes(resumes, jobs.store, intelligence, profiles).register(app, process.env.INTELLIGENCE_SERVICE_TOKEN ?? '');
 
   app.get('/api/v1/health', (_req, res) => {
     res.json({ status: 'ok', service: 'platform' });

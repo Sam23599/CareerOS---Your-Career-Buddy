@@ -10,6 +10,7 @@ const destinations: { to: string; label: string; icon: IconName; end?: boolean }
   { to: '/jobs', label: 'Opportunities', icon: 'jobs' },
   { to: '/saved-jobs', label: 'Shortlist', icon: 'bookmark' },
   { to: '/resumes', label: 'Documents', icon: 'resume' },
+  { to: '/cady', label: 'Cady', icon: 'sparkles' },
   { to: '/career-sources', label: 'Company feeds', icon: 'sources' },
   { to: '/notifications', label: 'Activity', icon: 'bell' },
   { to: '/settings', label: 'Settings', icon: 'settings' },

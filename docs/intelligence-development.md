@@ -74,4 +74,11 @@ Verified on 2026-10-02:
 - The previously rejected local 10-page PDF was retried through the rebuilt parser and Node response validator: extraction completed in about one second with one safe structural-repair warning. Original bytes were unchanged, confirmed by hashes before and after. Only counts and fixed warnings were printed; the original file was retained.
 - All four local services are healthy; authenticated parser readiness returns 200. The parser has no published host port in the ordinary Docker stack, and existing application data/settings were retained. Generated browser PDFs and temporary integration data were removed.
 
-Structured resume drafts, persisted analysis and reviewed profile import are implemented in batch 2; see [setup/review](resume-drafts.md) and [ADR-011](adr/011-structured-resume-drafts.md). Job analysis is implemented in batch 3, [CV-to-job matching](cv-job-matching.md) in batch 4, the [resume-checks/preparation baseline](resume-checks.md) in batch 5, and [saved-job ranking](job-ranking.md) in batch 6. Matching, checks and ranking use saved analyses without new AI calls. The [personalized AI preparation plan](personalized-preparation-plan.md) precedes initial Cady; both remain planned in [the Phase 2 backlog](phase-2-backlog.md).
+Structured resume drafts, persisted analysis and reviewed profile import are implemented in batch 2; see [setup/review](resume-drafts.md) and [ADR-011](adr/011-structured-resume-drafts.md). Job analysis is implemented in batch 3, [CV-to-job matching](cv-job-matching.md) in batch 4, the [resume-checks/preparation baseline](resume-checks.md) in batch 5, and [saved-job ranking](job-ranking.md) in batch 6. Matching, checks and ranking use saved analyses without new AI calls. [Personalized preparation and initial Cady](personalized-preparation.md) are implemented next, using shared OpenAI infrastructure and the existing task worker. See [ADR-017](adr/017-personalized-preparation-and-initial-cady.md) and [the Phase 2 backlog](phase-2-backlog.md).
+
+Preparation adds migration `004_preparation_plans.sql`, applied automatically at
+intelligence startup. Rebuild that service with `docker compose up -d --build intelligence`.
+Compose supplies `INTELLIGENCE_PLATFORM_URL=http://api:3000` for service-authenticated
+worker source checks. When running Python on the host, point it at Node's actual
+`API_PORT` and use the same `INTELLIGENCE_SERVICE_TOKEN`; do not expose the token
+to the browser. No Celery/Redis installation is required for this batch.

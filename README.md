@@ -762,13 +762,13 @@ The architecture, service boundaries, technology choices, and feature set are ex
 
 The [development plan](docs/development-plan.md) defines the roadmap. The [Phase 1 backlog](docs/phase-1-backlog.md) tracks the first release, and the [review and next steps](docs/implementation-next-steps.md) define the proposed implementation sequence.
 
-The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts, job-description analysis, explainable CV-to-job matching, the [resume-checks/preparation baseline](docs/resume-checks.md) and [saved-job ranking](docs/job-ranking.md) are implemented. Matching, checks and ranking reuse saved analyses without new AI calls. [Personalized AI preparation](docs/personalized-preparation-plan.md) is planned next; Cady follows separately.
+The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts, job-description analysis, explainable CV-to-job matching, the [resume-checks/preparation baseline](docs/resume-checks.md) and [saved-job ranking](docs/job-ranking.md) are implemented. Matching, checks and ranking reuse saved analyses without new AI calls. [Personalized AI preparation and initial Cady](docs/personalized-preparation.md) now add explicitly generated, versioned preparation plans on job pages and a read-only assistant at `/cady`. Both reuse shared OpenAI model/reasoning settings. Celery migration remains planned separately.
 
 The first release focuses on the core job workflow; community belongs to Phase 5. This README describes the product vision and planned architecture.
 
 ## Structured resume drafts
 
-At `/resumes`, choose **Resume draft** to generate detailed, evidence-backed fields using OpenAI, then edit/select, preview and explicitly apply supported fields to your profile. Python is modular/OOP and owns derived drafts in a separate PostgreSQL database. The shared provider layer serves both resume and job analysis; Cady remains a later step. See [configuration, review flow and checks](docs/resume-drafts.md) and [ADR-011](docs/adr/011-structured-resume-drafts.md).
+At `/resumes`, choose **Resume draft** to generate detailed, evidence-backed fields using OpenAI, then edit/select, preview and explicitly apply supported fields to your profile. Python is modular/OOP and owns derived drafts in a separate PostgreSQL database. The shared provider layer serves resume/job analysis, preparation and initial Cady. See [configuration, review flow and checks](docs/resume-drafts.md) and [ADR-011](docs/adr/011-structured-resume-drafts.md).
 
 ## Job-description analysis
 
@@ -792,4 +792,4 @@ At `/saved-jobs`, expand **Rank your shortlist**, choose a saved CV analysis and
 click **Rank saved jobs**. Rank up to 50 jobs across the applied filters using
 skill coverage, with preferences and saved priority breaking ties. Expand reasons
 and review jobs needing analysis separately. No new AI call or automatic edits.
-See [rules and limits](docs/job-ranking.md) and [the personalized-AI next-step plan](docs/personalized-preparation-plan.md).
+See [rules and limits](docs/job-ranking.md) and [personalized preparation/Cady use and limits](docs/personalized-preparation.md).

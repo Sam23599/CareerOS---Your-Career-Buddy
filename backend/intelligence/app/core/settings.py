@@ -13,6 +13,7 @@ class Settings:
     timeout: int = 90
     max_input_bytes: int = 60_000
     max_output_tokens: int = 16_384
+    platform_url: str = ""
 
     @classmethod
     def from_environment(cls):
@@ -23,4 +24,5 @@ class Settings:
             openai_key=os.getenv("OPENAI_API_KEY", ""),
             model=os.getenv("LLM_MODEL", "gpt-6-luna"),
             reasoning=os.getenv("LLM_REASONING_EFFORT", "medium"),
+            platform_url=os.getenv("INTELLIGENCE_PLATFORM_URL", ""),
         )

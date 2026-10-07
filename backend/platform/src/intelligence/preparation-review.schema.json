@@ -1,0 +1,66 @@
+{
+  "$defs": {
+    "ReviewedAction": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^action-[1-9][0-9]{0,2}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "skipped",
+            "done"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "detail",
+        "status"
+      ],
+      "title": "ReviewedAction",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "revision": {
+      "maximum": 2147483647,
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "actions": {
+      "items": {
+        "$ref": "#/$defs/ReviewedAction"
+      },
+      "maxItems": 60,
+      "title": "Actions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "revision",
+    "actions"
+  ],
+  "title": "PlanReview",
+  "type": "object"
+}

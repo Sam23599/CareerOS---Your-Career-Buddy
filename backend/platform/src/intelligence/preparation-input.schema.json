@@ -1,0 +1,223 @@
+{
+  "$defs": {
+    "GapChoice": {
+      "additionalProperties": false,
+      "properties": {
+        "matchIndex": {
+          "maximum": 349,
+          "minimum": 0,
+          "title": "Matchindex",
+          "type": "integer"
+        },
+        "classification": {
+          "enum": [
+            "already_know",
+            "need_evidence",
+            "want_to_learn",
+            "unsure"
+          ],
+          "title": "Classification",
+          "type": "string"
+        }
+      },
+      "required": [
+        "matchIndex",
+        "classification"
+      ],
+      "title": "GapChoice",
+      "type": "object"
+    },
+    "MatchInput": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "$ref": "#/$defs/Source"
+        },
+        "draftId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Draftid",
+          "type": "string"
+        },
+        "jobId": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobid",
+          "type": "string"
+        },
+        "jobHash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobhash",
+          "type": "string"
+        },
+        "jobAnalysisId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Jobanalysisid",
+          "type": "string"
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProfileSkills"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "resume",
+        "draftId",
+        "jobId",
+        "jobHash",
+        "jobAnalysisId",
+        "profile"
+      ],
+      "title": "MatchInput",
+      "type": "object"
+    },
+    "PreparationGoals": {
+      "additionalProperties": false,
+      "properties": {
+        "choices": {
+          "items": {
+            "$ref": "#/$defs/GapChoice"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Choices",
+          "type": "array"
+        },
+        "hoursPerWeek": {
+          "maximum": 40,
+          "minimum": 1,
+          "title": "Hoursperweek",
+          "type": "integer"
+        },
+        "weeks": {
+          "maximum": 12,
+          "minimum": 1,
+          "title": "Weeks",
+          "type": "integer"
+        },
+        "goal": {
+          "maxLength": 1000,
+          "title": "Goal",
+          "type": "string"
+        }
+      },
+      "required": [
+        "choices",
+        "hoursPerWeek",
+        "weeks",
+        "goal"
+      ],
+      "title": "PreparationGoals",
+      "type": "object"
+    },
+    "ProfileSkills": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Version",
+          "type": "integer"
+        },
+        "skills": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Skills",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version",
+        "skills"
+      ],
+      "title": "ProfileSkills",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "resumeId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Resumeid",
+          "type": "string"
+        },
+        "resumeVersion": {
+          "minimum": 1,
+          "title": "Resumeversion",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resumeId",
+        "resumeVersion",
+        "sha256"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "context": {
+      "$ref": "#/$defs/MatchInput"
+    },
+    "goals": {
+      "$ref": "#/$defs/PreparationGoals"
+    },
+    "model": {
+      "enum": [
+        "gpt-4.1",
+        "gpt-6-luna",
+        "gpt-6.1-sol"
+      ],
+      "title": "Model",
+      "type": "string"
+    },
+    "reasoning": {
+      "anyOf": [
+        {
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reasoning"
+    },
+    "requestKey": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "title": "Requestkey",
+      "type": "string"
+    }
+  },
+  "required": [
+    "context",
+    "goals",
+    "model",
+    "reasoning",
+    "requestKey"
+  ],
+  "title": "PreparationInput",
+  "type": "object"
+}

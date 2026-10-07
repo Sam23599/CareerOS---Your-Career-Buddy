@@ -302,9 +302,117 @@ The whole request has a 60-second deadline (504 `RANKING_TIMEOUT`), per-private-
 separate ten rankings/user/fifteen-minute limiter (`Retry-After: 900`). Disconnect
 or failure cancels pending/queued work. There is no automatic retry.
 
-Personalized AI preparation has a [separate proposed contract](../personalized-preparation-plan.md)
-and is not exposed by the current API.
+Personalized AI preparation extends this baseline through the explicit generation
+flow below. Reading a saved plan still makes no new AI call.
 
 ## Durable job tasks and dependencies (2026-10-07)
 
 See [task API and lifecycle](../notes-improvements.md#durable-job-analysis-tasks). The browser uses the new task submission route; leaving does not cancel accepted job analysis. Legacy synchronous analyze routes and resume/extraction flows retain disconnect cancellation. GET `/api/v1/system/status` uses private GET `/internal/v1/dependencies` without provider calls.
+
+## Personalized preparation and initial Cady
+
+Implemented 2026-10-07. See [use, storage and limits](../personalized-preparation.md)
+and [ADR-017](../adr/017-personalized-preparation-and-initial-cady.md). All public
+routes below require the authenticated owner. Caller-provided facts, hashes or
+owner IDs are rejected. JSON actions reject unknown fields and query parameters.
+
+`POST /api/v1/intelligence/jobs/:id/preparation-plans` accepts:
+
+```json
+{
+  "resumeId": "owned-resume-uuid",
+  "draftId": "saved-cv-analysis-uuid",
+  "jobAnalysisId": "saved-current-job-analysis-uuid",
+  "includeProfileSkills": false,
+  "profileVersion": null,
+  "goals": {
+    "choices": [{ "matchIndex": 1, "classification": "want_to_learn" }],
+    "hoursPerWeek": 5,
+    "weeks": 4,
+    "goal": "Prepare for the technical interview"
+  },
+  "model": "gpt-6-luna",
+  "reasoning": "medium",
+  "requestKey": "new-intent-uuid"
+}
+```
+
+All fields are required. Opted-in profile skills require the revision from the
+comparison; otherwise `profileVersion` is null. Changed revisions return 409
+`MATCH_SOURCE_CHANGED`. `matchIndex` refers to the deterministic comparison's
+requirement order. Choose 1–20 distinct indexes, classified `already_know`,
+`need_evidence`, `want_to_learn` or `unsure`. Hours/week is 1–40, weeks 1–12, goal
+at most 1,000 characters. The total budget must allow at least one hour per chosen
+requirement. Stale/expired jobs are rejected before submission.
+
+The response is 202 `{ taskId }`. Existing `/intelligence/tasks` reads/cancellation
+apply; preparation tasks add `kind: "preparation"`, with successful `analysisId`
+equal to the plan ID. A request key deduplicates the same owner/intent; reusing it
+with different input is rejected. Closing/navigation does not cancel accepted work.
+
+- `GET /api/v1/intelligence/jobs/:id/preparation-plans?beforeVersion=N` returns
+  `{ versions, nextBeforeVersion }`, twenty per page, newest first. Summaries contain
+  source identities, numbered version, model/reasoning, creation time, review
+  revision and stale-job label. Removed CVs suppress their plans from history.
+- `GET /api/v1/intelligence/jobs/:id/preparation-plans/:planId` returns
+  `{ record, match, sourceStatus: { stale, expired, profileChanged } }`. `match` is
+  rebuilt from the selected CV/JD without profile skills to label requirement
+  indexes; `record.source` retains the original opted-in profile revision. The
+  original generated plan stays immutable, alongside a separate review overlay.
+- `PATCH /api/v1/intelligence/jobs/:id/preparation-plans/:planId/review` accepts
+  `{ revision, actions: [{ id, title, detail, status }] }`. Status is `planned`,
+  `skipped` or `done`; action IDs must belong to the original plan. Omitted actions
+  retain their generated defaults. Conflicting revision returns 409
+  `PREPARATION_CHANGED`; changed job/profile sources return `MATCH_SOURCE_CHANGED`.
+  Response has the same shape as the plan read. Reads and review saves never
+  generate advice or change the CV/profile.
+
+Private Python counterparts use `/internal/v1/jobs/:id/preparation-plans` with
+the same history/read/review suffixes and service authentication/`X-Owner-Id`.
+Submission contains server-resolved `PreparationInput` (owned `MatchInput` context,
+goals, model/reasoning and request key). Python uses the shared generation gate and
+the existing PostgreSQL task executor; Celery remains a planned migration.
+
+The worker checks sources before provider execution and before storage through
+Node `POST /internal/v1/intelligence/sources/check`: service-token Bearer auth,
+JSON `{ owner, resume, jobId, jobHash, profileVersion }`; 200 `{ status: "current" }`
+or 409 for unavailable/changed sources. This private route is outside public JWT
+auth and does not accept a user's access token. Checks span MongoDB/PostgreSQL;
+they are not a cross-database transaction.
+
+`POST /api/v1/intelligence/cady/ask` accepts:
+
+```json
+{
+  "resumeId": "owned-resume-uuid",
+  "draftId": "saved-cv-analysis-uuid",
+  "jobs": [{ "jobId": "catalogue-sha256", "jobAnalysisId": "owned-analysis-uuid" }],
+  "includeProfileSkills": false,
+  "question": "How should I prepare for this role?",
+  "history": [],
+  "model": "gpt-6-luna",
+  "reasoning": "medium"
+}
+```
+
+Choose one CV and 0–3 distinct current, active job analyses. Question/history
+messages are at most 2,000 characters; history permits up to six messages with
+`{ role: "user" | "assistant", text }`. Node resolves source facts and optional
+profile skills, calls private `POST /internal/v1/cady/ask`, validates exact source
+identities/reference facts, then rechecks source lifetime/revisions. The response
+contains `resume`, `draftId`, `draftVersion`, comparison `sources`, `profileVersion`,
+`references: [{ id, label, text }]`, `answer` paragraphs with reference IDs and up
+to three follow-up questions, plus model/reasoning/usage metadata.
+
+Cady has no mutation tools, browsing or server-side chat persistence. Browser
+history is transient and bounded; follow-up buttons do not send automatically.
+Disconnect/Stop waiting cancels pending work where possible, with no automatic
+retry. A provider call may already have incurred cost.
+
+Both features have separate five-request/owner/fifteen-minute throttles. The
+shared provider generation deadline is 90 seconds; Cady's gateway deadline is
+110 seconds. Preparation output caps at 8,192 tokens, Cady at 4,096; shared prompt
+size remains bounded at 60 KB. Invalid structured/reference/time output returns
+the existing safe AI validation error, saves no generated plan and is not retried.
+See the generated Pydantic-derived schemas and typed verifiers in
+`backend/platform/src/intelligence/{preparation,cady}.ts`.

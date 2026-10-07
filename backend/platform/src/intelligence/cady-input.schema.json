@@ -1,0 +1,193 @@
+{
+  "$defs": {
+    "CadyJob": {
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobid",
+          "type": "string"
+        },
+        "jobHash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobhash",
+          "type": "string"
+        },
+        "jobAnalysisId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Jobanalysisid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "jobId",
+        "jobHash",
+        "jobAnalysisId"
+      ],
+      "title": "CadyJob",
+      "type": "object"
+    },
+    "ConversationTurn": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "text"
+      ],
+      "title": "ConversationTurn",
+      "type": "object"
+    },
+    "ProfileSkills": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Version",
+          "type": "integer"
+        },
+        "skills": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Skills",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version",
+        "skills"
+      ],
+      "title": "ProfileSkills",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "resumeId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Resumeid",
+          "type": "string"
+        },
+        "resumeVersion": {
+          "minimum": 1,
+          "title": "Resumeversion",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resumeId",
+        "resumeVersion",
+        "sha256"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "resume": {
+      "$ref": "#/$defs/Source"
+    },
+    "draftId": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "title": "Draftid",
+      "type": "string"
+    },
+    "jobs": {
+      "items": {
+        "$ref": "#/$defs/CadyJob"
+      },
+      "maxItems": 3,
+      "title": "Jobs",
+      "type": "array"
+    },
+    "profile": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProfileSkills"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "question": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Question",
+      "type": "string"
+    },
+    "history": {
+      "items": {
+        "$ref": "#/$defs/ConversationTurn"
+      },
+      "maxItems": 6,
+      "title": "History",
+      "type": "array"
+    },
+    "model": {
+      "enum": [
+        "gpt-4.1",
+        "gpt-6-luna",
+        "gpt-6.1-sol"
+      ],
+      "title": "Model",
+      "type": "string"
+    },
+    "reasoning": {
+      "anyOf": [
+        {
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reasoning"
+    }
+  },
+  "required": [
+    "resume",
+    "draftId",
+    "jobs",
+    "profile",
+    "question",
+    "history",
+    "model",
+    "reasoning"
+  ],
+  "title": "CadyInput",
+  "type": "object"
+}

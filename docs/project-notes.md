@@ -77,11 +77,19 @@ background processing:
 <!-- N-023 -->
 - for background processing or time taking tasks like ai analysis related stuffs, we can introduce Celery in intelligence layer. (my bad, forgot to add this in this initial disscussion plans). for now, lets just update the plans and introduce what current tasks or jobs can be migated to celery.
 
+cady:
+- improve cady interface. provide a chat widget like or pop-up like window for quick minimal and easy access, that accessible accross everywhere on the app. keep the current full cady page as well for immersed and detailed conversation.
+- improve cady page layout to a modern app. take notes from some external sources for better UI for an assistant like app.
+- Review resume & gaps or Compare CV to job: what are its separation? combine them in one if they nearly serve the same purpose.
+- Personalized preparation: keep all user field but compact them 
+- current "Create AI preparation plan" is shitty. it doesnt exactly work how it's supposed to. it only return data randomly (http://localhost:5173/jobs/6999e0b6f77164924365d45f9e93e83f84809ef14ac0dc1a193a8fb0d65c4968?skill=python&remoteType=REMOTE&source=remotive) with editable action title and details etc. that's weird. we need a proper preperation plan for the user to start preping step by step, based on the user input of like 1-8 weeks long plan. 
 
 - batch cv analysis
 - consolidate shortlisted jobs view page, give popup edit/view option
 - implement dark/light mode better, current dark mode color stings into eyes. 
-- 
+- sidebar and page name should be same. not like "shortlist-saved jobs". this keeps confusion, keep it consistent. career profile and dashboard are exception. they are ok just the way they are.
+- add more details from overall platform on dashboard, like statatics and status. currently it only holds the redirects to different pages of the platform.
+- improve namings of the ai analysed results for different versions, currently its confusing to know what's what!
 
 ## Refined notes
 
@@ -107,8 +115,7 @@ authoritative; the evidence/proposals/decisions preceding it describe the origin
 
 Implementation contracts, storage behavior and limits are in
 [notebook improvements](notes-improvements.md) and [ADR-016](adr/016-notebook-improvements.md).
-Personalized AI preparation stays documented in [its plan](personalized-preparation-plan.md)
-and deferred until you select it. No commit/push or paid provider call was made.
+Personalized AI preparation was held during the notebook batch. Later on 2026-10-07 you selected the original preparation → Cady sequence; both initial features are now implemented in [ADR-017](adr/017-personalized-preparation-and-initial-cady.md). This follow-up makes no paid provider call or publication change.
 
 ### Original 2026-10-06 proposed order — historical
 
@@ -318,8 +325,8 @@ clarifications and explicit implementation request supersede that pending state.
 - **Approved:** You explicitly asked to implement the notebook changes on 2026-10-07. The results above supersede the original review's pending implementation statuses.
 - **Confirmed:** N-003 archive recovery is support-only; N-004 credits/usage/payments are a demo now; N-018 new means since the previous source view. N-006/N-008 ordinary restoration works; only the expected seven-day expiry asks again.
 - **Remaining:** N-007 live Google consent needs configured credentials/user interaction. N-012/N-017 native contact/LinkedIn integration and N-011 imported reviews need supported access/research. General HTTP failure history, real billing and the full Phase 3 workflow remain future.
-- **N-023 planning only:** Celery is selected as the future intelligence task direction; Redis is the proposed broker. Migration implementation and personalized AI remain separate future selections.
-- **Held:** Personalized AI preparation remains documented and deferred. No paid AI verification, external message, commit or push was authorized by this implementation request.
+- **N-023 planning only:** Celery is selected as the future intelligence task direction; Redis is the proposed broker. Migration implementation remains a future selection; the later preparation/Cady selection uses the current worker.
+- **Selected later on 2026-10-07:** Personalized AI preparation and initial Cady implemented using shared providers and the existing worker. AI/data/charge notices delivered before work; mocked verification only. Celery, paid live verification, external messages and publication remain separately scoped.
 - **Updated:** 2026-10-07, Asia/Kolkata. Daily 03:00 review is still not a verified background schedule.
 
 ## Review log

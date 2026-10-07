@@ -1,0 +1,195 @@
+{
+  "$defs": {
+    "MatchSource": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "$ref": "#/$defs/Source"
+        },
+        "draftId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Draftid",
+          "type": "string"
+        },
+        "draftVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Draftversion",
+          "type": "integer"
+        },
+        "jobId": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobid",
+          "type": "string"
+        },
+        "jobHash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobhash",
+          "type": "string"
+        },
+        "jobAnalysisId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Jobanalysisid",
+          "type": "string"
+        },
+        "jobAnalysisVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Jobanalysisversion",
+          "type": "integer"
+        },
+        "profileVersion": {
+          "anyOf": [
+            {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Profileversion"
+        }
+      },
+      "required": [
+        "resume",
+        "draftId",
+        "draftVersion",
+        "jobId",
+        "jobHash",
+        "jobAnalysisId",
+        "jobAnalysisVersion",
+        "profileVersion"
+      ],
+      "title": "MatchSource",
+      "type": "object"
+    },
+    "PreparationSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/$defs/MatchSource"
+        },
+        "model": {
+          "enum": [
+            "gpt-4.1",
+            "gpt-6-luna",
+            "gpt-6.1-sol"
+          ],
+          "title": "Model",
+          "type": "string"
+        },
+        "reasoning": {
+          "anyOf": [
+            {
+              "enum": [
+                "none",
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reasoning"
+        },
+        "createdAt": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Createdat",
+          "type": "string"
+        },
+        "reviewRevision": {
+          "minimum": 0,
+          "title": "Reviewrevision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "source",
+        "model",
+        "reasoning",
+        "createdAt",
+        "reviewRevision"
+      ],
+      "title": "PreparationSummary",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "resumeId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Resumeid",
+          "type": "string"
+        },
+        "resumeVersion": {
+          "minimum": 1,
+          "title": "Resumeversion",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resumeId",
+        "resumeVersion",
+        "sha256"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "versions": {
+      "items": {
+        "$ref": "#/$defs/PreparationSummary"
+      },
+      "maxItems": 20,
+      "title": "Versions",
+      "type": "array"
+    },
+    "nextBeforeVersion": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Nextbeforeversion"
+    }
+  },
+  "required": [
+    "versions",
+    "nextBeforeVersion"
+  ],
+  "title": "PreparationHistory",
+  "type": "object"
+}

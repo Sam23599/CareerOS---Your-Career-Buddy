@@ -473,3 +473,17 @@ blockquote p { margin: 8px 0 0; }
 
 .workspace-card-heading.compact-card-heading { grid-template-columns: minmax(0, 1fr) auto; }
 .compact-card-heading > h2 { margin: 0; }
+.preparation-dialog { max-height: 88vh; overflow-y: auto; }
+.preparation-dialog .preview-heading { position: static; gap: 1rem; }
+.preparation-dialog fieldset { min-width: 0; }
+.preparation-gap, .plan-action, .cady-job { padding: .8rem 0; border-bottom: 1px solid var(--border); }
+.preparation-gap label, .plan-action label, .cady-page label { display: grid; gap: .4rem; }
+.preparation-gap .check-label, .cady-page .check-label { display: flex; }
+.plan-history-row { display: flex; gap: .8rem; justify-content: space-between; align-items: center; padding: .5rem 0; }
+.plan-history-row span, .cady-turn, .plan-action summary { overflow-wrap: anywhere; }
+.ai-settings { margin: .8rem 0; }
+.cady-page { max-width: 1040px; margin-inline: auto; }
+.cady-conversation form { margin-top: 1rem; }
+.cady-turn { padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.cady-turn h3 { font-size: .85rem; color: var(--muted); }
+@media (max-width: 600px) { .plan-history-row { align-items: stretch; flex-direction: column; } .preparation-dialog .profile-grid { grid-template-columns: 1fr; } }

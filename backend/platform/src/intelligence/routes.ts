@@ -20,6 +20,10 @@ import { ResumeReviewRoutes } from './review-routes.js';
 import { type SavedJobStore } from '../saved-jobs/store.js';
 import { SavedJobRankingService } from './ranking-service.js';
 import { SavedJobRankingRoutes } from './ranking-routes.js';
+import { PreparationRoutes } from './preparation-routes.js';
+import { PreparationService } from './preparation-service.js';
+import { CadyRoutes } from './cady-routes.js';
+import { CadyService } from './cady-service.js';
 
 export function intelligenceRouter(auth: AuthService, resumes: ResumeStore | undefined, client: IntelligenceClient, profiles?: ProfileStore, jobs?: JobStore, cleanup?: JobAnalysisCleanup, saved?: SavedJobStore) {
   const router = Router();
@@ -39,6 +43,13 @@ export function intelligenceRouter(auth: AuthService, resumes: ResumeStore | und
   if (jobs) new JobAnalysisRoutes(new JobAnalysisService(jobs, client, cleanup), client).register(router, throttle);
   if (!resumes) return router;
   const analysis = new ResumeAnalysisService(resumes, client, profiles);
+  const aiThrottle = (label: string) => rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, standardHeaders: 'draft-8', legacyHeaders: false,
+    keyGenerator: (_req, res) => res.locals.user.id,
+    handler: (_req, res, next) => { res.setHeader('Retry-After', '900'); next(new ApiError(429, 'RATE_LIMITED', `Too many ${label} requests. Please try again later.`)); } });
+  if (jobs) {
+    new PreparationRoutes(new PreparationService(analysis, new JobAnalysisService(jobs, client), client, profiles)).register(router, aiThrottle('preparation'));
+    new CadyRoutes(new CadyService(analysis, new JobAnalysisService(jobs, client), client, profiles)).register(router, aiThrottle('Cady'));
+  }
   if (jobs && saved) new SavedJobRankingRoutes(new SavedJobRankingService(saved, analysis,
     new JobAnalysisService(jobs, client), client, profiles)).register(router, rateLimit({
     windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false,
