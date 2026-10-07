@@ -58,7 +58,7 @@ test('job preparation stays compact, explains evidence gaps and clears reports o
   await panel.getByRole('button', { name: 'Load older CV analyses' }).click();
   await panel.getByLabel('CV analysis version').selectOption(cv.id);
   expect(state.reviews).toBe(0);
-  await panel.getByRole('button', { name: 'Review resume & gaps' }).click();
+  await panel.getByRole('button', { name: 'Review fit & gaps' }).click();
   await expect(panel.getByRole('status')).toHaveText('75%');
   const report = panel.getByRole('region', { name: 'Resume checks and preparation' });
   await expect(report.getByText('2 of 6 sections recognized', { exact: false })).toBeVisible();
@@ -77,15 +77,15 @@ test('job preparation stays compact, explains evidence gaps and clears reports o
   await report.screenshot({ path: '/tmp/careeros-resume-check-report-mobile.png' });
   await page.screenshot({ path: '/tmp/careeros-resume-checks-mobile.png', fullPage: true });
   await panel.getByLabel('Include my saved profile skills').check(); await expect(report).toHaveCount(0);
-  await panel.getByRole('button', { name: 'Review resume & gaps' }).click();
+  await panel.getByRole('button', { name: 'Review fit & gaps' }).click();
   await expect(panel.getByRole('status')).toHaveText('100%');
   await report.getByText('Profile skills to support in your CV (1)', { exact: true }).click();
   await report.locator('summary').filter({ hasText: /^TypeScript$/ }).click();
   await expect(report.getByText(/If accurate, add a concrete example/)).toBeVisible();
-  state.stale = true; await panel.getByRole('button', { name: 'Review resume & gaps' }).click();
+  state.stale = true; await panel.getByRole('button', { name: 'Review fit & gaps' }).click();
   await expect(panel.getByRole('alert')).toContainText('This listing changed'); await expect(report).toHaveCount(0);
   await panel.getByRole('button', { name: 'Refresh comparison inputs' }).click();
-  await expect(panel.getByRole('button', { name: 'Review resume & gaps' })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Review fit & gaps' })).toBeDisabled();
   expect(state.generated).toBe(0);
 });
 

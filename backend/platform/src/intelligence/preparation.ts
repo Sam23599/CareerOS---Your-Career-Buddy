@@ -10,13 +10,14 @@ import { type DraftRecord } from './drafts.js';
 
 export type GapChoice = { matchIndex: number; classification: 'already_know' | 'need_evidence' | 'want_to_learn' | 'unsure' };
 export type PreparationGoals = { choices: GapChoice[]; hoursPerWeek: number; weeks: number; goal: string };
-export type PlanAction = { id: string; matchIndex: number; kind: 'learn' | 'practice' | 'project' | 'checkpoint' | 'interview' | 'cv_evidence' | 'verify'; week: number; hours: number; title: string; detail: string };
+export type PlanAction = { id: string; matchIndex: number; kind: 'learn' | 'practice' | 'project' | 'checkpoint' | 'interview' | 'cv_evidence' | 'verify'; week: number; hours: number; title: string; detail: string; outcome?: string };
+export type WeeklyGoal = { week: number; objective: string; milestone: string };
 export type ReviewedAction = { id: string; title: string; detail: string; status: 'planned' | 'skipped' | 'done' };
 export type PlanReview = { revision: number; actions: ReviewedAction[] };
-export type PreparationRecord = { schemaVersion: 1; plannerVersion: 'preparation-v1'; id: string; version: number;
+export type PreparationRecord = { schemaVersion: 1; plannerVersion: 'preparation-v1' | 'preparation-v2'; id: string; version: number;
   source: MatchResult['source']; goals: PreparationGoals; provider: 'openai'; model: string; reasoning: string | null;
   usage: { inputTokens: number; outputTokens: number }; createdAt: string;
-  plan: { overview: string; actions: PlanAction[]; cautions: string[] }; review: PlanReview };
+  plan: { overview: string; actions: PlanAction[]; cautions: string[]; weeks?: WeeklyGoal[] }; review: PlanReview };
 export type PreparationInput = { context: { resume: DraftRecord['source']; draftId: string; jobId: string; jobHash: string; jobAnalysisId: string; profile: ProfileSkills | null };
   goals: PreparationGoals; model: string; reasoning: string | null; requestKey: string };
 export type PreparationSummary = Pick<PreparationRecord, 'id' | 'version' | 'source' | 'model' | 'reasoning' | 'createdAt'> & { reviewRevision: number; stale?: boolean };
@@ -54,6 +55,15 @@ export class PreparationVerifier {
     if (covered.size !== choices.size || [...hours.values()].some(value => value > record.goals.hoursPerWeek)
       || new Set(record.review.actions.map(item => item.id)).size !== record.review.actions.length
       || record.review.actions.some(item => !ids.has(item.id))) this.invalid();
+    if ((record.plannerVersion === 'preparation-v2') !== Boolean(record.plan.weeks)) this.invalid();
+    if (record.plan.weeks) {
+      const expected = Array.from({ length: record.goals.weeks }, (_, i) => i + 1);
+      if (!isDeepStrictEqual(record.plan.weeks.map(item => item.week), expected) || !isDeepStrictEqual([...hours.keys()].sort((a, b) => a - b), expected)
+        || record.plan.actions.some((action, i, items) => i > 0 && action.week < items[i - 1].week)
+        || expected.some(week => !['checkpoint', 'verify', 'interview'].includes(record.plan.actions.filter(action => action.week === week).at(-1)!.kind))
+        || record.plan.actions.some(action => !action.outcome?.trim() || !action.title.trim() || !action.detail.trim())
+        || record.plan.weeks.some(week => !week.objective.trim() || !week.milestone.trim())) this.invalid();
+    }
     return record;
   }
   static bound(record: PreparationRecord, match: MatchResult) {

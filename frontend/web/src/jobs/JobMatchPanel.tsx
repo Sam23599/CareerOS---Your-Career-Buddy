@@ -79,14 +79,6 @@ function Comparison({ jobId }: { jobId: string }) {
     catch (cause) { if (!controller.signal.aborted) setError(errorMessage(cause)); }
     finally { if (!controller.signal.aborted) setBusy(false); }
   }
-  function compare() {
-    clearResult();
-    void run(async signal => {
-      const response = await authenticatedRequest<MatchResponse>(`${base}/match`, { method: 'POST',
-        body: JSON.stringify({ resumeId, draftId, jobAnalysisId, includeProfileSkills }), signal });
-      if (!signal.aborted) setResult(response);
-    });
-  }
   function clearResult() { setResult(null); setReport(null); }
   function review() {
     clearResult();
@@ -118,7 +110,7 @@ function Comparison({ jobId }: { jobId: string }) {
   ] : [];
   return <><section className="panel profile-section job-matching" aria-label="CV-to-job matching">
     <div className="section-heading"><div><p className="eyebrow">Understand your fit</p><h2>Compare your CV to this job</h2></div></div>
-    <p>Use saved resume and job analyses to compare skills and review other requirements. Comparing makes no new AI call.</p>
+    <p>Review skill coverage, resume checks and preparation gaps together using saved analyses. This review makes no new AI call.</p>
     {loading && <p role="status">Loading comparison inputs…</p>}
     {error && <p role="alert" className="form-error">{error}</p>}
     <button className="secondary" disabled={loading || busy || draftLoading} onClick={() => {
@@ -141,7 +133,7 @@ function Comparison({ jobId }: { jobId: string }) {
         <div className="actions">{drafts.nextBeforeVersion !== null && <button type="button" className="secondary" onClick={() => older('resume')}>Load older CV analyses</button>}{jobs.nextBeforeVersion !== null && <button type="button" className="secondary" onClick={() => older('job')}>Load older job analyses</button>}</div>
         <label className="check-label"><input type="checkbox" checked={includeProfileSkills} onChange={event => { setIncludeProfileSkills(event.target.checked); clearResult(); setError(''); }} />Include my saved profile skills</label>
         <p className="muted">Profile skills are self-reported and labelled separately from quoted CV evidence.</p>
-        <div className="actions"><button disabled={draftLoading || !draftId || !jobAnalysisId}>Review resume & gaps</button><button type="button" className="secondary" disabled={draftLoading || !draftId || !jobAnalysisId} onClick={compare}>Compare CV to job</button></div>
+        <div className="actions"><button disabled={draftLoading || !draftId || !jobAnalysisId}>Review fit & gaps</button><a className="button-link secondary" href="#preparation">Preparation roadmap</a></div>
       </fieldset></form>
     </>}
     {busy && <p role="status">Working on your comparison…</p>}

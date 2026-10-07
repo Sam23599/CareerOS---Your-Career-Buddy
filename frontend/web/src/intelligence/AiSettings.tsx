@@ -3,18 +3,19 @@ import { authenticatedRequest } from '../auth/session';
 
 export type AiOptions = { model: string; reasoning: string | null };
 type Capabilities = { available: boolean; provider: string; models: { id: string; reasoningOptions: string[] }[]; defaultModel: string; defaultReasoning: string | null };
-export function useAiSettings() {
+export function useAiSettings(enabled = true) {
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null), [options, setOptions] = useState<AiOptions>({ model: '', reasoning: null }), [error, setError] = useState('');
   useEffect(() => {
+    if (!enabled) return;
     const controller = new AbortController();
     void authenticatedRequest<Capabilities>('/intelligence/capabilities', { signal: controller.signal }).then(value => {
       if (!controller.signal.aborted) { setCapabilities(value); setOptions({ model: value.defaultModel, reasoning: value.defaultReasoning }); }
     }).catch(cause => { if (!controller.signal.aborted) setError(cause.message); });
     return () => controller.abort();
-  }, []);
+  }, [enabled]);
   return { capabilities, options, setOptions, error };
 }
-export function AiSettings({ settings, disabled = false }: { settings: ReturnType<typeof useAiSettings>; disabled?: boolean }) {
+export function AiSettings({ settings, disabled = false }: { settings: Omit<ReturnType<typeof useAiSettings>, 'setOptions'> & { setOptions: (value: AiOptions) => void }; disabled?: boolean }) {
   const { capabilities, options, setOptions, error } = settings;
   return <div className="ai-settings">
     {error && <p className="form-error" role="alert">{error}</p>}

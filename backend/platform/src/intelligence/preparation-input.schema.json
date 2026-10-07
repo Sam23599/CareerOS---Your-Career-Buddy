@@ -75,45 +75,6 @@
       "title": "MatchInput",
       "type": "object"
     },
-    "PreparationGoals": {
-      "additionalProperties": false,
-      "properties": {
-        "choices": {
-          "items": {
-            "$ref": "#/$defs/GapChoice"
-          },
-          "maxItems": 20,
-          "minItems": 1,
-          "title": "Choices",
-          "type": "array"
-        },
-        "hoursPerWeek": {
-          "maximum": 40,
-          "minimum": 1,
-          "title": "Hoursperweek",
-          "type": "integer"
-        },
-        "weeks": {
-          "maximum": 12,
-          "minimum": 1,
-          "title": "Weeks",
-          "type": "integer"
-        },
-        "goal": {
-          "maxLength": 1000,
-          "title": "Goal",
-          "type": "string"
-        }
-      },
-      "required": [
-        "choices",
-        "hoursPerWeek",
-        "weeks",
-        "goal"
-      ],
-      "title": "PreparationGoals",
-      "type": "object"
-    },
     "ProfileSkills": {
       "additionalProperties": false,
       "properties": {
@@ -139,6 +100,45 @@
         "skills"
       ],
       "title": "ProfileSkills",
+      "type": "object"
+    },
+    "RoadmapGoals": {
+      "additionalProperties": false,
+      "properties": {
+        "choices": {
+          "items": {
+            "$ref": "#/$defs/GapChoice"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Choices",
+          "type": "array"
+        },
+        "hoursPerWeek": {
+          "maximum": 40,
+          "minimum": 1,
+          "title": "Hoursperweek",
+          "type": "integer"
+        },
+        "weeks": {
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Weeks",
+          "type": "integer"
+        },
+        "goal": {
+          "maxLength": 1000,
+          "title": "Goal",
+          "type": "string"
+        }
+      },
+      "required": [
+        "choices",
+        "hoursPerWeek",
+        "weeks",
+        "goal"
+      ],
+      "title": "RoadmapGoals",
       "type": "object"
     },
     "Source": {
@@ -175,7 +175,7 @@
       "$ref": "#/$defs/MatchInput"
     },
     "goals": {
-      "$ref": "#/$defs/PreparationGoals"
+      "$ref": "#/$defs/RoadmapGoals"
     },
     "model": {
       "enum": [

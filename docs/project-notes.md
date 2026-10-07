@@ -78,18 +78,41 @@ background processing:
 - for background processing or time taking tasks like ai analysis related stuffs, we can introduce Celery in intelligence layer. (my bad, forgot to add this in this initial disscussion plans). for now, lets just update the plans and introduce what current tasks or jobs can be migated to celery.
 
 cady:
+<!-- N-024 -->
 - improve cady interface. provide a chat widget like or pop-up like window for quick minimal and easy access, that accessible accross everywhere on the app. keep the current full cady page as well for immersed and detailed conversation.
+<!-- N-025 -->
 - improve cady page layout to a modern app. take notes from some external sources for better UI for an assistant like app.
+<!-- N-026 -->
 - Review resume & gaps or Compare CV to job: what are its separation? combine them in one if they nearly serve the same purpose.
+<!-- N-027 -->
 - Personalized preparation: keep all user field but compact them 
-- current "Create AI preparation plan" is shitty. it doesnt exactly work how it's supposed to. it only return data randomly (http://localhost:5173/jobs/6999e0b6f77164924365d45f9e93e83f84809ef14ac0dc1a193a8fb0d65c4968?skill=python&remoteType=REMOTE&source=remotive) with editable action title and details etc. that's weird. we need a proper preperation plan for the user to start preping step by step, based on the user input of like 1-8 weeks long plan. 
+<!-- N-028 -->
+- current "Create AI preparation plan" is shitty. it doesnt exactly work how it's supposed to. it only return data randomly (http://localhost:5173/jobs/6999e0b6f77164924365d45f9e93e83f84809ef14ac0dc1a193a8fb0d65c4968?skill=python&remoteType=REMOTE&source=remotive) with editable action title and details etc. that's weird. we need a proper preperation plan for the user to start preping step by step, based on the user input of like 1-8 weeks long plan, with a proper menu or component. 
+- bug: "go to next session" in Personalized preparation always goes back to week 1.
+- centralise model selection for ai tasks and feature into settings. give advance settings (default off) for user to select and decide llm model for custom feature there in settings. this will remove the cluture from the windows that asks for model preference everywhere
+- cady conversation: save all conversations. send last 6 to llm for continuity. the context for cady remains constant for all conversation. better lets lay document and plan baseline for RAG, then extend these features from there. 
+- cady widget chat app: scrolling isnt consistent. also 'Choose context' should be compressed by default. 'What’s your next move?' make it small (future scope if possible and feasible: this should be dynmaic suggestion based on current window context and past couple of conversation. give user an option of smart cady in settings: this will allow the cady to use rag and llm on almost every window where cady widget is open, but every window change will require new call for llm but only when cady is still open/re-opened on it, also suggest user for higher token/usage limits).
 
-- batch cv analysis
+
+- MAJOR: implement RAG baseline plan either raw, or with langchain or langgraph. a proper plan and disscussion is needed around it and should be placed in the current phase 2 development stage properly.
+
+
+<!-- N-029 -->
+- batch cv/job analysis option on the respective pages.
+<!-- N-030 -->
 - consolidate shortlisted jobs view page, give popup edit/view option
-- implement dark/light mode better, current dark mode color stings into eyes. 
-- sidebar and page name should be same. not like "shortlist-saved jobs". this keeps confusion, keep it consistent. career profile and dashboard are exception. they are ok just the way they are.
+<!-- N-031 -->
+- implement dark/light mode better (maybe even change the theme to better sleek like linux KDE), current dark mode color stings into eyes (not user friendly). 
+<!-- N-032 -->
+- sidebar section's name and page headline name should be same. not like "shortlist and saved jobs". this makes it confusing, keep it consistent and understandable. career profile and dashboard are exception. they are ok just the way they are.
+<!-- N-033 -->
 - add more details from overall platform on dashboard, like statatics and status. currently it only holds the redirects to different pages of the platform.
-- improve namings of the ai analysed results for different versions, currently its confusing to know what's what!
+<!-- N-034 -->
+- improve namings of the ai analysed results everywher for different versions (preferrably use something like job_title-company-version_numb-model-date, resume_file_name-version-model-date), currently its confusing to know what's what!
+- job analysis: make the whole tab compact and expandable. by default it will be compessed. also compress each analysis version compressed under their name, when selected then only expand to details. all improve their detail's view menu.
+- in "Compare your CV to this job": why have similar thing with 2 different naming 'Resume version and CV analysis version'. instead have something like 'Resumes and Resume Analysis'. also add a small background box to combine these 2 in one, such that from user's pov it makes sense that they are inter-related.
+- analyse resume doesnt still work in background. make it or introduce celery service now for these kind of background tasks or llm processings (except chat feature), and move them to celery for independent processing.
+- UI: background click or esc button should close the active component. currently everywhere on app, we need to explictly click close window on top right. we should also support this user friendly feature as well.
 
 ## Refined notes
 
@@ -329,6 +352,29 @@ clarifications and explicit implementation request supersede that pending state.
 - **Selected later on 2026-10-07:** Personalized AI preparation and initial Cady implemented using shared providers and the existing worker. AI/data/charge notices delivered before work; mocked verification only. Celery, paid live verification, external messages and publication remain separately scoped.
 - **Updated:** 2026-10-07, Asia/Kolkata. Daily 03:00 review is still not a verified background schedule.
 
+
+### N-024 / N-025 — Quick Cady access and full-page layout
+
+- **Decision (2026-10-08):** Implemented the selected batch. User chose shared history that survives refresh/browser restart. The native quick dialog is available throughout authenticated workspace pages; the full page has a context panel, message area and composer. Closing or switching views preserves history. No AI call on opening.
+- **Storage / boundary:** One active conversation per account in intelligence PostgreSQL, at most ten pairs; last three pairs sent for continuity. Context change/New conversation resets history; revision conflicts require reload. Removed source history is hidden but retained for recovery. No long-term memory/tools added.
+- **Code:** [Cady views](../frontend/web/src/cady/CadyPage.tsx#L55), [shared state](../frontend/web/src/cady/CadyProvider.tsx#L14), [storage](../backend/intelligence/app/storage/cady_postgres.py#L12). Details in [ADR-018](adr/018-weekly-roadmaps-and-shared-cady-conversation.md).
+
+### N-026 — One fit/gaps review action
+
+- **Cause:** Resume review already returns the deterministic comparison; presenting two near-identical actions made their purpose unclear.
+- **Decision (2026-10-08):** Implemented **Review fit & gaps** as the combined action, plus a preparation anchor. Underlying comparison API remains available for ranking/other callers. [Job controls](../frontend/web/src/jobs/JobMatchPanel.tsx#L136). No new AI call.
+
+### N-027 / N-028 — Compact preparation setup and a usable roadmap
+
+- **Cause:** The initial output validated references/time but did not require every week, weekly objectives, tangible deliverables or terminal checkpoints; the viewer led with editable fields.
+- **Decision (2026-10-08):** User chose flexible weekly sessions. New 1–8-week roadmaps require ordered week/session coverage, objectives, outcomes, milestones and final weekly checkpoints. The week menu/next-session/progress flow is primary; optional customization and all setup fields remain. V1 plans stay readable.
+- **Code:** [Roadmap contract](../backend/intelligence/app/preparation/models.py#L52), [validation](../backend/intelligence/app/preparation/validation.py#L39), [viewer](../frontend/web/src/preparation/PreparationReview.tsx#L15). Provider/model/data/cost notices delivered before work; verification mocked only. No paid calls or publication.
+
+### N-029–N-034 — Other new observations, deferred
+
+- **Raw sources:** Batch CV/job analysis; shortlist pop-up view/edit; theme overhaul; navigation/page naming; real dashboard statistics; clearer analysis-version names.
+- **Status:** Preserved for separate discussion/selection. They were outside the approved preparation/Cady batch and were not implemented. Suggested timing is not approval.
+
 ## Review log
 
 | Review date (IST) | Notes reviewed | Outcome / decisions |
@@ -337,6 +383,7 @@ clarifications and explicit implementation request supersede that pending state.
 | 2026-10-06 | N-001–N-022 | First submitted-notes review: raw wording preserved and IDs assigned; code and supported-source research checked read-only; minimal scopes/timing proposed. Confirmed: bin cleanup retains data; new jobs means added since last source view; Continue-as prompts both after logout and ordinary return. Normal-return cause needs reproduction. Personalized AI plan saved in memory and held. No implementation, commit or push approved. |
 | 2026-10-07 | N-001–N-022 | Latest answers supersede the ordinary-return auth report: seven-day expiry only; all-filters-empty observation confirmed; archive restore reserved for support; settings credits/billing explicitly demo. User then authorized implementation. Implemented the available scopes above; unsupported provider integrations/Google live consent remain prerequisites. Mocked AI verification only; no paid calls, commit or push. |
 | 2026-10-07 | N-023; related N-005/N-014 | User requested a Celery planning addition and current-task migration inventory. Added job-first/resume-next migration, PostgreSQL-owned history/results, Redis broker proposal, shared capacity/outbox/restart/cost controls and future preparation alignment. Planning docs only; no runtime/dependency changes, tests, AI calls, commit or push. Previous implementation patch preserved. |
+| 2026-10-08 | N-024–N-028; N-029–N-034 deferred | User selected flexible weekly roadmap sessions and account-persisted shared Cady history. Implemented combined review, compact setup, roadmap viewer, full-page/widget chat and revisioned storage. Mocked checks only; no paid calls, commit or push. Unrelated new notes remain deferred. |
 
 ## Daily review setup
 

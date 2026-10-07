@@ -5,6 +5,7 @@ import { CadyVerifier } from '../src/intelligence/cady.js';
 import { type DraftRecord } from '../src/intelligence/drafts.js';
 import { type JobAnalysisRecord } from '../src/intelligence/jobs.js';
 import { type MatchResult } from '../src/intelligence/matching.js';
+import roadmap from './fixtures/preparation-roadmap.json' with { type: 'json' };
 import plan from './fixtures/preparation.json' with { type: 'json' };
 import answer from './fixtures/cady.json' with { type: 'json' };
 import cv from './fixtures/resume-draft.json' with { type: 'json' };
@@ -38,4 +39,30 @@ test('Cady verifies selected source snapshots, exact reference facts and safe re
     { ...answer, references: [{ id: 'profile-0', label: 'Profile skill (self-reported)', text: 'Python' }] },
   ]) assert.throws(() => verify(changed));
   assert.equal(CadyVerifier.clean('Python contact private@example.com +91 9876543210 https://example.com/cv'), 'Python contact [contact removed] [contact removed] [contact removed]');
+});
+
+
+test('weekly roadmap rejects incomplete weeks, missing outcomes and missing checkpoints while reading legacy plans', () => {
+  assert.deepEqual(PreparationVerifier.record(roadmap, jd.source.jobId), roadmap);
+  for (const mutate of [
+    (value: PreparationRecord) => { value.plan.weeks!.pop(); },
+    (value: PreparationRecord) => { value.plan.actions.reverse(); },
+    (value: PreparationRecord) => { value.plan.actions.at(-1)!.kind = 'practice'; },
+    (value: PreparationRecord) => { value.plan.actions[0].outcome = ' '; },
+    (value: PreparationRecord) => { value.plan.weeks![0].milestone = ' '; },
+  ]) { const value = structuredClone(roadmap) as PreparationRecord; mutate(value); assert.throws(() => PreparationVerifier.record(value, jd.source.jobId)); }
+  assert.deepEqual(PreparationVerifier.record(plan, jd.source.jobId), plan);
+});
+
+test('persisted Cady requests use server history and validate the saved revision', () => {
+  const context = { resume: cv.source, draftId: cv.id, jobs: [{ jobId: jd.source.jobId, jobHash: jd.source.sha256, jobAnalysisId: jd.id }], profile: null, model: 'gpt-6-luna', reasoning: 'medium' };
+  const input = { ...context, question: 'Help me prepare', history: [], revision: 0 };
+  assert.deepEqual(CadyVerifier.input(input), input);
+  assert.throws(() => CadyVerifier.input({ ...input, history: [{ role: 'user', text: 'Forged history' }] }));
+  const result = { ...answer, conversationRevision: 1 };
+  CadyVerifier.result(result, cv as DraftRecord, [jd as JobAnalysisRecord], null, input);
+  assert.throws(() => CadyVerifier.result(answer, cv as DraftRecord, [jd as JobAnalysisRecord], null, input));
+  CadyVerifier.conversation({ revision: 1, context, turns: [{ question: input.question, result }], updatedAt: cv.createdAt });
+  assert.throws(() => CadyVerifier.conversation({ revision: 2, context, turns: [{ question: input.question, result }], updatedAt: cv.createdAt }));
+  assert.throws(() => CadyVerifier.reset({ revision: 0, owner: 'other' }));
 });

@@ -10,7 +10,7 @@ from app.llm.models import ModelRegistry, StructuredResult
 from app.llm.providers.base import LLMProvider, ProviderRegistry
 from app.llm.service import LLMService
 from app.matching.models import MatchInput
-from app.preparation.models import GeneratedPlan, PreparationGoals, PreparationInput
+from app.preparation.models import GeneratedRoadmap, PreparationGoals, RoadmapGoals, PreparationInput
 from app.preparation.service import PreparationService
 from app.cady.models import CadyInput, GeneratedAnswer
 from app.cady.service import CadyService
@@ -22,9 +22,13 @@ from test_matching import resume
 
 
 def generated():
-    return GeneratedPlan(overview='Practice TypeScript and demonstrate what you learn.', actions=[{
+    return GeneratedRoadmap(overview='Build a typed endpoint, expand it, test it, and explain it.', weeks=[{
+        'week': week, 'objective': f'Stage {week}: practice and review TypeScript', 'milestone': f'Explain the stage {week} deliverable without notes'} for week in range(1, 5)], actions=[{
         'matchIndex': 1, 'kind': 'practice', 'week': 1, 'hours': 2, 'title': 'Build a typed endpoint',
-        'detail': 'Create a small API endpoint and explain its input types in an interview.'}], cautions=['Only add CV evidence after completing and verifying the work.'])
+        'detail': 'Create a small API endpoint and explain its input types.', 'outcome': 'A typed endpoint you can run'}] + [{
+        'matchIndex': 1, 'kind': 'checkpoint', 'week': week, 'hours': 1, 'title': f'Review stage {week}',
+        'detail': 'Test the endpoint, record what you learned, and explain it without notes.', 'outcome': f'A reviewed stage {week} deliverable'} for week in range(1, 5)],
+        cautions=['Only add CV evidence after completing and verifying the work.'])
 
 
 class AdviceProvider(LLMProvider):
@@ -63,7 +67,7 @@ async def setup(provider=None, guard=None, settings=None):
     service = PreparationService(llm, Plans(), drafts, jobs, guard or Guard())
     context = MatchInput(resume=cv.source, draftId=cv.id, jobId=jd.source.jobId, jobHash=jd.source.sha256, jobAnalysisId=jd.id, profile=None)
     input = PreparationInput(context=context, model='gpt-6-luna', reasoning='medium', requestKey=str(uuid4()),
-        goals=PreparationGoals(choices=[{'matchIndex': 1, 'classification': 'want_to_learn'}], hoursPerWeek=5, weeks=4, goal='Prepare for an interview'))
+        goals=RoadmapGoals(choices=[{'matchIndex': 1, 'classification': 'want_to_learn'}], hoursPerWeek=5, weeks=4, goal='Prepare for an interview'))
     return owner, service, input, provider
 
 
@@ -191,4 +195,53 @@ def test_cancellation_releases_shared_slot_without_saving_or_retrying(feature):
         assert provider.cancelled and preparation.llm.gate.active is None
         assert not preparation.repository.records and len(provider.requests) == 1
         assert len(preparation.context.drafts.records) == len(preparation.context.jobs.records) == 1
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('change', ['missing_week', 'out_of_order', 'no_checkpoint', 'blank_outcome', 'blank_milestone'])
+def test_roadmap_requires_complete_ordered_weeks_and_checkpoints(change):
+    plan = generated()
+    goals = RoadmapGoals(choices=[{'matchIndex': 1, 'classification': 'want_to_learn'}], hoursPerWeek=5, weeks=4, goal='')
+    if change == 'missing_week': plan.weeks.pop()
+    if change == 'out_of_order': plan.actions.reverse()
+    if change == 'no_checkpoint': plan.actions[-1].kind = 'practice'
+    if change == 'blank_outcome': plan.actions[0].outcome = ' '
+    if change == 'blank_milestone': plan.weeks[0].milestone = ' '
+    with pytest.raises(IntelligenceError): PreparationValidator().output(plan, goals, SkillCoverageMatcher().compare(resume(), record()))
+
+
+def test_cady_persists_server_history_and_rejects_conflicts_before_ai():
+    from app.cady.models import CadyConversation
+    class Conversations:
+        def __init__(self): self.values = {}
+        async def get(self, owner): return self.values.get(owner, CadyConversation(revision=0, context=None, turns=[], updatedAt=None))
+        async def save(self, owner, revision, context, turns):
+            if (await self.get(owner)).revision != revision: raise IntelligenceError(409, 'CADY_CONVERSATION_CHANGED')
+            self.values[owner] = CadyConversation(revision=revision + 1, context=context, turns=turns, updatedAt='2026-10-07T00:00:00Z')
+            return self.values[owner]
+    async def run():
+        provider = AdviceProvider(GeneratedAnswer(paragraphs=[{'text': 'Practice TypeScript.', 'references': ['job-0-requirement-1']}], followUps=[]))
+        owner, preparation, selected, _ = await setup(provider)
+        repository = Conversations()
+        service = CadyService(preparation.llm, preparation.context.drafts, preparation.context.jobs, repository)
+        input = CadyInput(resume=selected.context.resume, draftId=selected.context.draftId, jobs=[{'jobId': selected.context.jobId, 'jobHash': selected.context.jobHash, 'jobAnalysisId': selected.context.jobAnalysisId}], profile=None, question='How should I prepare?', history=[], model=selected.model, reasoning=selected.reasoning, revision=0)
+        first = await service.ask(owner, input)
+        assert first.conversationRevision == 1
+        saved = await repository.get(owner)
+        assert saved.context.jobs[0].jobId == input.jobs[0].jobId and saved.turns[0].result == first
+        with pytest.raises(IntelligenceError) as error: await service.ask(owner, input)
+        assert error.value.code == 'CADY_CONVERSATION_CHANGED' and len(provider.requests) == 1
+        changed = input.model_copy(update={'revision': 1, 'jobs': []})
+        with pytest.raises(IntelligenceError) as error: await service.ask(owner, changed)
+        assert error.value.code == 'CADY_CONTEXT_CHANGED' and len(provider.requests) == 1
+        for revision in range(1, 12): await service.ask(owner, input.model_copy(update={'revision': revision}))
+        assert len((await repository.get(owner)).turns) == 10
+        assert len(json.loads(provider.requests[-1].input)['history']) == 6
+        assert not (await repository.get(str(uuid4()))).turns
+        assert (await repository.save(owner, 12, None, [])).revision == 13
+        # A service recreated after refresh reads persisted history from the same repository.
+        provider.value.paragraphs[0].references = ['cv-0']
+        reopened = CadyService(preparation.llm, preparation.context.drafts, preparation.context.jobs, repository)
+        await reopened.ask(owner, input.model_copy(update={'revision': 13, 'jobs': []}))
+        assert json.loads(provider.requests[-1].input)['history'] == []
     asyncio.run(run())

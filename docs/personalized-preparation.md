@@ -1,4 +1,4 @@
-# Personalized preparation and initial Cady
+# Personalized preparation and Cady
 
 Implemented locally: 2026-10-07, Asia/Kolkata. The user selected the original
 preparation → Cady sequence. AI purpose, inputs, models and charges were disclosed
@@ -7,25 +7,33 @@ before implementation. Verification uses synthetic mocked providers, without pai
 ## Use preparation
 
 1. Open a job with a saved current job analysis. Choose a saved CV analysis and
-   run **Review resume & gaps** or **Compare CV to job**.
+   run **Review fit & gaps**. It combines skill coverage, resume checks and
+   preparation gaps without a new AI call.
 2. Choose **Create AI preparation plan**. Review up to twenty requirements ordered
    required → unspecified → preferred. Classify them as already known, needing CV
    evidence, worth learning or unsure. Leave irrelevant requirements out. Missing
    CV evidence does not establish a missing skill.
-3. Set 1–40 hours/week, 1–12 weeks and an optional goal (1,000 characters). Choose
+3. Set 1–40 hours/week, 1–8 weeks and an optional goal (1,000 characters). Choose
    server-provided model/reasoning, read the notice and explicitly generate. Allow
    at least one hour for every selected requirement.
 4. The accepted task continues after navigation, refresh or closing the dialog.
    Follow it here or at `/tasks`. Queued tasks can be cancelled; running work may
    incur its charge. Interrupted/failed generations are not automatically retried.
-5. Expand weekly actions to edit titles/details or mark them planned, skipped or
-   done (self-reported). **Save reviewed plan** preserves original AI suggestions.
+5. Follow the week menu and **Go to next session**. Each week has an objective
+   and checkpoint; each ordered session has a tangible outcome. Mark progress as
+   planned/skipped/done (self-reported), or expand **Customize session** to edit
+   titles/details. **Save reviewed plan** preserves original AI suggestions.
    Closing with unsaved edits prompts for discard. An old review revision returns
    409; reopen before saving. Saving never changes a CV/profile.
 
 Successful generation saves a numbered version per owner/job in Python-owned
 PostgreSQL. Every chosen requirement needs an action; summed integer hours per week
-cannot exceed the budget. Unsure choices permit verification/checkpoints; already-known/
+cannot exceed the budget. New `preparation-v2` plans cover every selected week in
+order, end each week with a checkpoint/verification/interview session, and include
+nonblank objectives, milestones and outcomes. Earlier `preparation-v1` plans stay
+readable with their original actions and historical 1–12-week allocation. New
+requests permit 1–8 weeks; legacy queued requests exceeding eight fail validation
+before provider work. Unsure choices permit verification/checkpoints; already-known/
 evidence-only choices cannot prescribe learning from scratch. Learning cannot become
 unearned CV evidence. Failure/refusal/invalid output saves no plan or version.
 
@@ -44,17 +52,36 @@ optionally up to three job analyses. Saved jobs populate the selector; the curre
 job does not need saving. Only current active job analyses are accepted. Profile
 skills are optional and labelled self-reported.
 
-Explicit questions return brief paragraphs with expandable source references.
-Follow-up buttons fill the question without sending it. Changing context clears
-the conversation. Conversation stays in page memory and clears on refresh/navigation/
-sign-out; at most six recent messages (2,000 characters each) are sent per question.
-There is no server chat history in this initial version. **Stop waiting** cancels
-where possible; provider work may already have incurred cost.
+Use the bottom-right **Ask Cady** launcher on authenticated workspace pages for
+quick chat, or open `/cady` for the full conversation with a context sidebar.
+Both share the same account conversation. Close/Escape hides the widget and returns
+focus; accepted answers continue when switching views. The widget uses a native
+dialog for keyboard focus and adapts to small screens. Source references stay
+expandable, and follow-up buttons fill the composer without sending.
+
+One active conversation per account is saved in Python-owned PostgreSQL (migration
+`005_cady_conversations.sql`). The last ten question-and-answer pairs survive
+navigation, refresh, browser and service restarts; only the last three pairs
+(six messages, each bounded to 2,000 characters) enter the next prompt. No private
+chat copy is stored in browser localStorage. Sign-out removes the browser state;
+authenticating the same account can reopen its history. **New conversation** clears
+the saved history. This is bounded conversation continuity, not a long-term memory
+or multi-thread history feature.
+
+Changing the CV, analysis, selected jobs, profile opt-in or model/reasoning resets
+history before using the new context. A job link preserves an existing conversation
+and offers **Use linked context** when it differs. Source/profile changes label old
+advice historical; unavailable CVs/jobs hide its content, retaining it for recovery.
+Hard source erasure also removes its conversation and prevents late source writes.
+Concurrent changes return a revision conflict; reload before continuing. Reads,
+reset, reopening and navigation make no AI call. **Stop waiting** cancels where
+possible; provider work may already have incurred cost. After an uncertain reply,
+reload saved history before deciding to ask again; there is no automatic paid retry.
 
 Cady uses authorized saved facts and deterministic comparisons. It cannot edit
 data, apply, schedule, browse, generate plans through chat or claim completed actions.
 Mutation tools require later contracts and explicit user confirmation. LangGraph,
-vectors, durable memory, resource discovery and autonomous workflows remain extensions.
+vectors, long-term memory, resource discovery and autonomous workflows remain extensions.
 
 ## AI inputs and limits
 
@@ -114,3 +141,16 @@ Mocked checks cover source/privacy/citation/time/refusal/cancellation failures,
 isolated PostgreSQL history/review conflicts/restarts/cleanup, MongoDB ownership
 and browser generation/recovery/review/Cady/mobile flows. Live model quality/access
 and paid usage are not verified by those checks.
+
+## UI references and verification (refinement completed 2026-10-08)
+
+The compact bottom-right entry follows the established
+[Intercom Messenger pattern](https://www.intercom.com/help/en/articles/6612589-set-up-and-customize-the-messenger).
+Visible CV/job selection and expandable citations follow the explicit-context
+approach illustrated in [Copilot Chat context references](https://learn.microsoft.com/en-us/visualstudio/ide/copilot-chat-context-references?view=visualstudio).
+CareerOS keeps its existing theme tokens and components; no external UI SDK was added.
+
+The refinement batch checks complete weekly schedules and preserved legacy plans,
+owned conversation storage, conflicts, reset, restart and hard cleanup, plus shared
+widget/full-page and refresh recovery. Provider calls in verification remain mocked.
+See [ADR-018](adr/018-weekly-roadmaps-and-shared-cady-conversation.md).

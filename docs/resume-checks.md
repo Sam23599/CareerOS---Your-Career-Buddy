@@ -13,10 +13,10 @@ source changes reload in the existing local Compose stack. Keep existing volumes
   → **Run resume checks**. Load older analyses when needed. If there is no saved
   analysis, **Open resume draft** leads to the existing analysis workflow.
 - **Selected job:** open a job → choose PDF, CV analysis and current job analysis
-  in the comparison panel → **Review resume & gaps**. Including profile skills is
+  in the comparison panel → **Review fit & gaps**. Including profile skills is
   optional. The same action returns the existing skill-coverage comparison plus
   resume findings, preparation actions and job terminology checks.
-- **Compare CV to job** remains available for a comparison alone. Report groups
+- **Review fit & gaps** includes the skill comparison and resume checks. Report groups
   and their evidence are collapsed initially. Open a group, then a finding to read
   its action and quotes. Counts and section labels provide an overview.
 - Changing any selected input clears the prior result. Refresh reloads available

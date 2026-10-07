@@ -14,7 +14,7 @@ OpenAI actions and their documented charges. See [ADR-013](adr/013-cv-job-matchi
    versions load through the existing paginated history without generation.
 3. Optionally include saved profile skills. These are labelled self-reported;
    CV evidence takes precedence when the same skill appears in both.
-4. Click **Compare CV to job**. Review skill coverage, matched skills, skills not
+4. Click **Review fit & gaps**. Review skill coverage, matched skills, skills not
    found and other requirements. Expand evidence to see the exact job quotation,
    priority quotation and resume page quotation.
 5. Changing any selection clears the result. **Refresh comparison inputs** loads
@@ -87,9 +87,11 @@ If there are no scorable requirements, the score is null rather than an invented
   must use this full identity and current authorization, not just a job ID.
 
 The [batch 5 resume-checks/preparation baseline](resume-checks.md) now reuses this
-matcher through **Review resume & gaps** in the same panel. Comparison groups are
-collapsed initially to keep reports compact. Ranking, embeddings, semantic scoring,
-personalized AI preparation and Cady remain planned; notify before any new AI stage.
+matcher through **Review fit & gaps** in the same panel. Comparison groups are
+collapsed initially to keep reports compact. Saved-job ranking, personalized
+preparation and initial Cady are implemented in later batches; see the
+[preparation/Cady guide](personalized-preparation.md). Embeddings and semantic
+scoring remain deferred; notify before any new AI stage.
 
 ## Verification
 

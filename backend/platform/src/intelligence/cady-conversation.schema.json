@@ -1,0 +1,515 @@
+{
+  "$defs": {
+    "AnswerParagraph": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "references": {
+          "items": {
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "References",
+          "type": "array"
+        }
+      },
+      "required": [
+        "text",
+        "references"
+      ],
+      "title": "AnswerParagraph",
+      "type": "object"
+    },
+    "CadyContext": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "$ref": "#/$defs/Source"
+        },
+        "draftId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Draftid",
+          "type": "string"
+        },
+        "jobs": {
+          "items": {
+            "$ref": "#/$defs/CadyJob"
+          },
+          "maxItems": 3,
+          "title": "Jobs",
+          "type": "array"
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProfileSkills"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model": {
+          "enum": [
+            "gpt-4.1",
+            "gpt-6-luna",
+            "gpt-6.1-sol"
+          ],
+          "title": "Model",
+          "type": "string"
+        },
+        "reasoning": {
+          "anyOf": [
+            {
+              "enum": [
+                "none",
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reasoning"
+        }
+      },
+      "required": [
+        "resume",
+        "draftId",
+        "jobs",
+        "profile",
+        "model",
+        "reasoning"
+      ],
+      "title": "CadyContext",
+      "type": "object"
+    },
+    "CadyJob": {
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobid",
+          "type": "string"
+        },
+        "jobHash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobhash",
+          "type": "string"
+        },
+        "jobAnalysisId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Jobanalysisid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "jobId",
+        "jobHash",
+        "jobAnalysisId"
+      ],
+      "title": "CadyJob",
+      "type": "object"
+    },
+    "CadyResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "default": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "assistantVersion": {
+          "const": "cady-v1",
+          "default": "cady-v1",
+          "title": "Assistantversion",
+          "type": "string"
+        },
+        "resume": {
+          "$ref": "#/$defs/Source"
+        },
+        "draftId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Draftid",
+          "type": "string"
+        },
+        "draftVersion": {
+          "minimum": 1,
+          "title": "Draftversion",
+          "type": "integer"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/MatchSource"
+          },
+          "maxItems": 3,
+          "title": "Sources",
+          "type": "array"
+        },
+        "profileVersion": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Profileversion"
+        },
+        "answer": {
+          "$ref": "#/$defs/GeneratedAnswer"
+        },
+        "references": {
+          "items": {
+            "$ref": "#/$defs/ContextReference"
+          },
+          "maxItems": 80,
+          "title": "References",
+          "type": "array"
+        },
+        "model": {
+          "enum": [
+            "gpt-4.1",
+            "gpt-6-luna",
+            "gpt-6.1-sol"
+          ],
+          "title": "Model",
+          "type": "string"
+        },
+        "reasoning": {
+          "anyOf": [
+            {
+              "enum": [
+                "none",
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reasoning"
+        },
+        "usage": {
+          "$ref": "#/$defs/Usage"
+        },
+        "conversationRevision": {
+          "anyOf": [
+            {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conversationrevision"
+        }
+      },
+      "required": [
+        "resume",
+        "draftId",
+        "draftVersion",
+        "sources",
+        "profileVersion",
+        "answer",
+        "references",
+        "model",
+        "reasoning",
+        "usage"
+      ],
+      "title": "CadyResult",
+      "type": "object"
+    },
+    "ContextReference": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 40,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 180,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "text"
+      ],
+      "title": "ContextReference",
+      "type": "object"
+    },
+    "GeneratedAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "paragraphs": {
+          "items": {
+            "$ref": "#/$defs/AnswerParagraph"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Paragraphs",
+          "type": "array"
+        },
+        "followUps": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 3,
+          "title": "Followups",
+          "type": "array"
+        }
+      },
+      "required": [
+        "paragraphs",
+        "followUps"
+      ],
+      "title": "GeneratedAnswer",
+      "type": "object"
+    },
+    "MatchSource": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "$ref": "#/$defs/Source"
+        },
+        "draftId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Draftid",
+          "type": "string"
+        },
+        "draftVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Draftversion",
+          "type": "integer"
+        },
+        "jobId": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobid",
+          "type": "string"
+        },
+        "jobHash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Jobhash",
+          "type": "string"
+        },
+        "jobAnalysisId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Jobanalysisid",
+          "type": "string"
+        },
+        "jobAnalysisVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Jobanalysisversion",
+          "type": "integer"
+        },
+        "profileVersion": {
+          "anyOf": [
+            {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Profileversion"
+        }
+      },
+      "required": [
+        "resume",
+        "draftId",
+        "draftVersion",
+        "jobId",
+        "jobHash",
+        "jobAnalysisId",
+        "jobAnalysisVersion",
+        "profileVersion"
+      ],
+      "title": "MatchSource",
+      "type": "object"
+    },
+    "ProfileSkills": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Version",
+          "type": "integer"
+        },
+        "skills": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Skills",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version",
+        "skills"
+      ],
+      "title": "ProfileSkills",
+      "type": "object"
+    },
+    "SavedTurn": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/$defs/CadyResult"
+        }
+      },
+      "required": [
+        "question",
+        "result"
+      ],
+      "title": "SavedTurn",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "resumeId": {
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "title": "Resumeid",
+          "type": "string"
+        },
+        "resumeVersion": {
+          "minimum": 1,
+          "title": "Resumeversion",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resumeId",
+        "resumeVersion",
+        "sha256"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Usage": {
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": {
+          "minimum": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "outputTokens": {
+          "minimum": 0,
+          "title": "Outputtokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "inputTokens",
+        "outputTokens"
+      ],
+      "title": "Usage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "revision": {
+      "maximum": 2147483647,
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "context": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CadyContext"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "turns": {
+      "items": {
+        "$ref": "#/$defs/SavedTurn"
+      },
+      "maxItems": 10,
+      "title": "Turns",
+      "type": "array"
+    },
+    "updatedAt": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Updatedat"
+    }
+  },
+  "required": [
+    "revision",
+    "context",
+    "turns",
+    "updatedAt"
+  ],
+  "title": "CadyConversation",
+  "type": "object"
+}

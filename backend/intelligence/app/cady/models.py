@@ -19,15 +19,19 @@ class ConversationTurn(StrictModel):
     text: Annotated[str, Field(min_length=1, max_length=2000)]
 
 
-class CadyInput(StrictModel):
+class CadyContext(StrictModel):
     resume: Source
     draftId: Identifier
     jobs: Annotated[list[CadyJob], Field(max_length=3)]
     profile: ProfileSkills | None
-    question: Annotated[str, Field(min_length=1, max_length=2000)]
-    history: Annotated[list[ConversationTurn], Field(max_length=6)]
     model: ModelName
     reasoning: Reasoning
+
+
+class CadyInput(CadyContext):
+    question: Annotated[str, Field(min_length=1, max_length=2000)]
+    history: Annotated[list[ConversationTurn], Field(max_length=6)]
+    revision: Annotated[int, Field(ge=0, le=2147483646)] | None = None
 
 
 class AnswerParagraph(StrictModel):
@@ -59,3 +63,20 @@ class CadyResult(StrictModel):
     model: ModelName
     reasoning: Reasoning
     usage: Usage
+    conversationRevision: Annotated[int, Field(ge=1, le=2147483647)] | None = None
+
+
+class SavedTurn(StrictModel):
+    question: Annotated[str, Field(min_length=1, max_length=2000)]
+    result: CadyResult
+
+
+class CadyConversation(StrictModel):
+    revision: Annotated[int, Field(ge=0, le=2147483647)]
+    context: CadyContext | None
+    turns: Annotated[list[SavedTurn], Field(max_length=10)]
+    updatedAt: Annotated[str, Field(min_length=1, max_length=80)] | None
+
+
+class ResetConversation(StrictModel):
+    revision: Annotated[int, Field(ge=0, le=2147483646)]

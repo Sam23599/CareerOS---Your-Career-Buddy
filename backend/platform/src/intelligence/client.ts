@@ -45,6 +45,8 @@ const upstreamErrors: Record<string, [number, string]> = {
   MATCH_SOURCE_CHANGED: [409, 'A comparison input changed. Reload the inputs and compare again.'],
   MATCHING_LIMIT: [413, 'This comparison exceeds the supported size limit.'],
   REVIEW_LIMIT: [413, 'This review exceeds the supported size limit.'],
+  CADY_CONVERSATION_CHANGED: [409, 'Conversation changed in another tab. Reload it before continuing.'],
+  CADY_CONTEXT_CHANGED: [409, 'Start a new conversation to use different context.'],
   PREPARATION_NOT_FOUND: [404, 'No saved preparation plan is available.'],
   PREPARATION_CHANGED: [409, 'This plan was edited elsewhere. Reload it before saving.'],
 };
@@ -272,6 +274,12 @@ export class IntelligenceClient {
   }
   async reviewPreparation(owner: string, jobId: string, planId: string, review: PlanReview) {
     return PreparationVerifier.record(await this.request(`/internal/v1/jobs/${jobId}/preparation-plans/${planId}/review`, { method: 'PATCH', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' }, body: JSON.stringify(review) }), jobId, planId);
+  }
+  async cadyConversation(owner: string) {
+    return CadyVerifier.conversation(await this.request('/internal/v1/cady/conversation', { headers: { 'X-Owner-Id': owner } }));
+  }
+  async resetCady(owner: string, revision: number) {
+    return CadyVerifier.conversation(await this.request('/internal/v1/cady/conversation/reset', { method: 'POST', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' }, body: JSON.stringify({ revision }) }));
   }
   async askCady(owner: string, input: CadyInput, resume: DraftRecord, jobs: JobAnalysisRecord[], signal: AbortSignal) {
     return CadyVerifier.result(await this.request('/internal/v1/cady/ask', { method: 'POST', headers: { 'X-Owner-Id': owner, 'Content-Type': 'application/json' }, body: JSON.stringify(input) }, signal, 110_000), resume, jobs, input.profile, input);

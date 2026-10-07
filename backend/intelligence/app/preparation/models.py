@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from app.core.models import StrictModel
 from app.matching.models import MatchInput, MatchSource
@@ -22,9 +22,13 @@ class PreparationGoals(StrictModel):
     goal: Annotated[str, Field(max_length=1000)]
 
 
+class RoadmapGoals(PreparationGoals):
+    weeks: Annotated[int, Field(ge=1, le=8)]
+
+
 class PreparationInput(StrictModel):
     context: MatchInput
-    goals: PreparationGoals
+    goals: RoadmapGoals
     model: ModelName
     reasoning: Reasoning
     requestKey: Identifier
@@ -42,6 +46,24 @@ class GeneratedAction(StrictModel):
 class GeneratedPlan(StrictModel):
     overview: ShortText
     actions: Annotated[list[GeneratedAction], Field(min_length=1, max_length=60)]
+    cautions: Annotated[list[ShortText], Field(max_length=8)]
+
+
+class WeeklyGoal(StrictModel):
+    week: Annotated[int, Field(ge=1, le=8)]
+    objective: Annotated[str, Field(min_length=1, max_length=600)]
+    milestone: Annotated[str, Field(min_length=1, max_length=800)]
+
+
+class StudySession(GeneratedAction):
+    week: Annotated[int, Field(ge=1, le=8)]
+    outcome: Annotated[str, Field(min_length=1, max_length=800)]
+
+
+class GeneratedRoadmap(StrictModel):
+    overview: ShortText
+    weeks: Annotated[list[WeeklyGoal], Field(min_length=1, max_length=8)]
+    actions: Annotated[list[StudySession], Field(min_length=1, max_length=60)]
     cautions: Annotated[list[ShortText], Field(max_length=8)]
 
 
@@ -67,9 +89,20 @@ class PlanContent(StrictModel):
     cautions: Annotated[list[ShortText], Field(max_length=8)]
 
 
+class RoadmapAction(StudySession):
+    id: Annotated[str, Field(pattern=r"^action-[1-9][0-9]{0,2}$")]
+
+
+class RoadmapContent(StrictModel):
+    overview: ShortText
+    weeks: Annotated[list[WeeklyGoal], Field(min_length=1, max_length=8)]
+    actions: Annotated[list[RoadmapAction], Field(min_length=1, max_length=60)]
+    cautions: Annotated[list[ShortText], Field(max_length=8)]
+
+
 class PreparationRecord(StrictModel):
     schemaVersion: Literal[1] = 1
-    plannerVersion: Literal["preparation-v1"] = "preparation-v1"
+    plannerVersion: Literal["preparation-v1", "preparation-v2"] = "preparation-v1"
     id: Identifier
     version: Version
     source: MatchSource
@@ -79,8 +112,14 @@ class PreparationRecord(StrictModel):
     reasoning: Reasoning
     usage: Usage
     createdAt: Annotated[str, Field(min_length=1, max_length=80)]
-    plan: PlanContent
+    plan: PlanContent | RoadmapContent
     review: PlanReview
+
+    @model_validator(mode='after')
+    def versioned_content(self):
+        if (self.plannerVersion == 'preparation-v2') != isinstance(self.plan, RoadmapContent):
+            raise ValueError('Planner version must match content format')
+        return self
 
 
 class PreparationSummary(StrictModel):

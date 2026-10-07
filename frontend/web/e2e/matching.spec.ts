@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import cv from '../../../backend/platform/test/fixtures/resume-draft.json' with { type: 'json' };
 import jd from '../../../backend/platform/test/fixtures/job-analysis.json' with { type: 'json' };
+import review from '../../../backend/platform/test/fixtures/resume-review.json' with { type: 'json' };
 import match from '../../../backend/platform/test/fixtures/matching.json' with { type: 'json' };
 
 test('CV matching selects saved versions, explains evidence, supplements profile skills and handles stale inputs without AI', async ({ page }) => {
@@ -28,29 +29,29 @@ test('CV matching selects saved versions, explains evidence, supplements profile
     if (path.endsWith('/analyses')) return route.fulfill({ json: { versions: [{ id: jd.id, version: jd.version, model: jd.model,
       reasoning: jd.reasoning, createdAt: jd.createdAt, sourceHash: jd.source.sha256, stale }], nextBeforeVersion: null } });
     if (path.endsWith('/analysis')) return route.fulfill({ json: { analysis: jd, sourceStatus: { stale, expired: false } } });
-    if (path.endsWith('/match')) {
+    if (path.endsWith('/review')) {
       comparisons++;
       const input = route.request().postDataJSON();
-      expect(input).toEqual({ resumeId: cv.source.resumeId, draftId: cv.id, jobAnalysisId: jd.id, includeProfileSkills: comparisons > 1 });
+      expect(input).toEqual({ draftId: cv.id, job: { jobId: jd.source.jobId, jobAnalysisId: jd.id, includeProfileSkills: comparisons > 1 } });
       if (stale) return route.fulfill({ status: 409, json: { error: { code: 'JOB_ANALYSIS_STALE', message: 'This listing changed. Analyze its current description before matching.' } } });
       const result = structuredClone(match);
-      if (input.includeProfileSkills) {
+      if (input.job.includeProfileSkills) {
         result.score = 100; result.matchedWeight = 4; result.source.profileVersion = 5;
         const item = result.items.find(row => row.status === 'not_found')!;
         item.status = 'matched'; item.candidate = { source: 'profile', field: 'skills', value: 'TypeScript', evidence: [] };
       }
-      return route.fulfill({ json: { match: result, sourceStatus: { expired: false } } });
+      return route.fulfill({ json: { report: { ...review, match: result }, sourceStatus: { expired: false } } });
     }
     if (path.endsWith('/analyze')) generated++;
     return route.fulfill({ status: 404, json: { error: { message: 'Unconfigured test endpoint.' } } });
   });
   await page.goto(`/jobs/${job.id}`);
   const panel = page.getByRole('region', { name: 'CV-to-job matching', exact: true });
-  await expect(panel.getByRole('button', { name: 'Compare CV to job', exact: true })).toBeEnabled();
+  await expect(panel.getByRole('button', { name: 'Review fit & gaps', exact: true })).toBeEnabled();
   expect(comparisons).toBe(0); expect(generated).toBe(0);
   await panel.getByRole('button', { name: 'Load older CV analyses' }).click();
   await panel.getByLabel('CV analysis version').selectOption(cv.id);
-  await panel.getByRole('button', { name: 'Compare CV to job', exact: true }).click();
+  await panel.getByRole('button', { name: 'Review fit & gaps', exact: true }).click();
   await expect(panel.getByRole('status')).toHaveText('75%');
   await expect(panel.getByText('3 of 4 weighted points matched')).toBeVisible();
   await panel.getByText('Skills not found (1)', { exact: true }).click();
@@ -62,18 +63,18 @@ test('CV matching selects saved versions, explains evidence, supplements profile
   await expect(panel.getByText('Page 1', { exact: true })).toBeVisible();
   await panel.getByLabel('Include my saved profile skills').check();
   await expect(panel.locator('.match-result')).toHaveCount(0);
-  await panel.getByRole('button', { name: 'Compare CV to job', exact: true }).click();
+  await panel.getByRole('button', { name: 'Review fit & gaps', exact: true }).click();
   await expect(panel.getByRole('status')).toHaveText('100%');
   await panel.getByText('Matched skills (2)', { exact: true }).click();
   await expect(panel.getByText(/your profile skills \(self-reported\)/)).toBeVisible();
   await page.setViewportSize({ width: 375, height: 812 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   stale = true;
-  await panel.getByRole('button', { name: 'Compare CV to job', exact: true }).click();
+  await panel.getByRole('button', { name: 'Review fit & gaps', exact: true }).click();
   await expect(panel.getByRole('alert')).toHaveText('This listing changed. Analyze its current description before matching.');
   await expect(panel.locator('.match-result')).toHaveCount(0);
   await panel.getByRole('button', { name: 'Refresh comparison inputs' }).click();
-  await expect(panel.getByRole('button', { name: 'Compare CV to job', exact: true })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Review fit & gaps', exact: true })).toBeDisabled();
   expect(generated).toBe(0);
 });
 
@@ -96,7 +97,7 @@ test('matching clearly explains missing prerequisites and remains hidden for sig
   const panel = page.getByRole('region', { name: 'CV-to-job matching', exact: true });
   await expect(panel.getByRole('link', { name: 'Upload and analyze a resume' })).toBeVisible();
   await expect(panel.getByRole('link', { name: 'Analyze the current job description' })).toBeVisible();
-  await expect(panel.getByRole('button', { name: 'Compare CV to job', exact: true })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Review fit & gaps', exact: true })).toBeDisabled();
   signedIn = false; await page.reload();
   await expect(panel).toHaveCount(0);
 });

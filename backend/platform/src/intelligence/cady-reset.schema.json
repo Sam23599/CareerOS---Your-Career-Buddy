@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "revision": {
+      "maximum": 2147483646,
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "revision"
+  ],
+  "title": "ResetConversation",
+  "type": "object"
+}

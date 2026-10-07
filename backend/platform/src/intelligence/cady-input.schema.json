@@ -135,20 +135,6 @@
         }
       ]
     },
-    "question": {
-      "maxLength": 2000,
-      "minLength": 1,
-      "title": "Question",
-      "type": "string"
-    },
-    "history": {
-      "items": {
-        "$ref": "#/$defs/ConversationTurn"
-      },
-      "maxItems": 6,
-      "title": "History",
-      "type": "array"
-    },
     "model": {
       "enum": [
         "gpt-4.1",
@@ -176,6 +162,34 @@
         }
       ],
       "title": "Reasoning"
+    },
+    "question": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Question",
+      "type": "string"
+    },
+    "history": {
+      "items": {
+        "$ref": "#/$defs/ConversationTurn"
+      },
+      "maxItems": 6,
+      "title": "History",
+      "type": "array"
+    },
+    "revision": {
+      "anyOf": [
+        {
+          "maximum": 2147483646,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revision"
     }
   },
   "required": [
@@ -183,10 +197,10 @@
     "draftId",
     "jobs",
     "profile",
-    "question",
-    "history",
     "model",
-    "reasoning"
+    "reasoning",
+    "question",
+    "history"
   ],
   "title": "CadyInput",
   "type": "object"

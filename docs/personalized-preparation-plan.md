@@ -12,13 +12,13 @@ PostgreSQL worker now; defer the separate Celery migration. The proposed contrac
 below are implemented; [the guide](personalized-preparation.md) describes current
 limits. Output caps are 8,192 preparation / 4,096 Cady tokens. Keep twenty selected
 requirements, immutable generated content and revisioned reviewed actions.
-Cady is a read-only context assistant with transient conversation. Earlier Celery
+Cady is a read-only context assistant with bounded account-persisted conversation shared by widget/full page. Earlier Celery
 wording below describes future executor replacement, not a current prerequisite.
 
 ## First outcome and review flow
 
 `Choose job + CV versions → Review gaps → Confirm learning goals/time → Generate
-plan explicitly → Review/edit suggestions → Save reviewed plan`
+roadmap explicitly → Follow weekly sessions → Track progress/customize → Save reviewed plan`
 
 Keep one compact action in the job's preparation report. Open a dialog with the
 selected versions, prioritized requirements and optional profile skills. Ask the
@@ -151,3 +151,16 @@ the planned Celery/Redis foundation can replace that executor later.
 Initial Cady is now implemented as batch 7 using this reusable context foundation. Tracking
 applications remains Phase 3; arbitrary company-page browsing and notebook requests
 stay separately prioritized. This plan does not authorize implementing those items.
+
+
+## Selected refinement (2026-10-08)
+
+Implemented after the user selected flexible weekly study sessions and conversation
+persistence across refresh/browser restarts. New roadmaps cover 1–8 ordered weeks,
+with objectives, tangible session outcomes and terminal weekly checkpoints validated
+before saving. Legacy plans remain readable. One **Review fit & gaps** action combines
+existing deterministic results; compact setup retains all user fields. Cady gains
+an app-wide launcher, full conversation layout and one account-persisted conversation
+with revision conflicts and bounded server-derived history. No Celery migration,
+new provider, paid verification, browsing or mutation tools in this batch.
+See [ADR-018](adr/018-weekly-roadmaps-and-shared-cady-conversation.md).

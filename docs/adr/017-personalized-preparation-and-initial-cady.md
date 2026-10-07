@@ -26,3 +26,5 @@ The user selected the original preparation → Cady sequence. Reuse shared intel
 
 This supersedes personalized-AI deferral in ADR-016 and the earlier plan, preserving
 Celery planning and other separately deferred notebook items. See [use and limits](../personalized-preparation.md).
+
+The later selected [ADR-018](018-weekly-roadmaps-and-shared-cady-conversation.md) supersedes transient Cady history with bounded account persistence and adds validated weekly roadmaps; the provider and execution boundaries above remain.

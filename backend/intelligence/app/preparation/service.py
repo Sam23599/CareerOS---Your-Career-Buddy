@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from app.core.errors import IntelligenceError
 from app.preparation.context import CareerContext
-from app.preparation.models import GeneratedPlan, PlanAction, PlanContent, PlanReview, PreparationRecord
+from app.preparation.models import GeneratedRoadmap, RoadmapAction, RoadmapContent, PlanReview, PreparationRecord
 from app.preparation.prompt import PreparationPrompt
 from app.preparation.validation import PreparationValidator
 from app.resumes.models import Usage
@@ -39,16 +39,16 @@ class PreparationService:
             try:
                 async with asyncio.timeout(self.llm.settings.timeout):
                     result = await self.llm.generate(input.model, input.reasoning, PreparationPrompt.instructions,
-                                                     json.dumps(payload, ensure_ascii=False), GeneratedPlan, output_tokens=8192)
+                                                     json.dumps(payload, ensure_ascii=False), GeneratedRoadmap, output_tokens=8192)
             except TimeoutError:
                 raise IntelligenceError(504, "LLM_TIMEOUT") from None
             generated = self.validator.output(result.value, input.goals, match)
             await self.context.load(owner, input.context)
             await self.source_guard.check(owner, input.context)
-            record = PreparationRecord(id=str(uuid4()), version=1, source=match.source, goals=input.goals,
+            record = PreparationRecord(id=str(uuid4()), version=1, plannerVersion='preparation-v2', source=match.source, goals=input.goals,
                 model=input.model, reasoning=input.reasoning, usage=Usage(inputTokens=result.input_tokens, outputTokens=result.output_tokens),
                 createdAt=datetime.now(timezone.utc).isoformat(),
-                plan=PlanContent(overview=generated.overview, cautions=generated.cautions,
-                    actions=[PlanAction(**action.model_dump(), id=f"action-{i + 1}") for i, action in enumerate(generated.actions)]),
+                plan=RoadmapContent(overview=generated.overview, weeks=generated.weeks, cautions=generated.cautions,
+                    actions=[RoadmapAction(**action.model_dump(), id=f"action-{i + 1}") for i, action in enumerate(generated.actions)]),
                 review=PlanReview(revision=0, actions=[]))
             return await self.repository.save(owner, record)

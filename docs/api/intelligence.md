@@ -341,7 +341,7 @@ All fields are required. Opted-in profile skills require the revision from the
 comparison; otherwise `profileVersion` is null. Changed revisions return 409
 `MATCH_SOURCE_CHANGED`. `matchIndex` refers to the deterministic comparison's
 requirement order. Choose 1–20 distinct indexes, classified `already_know`,
-`need_evidence`, `want_to_learn` or `unsure`. Hours/week is 1–40, weeks 1–12, goal
+`need_evidence`, `want_to_learn` or `unsure`. Hours/week is 1–40, weeks 1–8, goal
 at most 1,000 characters. The total budget must allow at least one hour per chosen
 requirement. Stale/expired jobs are rejected before submission.
 
@@ -390,6 +390,7 @@ they are not a cross-database transaction.
   "includeProfileSkills": false,
   "question": "How should I prepare for this role?",
   "history": [],
+  "revision": 0,
   "model": "gpt-6-luna",
   "reasoning": "medium"
 }
@@ -404,8 +405,7 @@ contains `resume`, `draftId`, `draftVersion`, comparison `sources`, `profileVers
 `references: [{ id, label, text }]`, `answer` paragraphs with reference IDs and up
 to three follow-up questions, plus model/reasoning/usage metadata.
 
-Cady has no mutation tools, browsing or server-side chat persistence. Browser
-history is transient and bounded; follow-up buttons do not send automatically.
+Cady has no mutation tools or browsing. Account-persisted history is bounded; follow-up buttons do not send automatically.
 Disconnect/Stop waiting cancels pending work where possible, with no automatic
 retry. A provider call may already have incurred cost.
 
@@ -416,3 +416,41 @@ size remains bounded at 60 KB. Invalid structured/reference/time output returns
 the existing safe AI validation error, saves no generated plan and is not retried.
 See the generated Pydantic-derived schemas and typed verifiers in
 `backend/platform/src/intelligence/{preparation,cady}.ts`.
+
+
+### Weekly roadmaps and saved Cady conversation
+
+New plans use `plannerVersion: "preparation-v2"`. `plan.weeks` contains exactly
+weeks 1 through the requested 1–8 weeks, each `{ week, objective, milestone }`.
+`plan.actions` are ordered sessions with existing IDs/requirement/kind/week/hour/
+title/detail fields plus required `outcome`. Every week is represented and its final
+session is `checkpoint`, `verify` or `interview`; hour/classification/coverage limits
+still apply. Invalid timelines fail without saving or retrying. Stored v1 plans
+retain their original shape and historical maximum twelve weeks. Reviews still edit
+only title/detail/status overlays, preserving generated objectives/outcomes.
+
+- `GET /api/v1/intelligence/cady/conversation` returns
+  `{ conversation: { revision, context, turns, updatedAt }, unavailable, outdated }`.
+  Empty accounts return revision 0, null context/time, empty turns. Turns are
+  `{ question, result }`, at most ten. Context contains server-resolved resume,
+  draft/job source references, optional profile skills and model/reasoning.
+  Gateway validates saved answers against owned analyses. Removed sources suppress
+  context/turns while retaining the revision; changed/expired sources label history.
+- `POST /api/v1/intelligence/cady/conversation/reset` takes exactly `{ revision }`
+  and returns the cleared conversation with revision incremented. Conflicting
+  revisions return 409 `CADY_CONVERSATION_CHANGED`. Read/reset require JWT auth,
+  reject queries/foreign owner fields and make no provider calls.
+- `/cady/ask` with `revision` requires `history: []`; Python derives the last three
+  stored pairs. Expected revision and context identity are checked before provider
+  work; save uses an atomic revision comparison. Response adds
+  `conversationRevision`. Context changes require explicit reset; mismatch returns
+  409 `CADY_CONTEXT_CHANGED`. Successful saves retain the last ten pairs.
+  Legacy requests omitting revision remain transient and accept bounded caller history.
+
+Private conversation GET/reset routes have the same suffixes under `/internal/v1/cady`,
+service-token auth and trusted `X-Owner-Id`. Migration 005 adds one PostgreSQL row per
+owner; GET creates no row. Reset replaces its history, not a retained deleted thread.
+Hard CV/job cleanup removes matching conversations using source locks/tombstones to
+prevent late writes. Soft recovery retains them. Generation/storage precedes gateway
+postchecks, so a removed source can suppress an already saved reply; these services
+do not share a cross-database transaction. Conflicts/timeouts never automatically retry.

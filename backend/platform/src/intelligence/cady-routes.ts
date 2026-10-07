@@ -5,6 +5,15 @@ import { type CadyService } from './cady-service.js';
 export class CadyRoutes {
   constructor(private service: CadyService) {}
   register(router: Router, throttle: RequestHandler) {
+    router.get('/cady/conversation', async (req, res) => {
+      if (Object.keys(req.query).length) throw new ApiError(400, 'INVALID_INPUT', 'Conversation does not accept query parameters.');
+      res.json(await this.service.conversation(res.locals.user));
+    });
+    router.post('/cady/conversation/reset', async (req, res) => {
+      if (!req.is('application/json')) throw new ApiError(415, 'JSON_REQUIRED', 'Use application/json.');
+      if (Object.keys(req.query).length) throw new ApiError(400, 'INVALID_INPUT', 'Conversation does not accept query parameters.');
+      res.json(await this.service.reset(res.locals.user, req.body));
+    });
     router.post('/cady/ask', throttle, async (req, res) => {
       if (!req.is('application/json')) throw new ApiError(415, 'JSON_REQUIRED', 'Use application/json.');
       if (Object.keys(req.query).length) throw new ApiError(400, 'INVALID_INPUT', 'Cady does not accept query parameters.');

@@ -1,6 +1,6 @@
 # Phase 2 — Resume intelligence and job matching
 
-Updated: 2026-10-07, Asia/Kolkata. **Batches 1–4, the batch 5 baseline, batch 6 saved-job baseline and notebook follow-up, personalized AI preparation and initial Cady implemented locally; Celery migration remains planned.**
+Updated: 2026-10-08, Asia/Kolkata. **Batches 1–4, the batch 5 baseline, batch 6 saved-job baseline and notebook follow-up, personalized AI preparation and initial Cady plus weekly-roadmap/shared-chat refinement implemented locally; Celery migration remains planned.**
 
 This follows the planning step agreed after Phase 1. The original [Phase 2 roadmap](development-plan.md#5-phase-2--intelligence--ai) remains the product scope. [ADR-010](adr/010-resume-intelligence-foundation.md) defines the first batch; the [API contract](api/intelligence.md) makes it implementable. Later milestones below are a sequence, not a claim that they are built.
 
@@ -102,3 +102,5 @@ is implemented by this planning update.
 | Analysis retention and deletion | Notebook follow-up settled | Owner-scoped records; recoverable source removal and support-only recovery after bin expiry; historical hard-deletion outbox/tombstones retained |
 
 The approved UI/source/filter/recovery/task-history requests have an implemented [notebook batch](notes-improvements.md). Google live sign-in verification and supported native LinkedIn/contact/review access remain pending prerequisites. Saved jobs now include manual application progress/history as a small foundation; the full application workflow remains Phase 3, community Phase 5 and production deployment Phase 7. Personalized preparation and initial Cady are now implemented; see [use and limits](personalized-preparation.md).
+
+The selected preparation/Cady refinement is implemented in [ADR-018](adr/018-weekly-roadmaps-and-shared-cady-conversation.md): 1–8 flexible weeks, compact inputs, combined deterministic review, app-wide widget and bounded account-persisted history. Next planned work remains the separately scoped Celery foundation, followed by Phase 2 verification.

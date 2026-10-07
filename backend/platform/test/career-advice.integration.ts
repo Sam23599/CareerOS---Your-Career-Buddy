@@ -22,7 +22,7 @@ import { type DraftRecord, type Source } from '../src/intelligence/drafts.js';
 import { type JobAnalysisRecord, type JobSource } from '../src/intelligence/jobs.js';
 import { type ProfileSkills, type MatchResult } from '../src/intelligence/matching.js';
 import { type PlanReview, type PreparationRecord, type PreparationInput } from '../src/intelligence/preparation.js';
-import { type CadyInput, CadyVerifier } from '../src/intelligence/cady.js';
+import { type CadyInput, type CadyConversation, CadyVerifier } from '../src/intelligence/cady.js';
 import { ApiError } from '../src/errors.js';
 import cvFixture from './fixtures/resume-draft.json' with { type: 'json' };
 import jobFixture from './fixtures/job-analysis.json' with { type: 'json' };
@@ -38,7 +38,7 @@ let afterAsk: (() => Promise<void>) | undefined;
 const source = (cv: DraftRecord, jd: JobAnalysisRecord, profile: ProfileSkills | null) => ({ resume: cv.source, draftId: cv.id, draftVersion: cv.version,
   jobId: jd.source.jobId, jobHash: jd.source.sha256, jobAnalysisId: jd.id, jobAnalysisVersion: jd.version, profileVersion: profile?.version ?? null });
 class AdviceClient extends IntelligenceClient {
-  cvs = new Map<string, DraftRecord>(); jds = new Map<string, JobAnalysisRecord>(); plans = new Map<string, PreparationRecord>(); queued = 0; asked = 0;
+  cvs = new Map<string, DraftRecord>(); jds = new Map<string, JobAnalysisRecord>(); plans = new Map<string, PreparationRecord>(); queued = 0; asked = 0; conversations = new Map<string, CadyConversation>();
   override async draft(owner: string, context: Source, _signal?: AbortSignal, id?: string) {
     const value = this.cvs.get(`${owner}:${id}`); if (!value || value.source.resumeId !== context.resumeId) throw new ApiError(404, 'ANALYSIS_NOT_FOUND', 'No CV.'); return value;
   }
@@ -63,10 +63,23 @@ class AdviceClient extends IntelligenceClient {
     if (review.revision !== record.review.revision) throw new ApiError(409, 'PREPARATION_CHANGED', 'Reload before saving.');
     const result = { ...record, review: { ...review, revision: review.revision + 1 } }; this.plans.set(`${owner}:${planId}`, result); return result;
   }
+  override async cadyConversation(owner: string) { return this.conversations.get(owner) ?? { revision: 0, context: null, turns: [], updatedAt: null }; }
+  override async resetCady(owner: string, revision: number) {
+    if ((await this.cadyConversation(owner)).revision !== revision) throw new ApiError(409, 'CADY_CONVERSATION_CHANGED', 'Reload conversation.');
+    const value = { revision: revision + 1, context: null, turns: [], updatedAt: new Date().toISOString() }; this.conversations.set(owner, value); return value;
+  }
   override async askCady(_owner: string, input: CadyInput, cv: DraftRecord, jds: JobAnalysisRecord[]) {
     this.asked++; if (afterAsk) await afterAsk();
-    const result = { ...structuredClone(cadyFixture), resume: cv.source, draftId: cv.id, draftVersion: cv.version, sources: jds.map(jd => source(cv, jd, input.profile)), profileVersion: input.profile?.version ?? null, model: input.model, reasoning: input.reasoning };
-    return CadyVerifier.result(result, cv, jds, input.profile, input);
+    const result = { ...structuredClone(cadyFixture), ...(input.revision != null ? { conversationRevision: input.revision + 1 } : {}), resume: cv.source, draftId: cv.id, draftVersion: cv.version, sources: jds.map(jd => source(cv, jd, input.profile)), profileVersion: input.profile?.version ?? null, model: input.model, reasoning: input.reasoning };
+    const verified = CadyVerifier.result(result, cv, jds, input.profile, input);
+    if (input.revision != null) {
+      const saved = await this.cadyConversation(_owner);
+      if (saved.revision !== input.revision) throw new ApiError(409, 'CADY_CONVERSATION_CHANGED', 'Reload conversation.');
+      const { question } = input;
+      const context = { resume: input.resume, draftId: input.draftId, jobs: input.jobs, profile: input.profile, model: input.model, reasoning: input.reasoning };
+      this.conversations.set(_owner, { revision: input.revision + 1, context, turns: [...saved.turns.slice(-9), { question, result: verified }], updatedAt: new Date().toISOString() });
+    }
+    return verified;
   }
 }
 const client = new AdviceClient({});
@@ -163,4 +176,25 @@ test('worker source checks require the service token and reject removed or chang
   assert.equal((await request('b'.repeat(64), path, { ...body, jobHash: 'c'.repeat(64) })).status, 409);
   await resumes.remove(owner.user.id, owner.cv.source.resumeId);
   assert.equal((await request('b'.repeat(64), path, body)).status, 409);
+});
+
+
+test('saved Cady conversation is account scoped, reads without AI, resets by revision and hides trashed sources', async () => {
+  const owner = await account(), other = await account(), path = '/api/v1/intelligence/cady/conversation';
+  assert.equal((await request('', path)).status, 401);
+  assert.equal((await request(owner.accessToken, path + '?owner=other')).status, 400);
+  assert.equal((await request(owner.accessToken, '/api/v1/intelligence/cady/ask', { ...owner.ask, revision: 0 })).status, 200);
+  const count = client.asked;
+  const saved = await (await request(owner.accessToken, path)).json();
+  assert.equal(saved.conversation.revision, 1); assert.equal(saved.conversation.turns.length, 1); assert.equal(client.asked, count);
+  assert.equal((await (await request(other.accessToken, path)).json()).conversation.turns.length, 0);
+  await jobs.jobs.updateOne({ _id: owner.id }, { $set: { description: 'Changed listing' } });
+  assert.equal((await (await request(owner.accessToken, path)).json()).outdated, true);
+  await resumes.remove(owner.user.id, owner.cv.source.resumeId);
+  const hidden = await (await request(owner.accessToken, path)).json();
+  assert.equal(hidden.unavailable, true); assert.deepEqual(hidden.conversation.turns, []); assert.equal(hidden.conversation.revision, 1);
+  assert.equal((await request(owner.accessToken, path + '/reset', { revision: 0 })).status, 409);
+  assert.equal((await request(owner.accessToken, path + '/reset', { revision: 1 })).status, 200);
+  assert.equal((await (await request(owner.accessToken, path)).json()).conversation.revision, 2);
+  assert.equal(client.asked, count);
 });

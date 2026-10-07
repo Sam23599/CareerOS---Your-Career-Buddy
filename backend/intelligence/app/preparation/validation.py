@@ -27,6 +27,18 @@ class PreparationValidator:
             covered.add(action.matchIndex)
         if any(value > goals.hoursPerWeek for value in hours.values()) or covered != set(choices):
             raise ResponseValidationError("preparation", "time_or_coverage_invalid")
+        if hasattr(plan, 'weeks'):
+            expected = list(range(1, goals.weeks + 1))
+            if [week.week for week in plan.weeks] != expected or sorted(hours) != expected:
+                raise ResponseValidationError('preparation', 'incomplete_roadmap')
+            if [action.week for action in plan.actions] != sorted(action.week for action in plan.actions):
+                raise ResponseValidationError('preparation', 'unordered_sessions')
+            for week in expected:
+                sessions = [action for action in plan.actions if action.week == week]
+                if sessions[-1].kind not in ('checkpoint', 'verify', 'interview'):
+                    raise ResponseValidationError('preparation', 'missing_weekly_checkpoint')
+            if any(not action.title.strip() or not action.detail.strip() or not action.outcome.strip() for action in plan.actions) or any(not week.objective.strip() or not week.milestone.strip() for week in plan.weeks):
+                raise ResponseValidationError('preparation', 'empty_roadmap_text')
         self.no_links(plan.model_dump_json())
         return plan
 

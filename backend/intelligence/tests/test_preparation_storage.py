@@ -76,3 +76,45 @@ def test_owned_plan_versions_review_cas_restart_tasks_and_hard_cleanup():
             await admin.execute(sql.SQL('DROP DATABASE {} WITH (FORCE)').format(sql.Identifier(database)))
             await admin.close()
     asyncio.run(run())
+
+
+@pytest.mark.skipif(not os.getenv('TEST_DATABASE_URL'), reason='Isolated PostgreSQL required')
+def test_cady_postgres_owner_isolation_conflicts_restart_reset_and_source_cleanup():
+    from app.cady.models import CadyContext, CadyResult, SavedTurn
+    from app.storage.cady_postgres import PostgresCadyRepository
+    async def run():
+        url, database = os.environ['TEST_DATABASE_URL'], 'cady_test_' + uuid4().hex
+        admin = await AsyncConnection.connect(url, autocommit=True)
+        await admin.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(database)))
+        store = PostgresDraftRepository(make_conninfo(url, dbname=database))
+        try:
+            await store.start(); assert store.ready
+            owner, _, input, _ = await setup()
+            repository = PostgresCadyRepository(store)
+            assert (await repository.get(owner)).revision == 0
+            context = CadyContext(resume=input.context.resume, draftId=input.context.draftId, jobs=[{'jobId': input.context.jobId, 'jobHash': input.context.jobHash, 'jobAnalysisId': input.context.jobAnalysisId}], profile=None, model=input.model, reasoning=input.reasoning)
+            result = CadyResult(resume=input.context.resume, draftId=input.context.draftId, draftVersion=1, sources=[], profileVersion=None, answer={'paragraphs': [{'text': 'Practice your skills.', 'references': []}], 'followUps': []}, references=[], model=input.model, reasoning=input.reasoning, usage={'inputTokens': 10, 'outputTokens': 20}, conversationRevision=1)
+            turn = SavedTurn(question='How should I prepare?', result=result)
+            first = await repository.save(owner, 0, context, [turn]); assert first.revision == 1
+            assert not (await repository.get(str(uuid4()))).turns
+            with pytest.raises(IntelligenceError) as error: await repository.save(owner, 0, None, [])
+            assert error.value.code == 'CADY_CONVERSATION_CHANGED'
+            await store.close(); store = PostgresDraftRepository(make_conninfo(url, dbname=database)); await store.start()
+            repository = PostgresCadyRepository(store)
+            assert (await repository.get(owner)).turns[0] == turn
+            reset = await repository.save(owner, 1, None, []); assert reset.revision == 2 and not reset.turns
+            turn.result.conversationRevision = 3
+            await repository.save(owner, 2, context, [turn])
+            await store.delete(owner, context.resume.resumeId)
+            assert (await repository.get(owner)).revision == 0
+            with pytest.raises(IntelligenceError): await repository.save(owner, 0, context, [turn])
+            other = str(uuid4()); turn.result.conversationRevision = 1
+            await repository.save(other, 0, context, [turn])
+            await PostgresJobAnalysisRepository(store).delete(other, context.jobs[0].jobId)
+            assert not (await repository.get(other)).turns
+            with pytest.raises(IntelligenceError): await repository.save(other, 0, context, [turn])
+        finally:
+            await store.close()
+            await admin.execute(sql.SQL('DROP DATABASE {} WITH (FORCE)').format(sql.Identifier(database)))
+            await admin.close()
+    asyncio.run(run())

@@ -38,7 +38,7 @@ function PreparationDialog({ match, value, jobId, task, onClose, onAccepted, onS
   return <dialog className="resume-preview preparation-dialog" ref={dialog} aria-labelledby="preparation-title" onCancel={event => { event.preventDefault(); close(); }}>
     <div className="preview-heading"><div><p className="eyebrow">Your next steps</p><h2 id="preparation-title">Personalized preparation</h2></div><button className="secondary" onClick={close} autoFocus>Close</button></div>
     {value ? <PreparationReview key={value.record.id} jobId={jobId} value={value} onSaved={onSaved} onDirty={value => { dirty.current = value; }} /> : <>
-      <p>Confirm what you know before choosing what to learn. AI will suggest actions linked to these saved requirements.</p>
+      <p>Confirm what you know before choosing what to learn. AI will build ordered weekly sessions from these saved requirements.</p>
       <p className="muted">CV analysis {match?.source.draftVersion} · Job analysis {match?.source.jobAnalysisVersion}. Missing evidence does not prove a missing skill.</p>
       {!relevant.length && <p>No evidence gaps were identified for these inputs. Review requirements in the comparison or ask Cady a specific question.</p>}
       {relevant.length > 0 && <form onSubmit={event => { event.preventDefault(); void generate(); }}><fieldset disabled={busy || pending}><legend>Confirm gaps & available time</legend>
@@ -51,8 +51,8 @@ function PreparationDialog({ match, value, jobId, task, onClose, onAccepted, onS
           <details><summary>Job evidence · {item.requirement.priority}</summary>{item.requirement.evidence.map((quote, index) => <blockquote key={index}>{quote.quote}</blockquote>)}</details>
         </div>)}</details>
         {match && match.items.length > 20 && <p className="muted">The first 20 relevant gaps are considered in this plan.</p>}
-        <div className="profile-grid"><label>Hours per week<input type="number" min={1} max={40} required value={hours} onChange={event => setHours(Number(event.target.value))} /></label><label>Target weeks<input type="number" min={1} max={12} required value={weeks} onChange={event => setWeeks(Number(event.target.value))} /></label></div>
-        <label>Goal (optional)<textarea value={goal} rows={2} maxLength={1000} onChange={event => setGoal(event.target.value)} placeholder="For example, prepare for a technical interview." /></label>
+        <div className="profile-grid"><label>Hours per week<input type="number" min={1} max={40} required value={hours} onChange={event => setHours(Number(event.target.value))} /></label><label>Target weeks<input type="number" min={1} max={8} required value={weeks} onChange={event => setWeeks(Number(event.target.value))} /></label></div>
+        <details className="review-group"><summary>Personal goal (optional)</summary><label>Goal (optional)<textarea value={goal} rows={2} maxLength={1000} onChange={event => setGoal(event.target.value)} placeholder="For example, prepare for a technical interview." /></label></details>
         <AiSettings settings={settings} />
         {choices.length > hours * weeks && <p className="extraction-warning">Allow at least one hour per selected requirement, or leave some out of this plan.</p>}
         <label className="check-label"><input type="checkbox" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} />I have reviewed these gap classifications and the processing notice.</label>
@@ -94,10 +94,10 @@ export function PreparationPanel({ jobId, match }: { jobId: string; match: Match
   async function view(id: string) { setError(''); try { const result = await authenticatedRequest<PreparationResponse>(`${base}/preparation-plans/${id}`); setValue(result); setOpen(true); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not open this plan.'); } }
   const pending = task && ['queued', 'running'].includes(task.state);
   return <section id="preparation" className="panel profile-section" aria-label="Personalized AI preparation"><div className="section-heading"><div><p className="eyebrow">Turn gaps into action</p><h2>Personalized preparation</h2></div></div>
-    <p>Confirm your goals and build a practical weekly plan. Saved plans remain available here.</p>
+    <p>Build a 1–8 week roadmap with flexible sessions, deliverables and checkpoints. Saved plans remain available here.</p>
     <div className="actions"><button disabled={!match || Boolean(pending)} onClick={() => { setValue(null); setOpen(true); }}>Create AI preparation plan</button>{value && <button className="secondary" onClick={() => setOpen(true)}>Review plan version {value.record.version}</button>}
       <Link className="button-link secondary" to={`/cady?jobId=${jobId}${match ? `&resumeId=${match.source.resume.resumeId}&draftId=${match.source.draftId}` : ''}`}>Discuss with Cady</Link></div>
-    {!match && <p className="muted">Review resume & gaps or compare your CV above to choose inputs first.</p>}
+    {!match && <p className="muted">Choose “Review fit & gaps” above to select inputs first.</p>}
     {pending && <p role="status">Preparation {task.state}. You may leave and return; find it in <Link to="/tasks">Task history</Link>.</p>}
     {task?.state === 'failed' && <p className="form-error" role="alert">Preparation could not finish ({task.errorCode}). Check saved plans before retrying; no automatic paid retry.</p>}
     {pending && task.state === 'queued' && <button className="secondary" onClick={() => { void authenticatedRequest(`/intelligence/tasks/${task.id}/cancel`, { method: 'POST', body: '{}' }).then(() => setRefresh(count => count + 1)).catch(cause => setError(cause.message)); }}>Cancel queued preparation</button>}

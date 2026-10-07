@@ -289,6 +289,20 @@
     },
     "usage": {
       "$ref": "#/$defs/Usage"
+    },
+    "conversationRevision": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Conversationrevision"
     }
   },
   "required": [

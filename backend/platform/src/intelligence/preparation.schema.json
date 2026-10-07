@@ -296,6 +296,124 @@
       "title": "ReviewedAction",
       "type": "object"
     },
+    "RoadmapAction": {
+      "additionalProperties": false,
+      "properties": {
+        "matchIndex": {
+          "maximum": 349,
+          "minimum": 0,
+          "title": "Matchindex",
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "learn",
+            "practice",
+            "project",
+            "checkpoint",
+            "interview",
+            "cv_evidence",
+            "verify"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "week": {
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Week",
+          "type": "integer"
+        },
+        "hours": {
+          "maximum": 40,
+          "minimum": 1,
+          "title": "Hours",
+          "type": "integer"
+        },
+        "title": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        },
+        "outcome": {
+          "maxLength": 800,
+          "minLength": 1,
+          "title": "Outcome",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^action-[1-9][0-9]{0,2}$",
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "matchIndex",
+        "kind",
+        "week",
+        "hours",
+        "title",
+        "detail",
+        "outcome",
+        "id"
+      ],
+      "title": "RoadmapAction",
+      "type": "object"
+    },
+    "RoadmapContent": {
+      "additionalProperties": false,
+      "properties": {
+        "overview": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Overview",
+          "type": "string"
+        },
+        "weeks": {
+          "items": {
+            "$ref": "#/$defs/WeeklyGoal"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Weeks",
+          "type": "array"
+        },
+        "actions": {
+          "items": {
+            "$ref": "#/$defs/RoadmapAction"
+          },
+          "maxItems": 60,
+          "minItems": 1,
+          "title": "Actions",
+          "type": "array"
+        },
+        "cautions": {
+          "items": {
+            "maxLength": 1200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Cautions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "overview",
+        "weeks",
+        "actions",
+        "cautions"
+      ],
+      "title": "RoadmapContent",
+      "type": "object"
+    },
     "Source": {
       "additionalProperties": false,
       "properties": {
@@ -343,6 +461,36 @@
       ],
       "title": "Usage",
       "type": "object"
+    },
+    "WeeklyGoal": {
+      "additionalProperties": false,
+      "properties": {
+        "week": {
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Week",
+          "type": "integer"
+        },
+        "objective": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Objective",
+          "type": "string"
+        },
+        "milestone": {
+          "maxLength": 800,
+          "minLength": 1,
+          "title": "Milestone",
+          "type": "string"
+        }
+      },
+      "required": [
+        "week",
+        "objective",
+        "milestone"
+      ],
+      "title": "WeeklyGoal",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -354,8 +502,11 @@
       "type": "integer"
     },
     "plannerVersion": {
-      "const": "preparation-v1",
       "default": "preparation-v1",
+      "enum": [
+        "preparation-v1",
+        "preparation-v2"
+      ],
       "title": "Plannerversion",
       "type": "string"
     },
@@ -420,7 +571,15 @@
       "type": "string"
     },
     "plan": {
-      "$ref": "#/$defs/PlanContent"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PlanContent"
+        },
+        {
+          "$ref": "#/$defs/RoadmapContent"
+        }
+      ],
+      "title": "Plan"
     },
     "review": {
       "$ref": "#/$defs/PlanReview"

@@ -3,6 +3,8 @@ import { Link, NavLink, useLocation } from 'react-router';
 import { useSession } from '../auth/session';
 import { NotificationLink } from '../notifications/NotificationLink';
 import { Icon, type IconName } from './WorkspaceUi';
+import { CadyProvider } from '../cady/CadyProvider';
+import { CadyWidget } from '../cady/CadyPage';
 import { workspaceNavigationEvent } from './navigation';
 
 const destinations: { to: string; label: string; icon: IconName; end?: boolean }[] = [
@@ -19,7 +21,7 @@ const destinations: { to: string; label: string; icon: IconName; end?: boolean }
   { to: '/profile', label: 'Career profile', icon: 'profile' },
 ];
 
-export function WorkspaceShell({ children }: { children: ReactNode }) {
+function WorkspaceLayout({ children }: { children: ReactNode }) {
   const session = useSession();
   const { pathname, search } = useLocation();
   const [openPath, setOpenPath] = useState<string | null>(null);
@@ -62,4 +64,9 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       {!authentication && <footer className="workspace-footer"><span>CareerOS</span><span>Make room for your next chapter.</span></footer>}
     </div>
   </div>;
+}
+
+export function WorkspaceShell({ children }: { children: ReactNode }) {
+  const session = useSession();
+  return session.state === 'authenticated' ? <CadyProvider key={session.user?.id}><WorkspaceLayout>{children}</WorkspaceLayout><CadyWidget /></CadyProvider> : <WorkspaceLayout>{children}</WorkspaceLayout>;
 }
