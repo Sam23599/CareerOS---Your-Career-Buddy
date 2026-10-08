@@ -50,7 +50,7 @@ test('CV matching selects saved versions, explains evidence, supplements profile
   await expect(panel.getByRole('button', { name: 'Review fit & gaps', exact: true })).toBeEnabled();
   expect(comparisons).toBe(0); expect(generated).toBe(0);
   await panel.getByRole('button', { name: 'Load older CV analyses' }).click();
-  await panel.getByLabel('CV analysis version').selectOption(cv.id);
+  await panel.getByRole('combobox', { name: 'Resume analysis', exact: true }).selectOption(cv.id);
   await panel.getByRole('button', { name: 'Review fit & gaps', exact: true }).click();
   await expect(panel.getByRole('status')).toHaveText('75%');
   await expect(panel.getByText('3 of 4 weighted points matched')).toBeVisible();

@@ -3,6 +3,8 @@ import { authenticatedRequest } from '../auth/session';
 import { type DraftHistory } from '../../../../backend/platform/src/intelligence/drafts';
 import { type ReviewResponse } from '../../../../backend/platform/src/intelligence/reviews';
 import { ResumeCheckReport } from './ResumeCheckReport';
+import { useDialogDismiss } from '../ui/dialogDismiss';
+import { analysisVersionLabel } from '../intelligence/analysisLabels';
 
 export function ResumeChecks({ resume, onClose, onAnalyze }: { resume: { id: string; name: string }; onClose: () => void; onAnalyze: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -14,6 +16,7 @@ export function ResumeChecks({ resume, onClose, onAnalyze }: { resume: { id: str
   const [error, setError] = useState('');
   const [result, setResult] = useState<ReviewResponse | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const dismissal = useDialogDismiss(onClose);
   const base = `/intelligence/resumes/${resume.id}`;
   useEffect(() => {
     const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -41,13 +44,13 @@ export function ResumeChecks({ resume, onClose, onAnalyze }: { resume: { id: str
       if (!signal.aborted) setResult(response);
     });
   }
-  return <dialog className="resume-preview resume-check-dialog" ref={dialog} aria-labelledby="resume-check-title" onCancel={event => { event.preventDefault(); onClose(); }}>
+  return <dialog className="resume-preview resume-check-dialog" ref={dialog} aria-labelledby="resume-check-title" {...dismissal}>
     <div className="preview-heading"><h2 id="resume-check-title">Check {resume.name}</h2><button type="button" className="secondary" onClick={onClose} autoFocus>Close resume checks</button></div>
     <p className="muted">Review a saved analysis for missing context and PDF reading warnings. No new AI call or changes to your resume.</p>
     {loading && <p role="status">Loading saved CV analyses…</p>}
     {error && <p className="form-error" role="alert">{error}</p>}
     {!loading && !history.versions.length && !error && <p>Analyze this resume first to prepare these checks. <button type="button" className="secondary" onClick={onAnalyze}>Open resume draft</button></p>}
-    {!loading && history.versions.length > 0 && <form onSubmit={review}><div className="review-controls"><label>CV analysis for checks<select value={draftId} disabled={busy} onChange={event => { setDraftId(event.target.value); setResult(null); setError(''); }}>{history.versions.map(item => <option value={item.id} key={item.id}>Version {item.version} · {item.model} · {new Date(item.createdAt).toLocaleString()}</option>)}</select></label><button disabled={busy || !draftId}>Run resume checks</button></div></form>}
+    {!loading && history.versions.length > 0 && <form onSubmit={review}><div className="review-controls"><label>CV analysis for checks<select value={draftId} disabled={busy} onChange={event => { setDraftId(event.target.value); setResult(null); setError(''); }}>{history.versions.map(item => <option value={item.id} key={item.id}>{analysisVersionLabel(resume.name, item)}</option>)}</select></label><button disabled={busy || !draftId}>Run resume checks</button></div></form>}
     <div className="actions">
       {history.nextBeforeVersion !== null && <button className="secondary" disabled={loading || busy} onClick={() => void run(async signal => {
         const value = await authenticatedRequest<DraftHistory>(`${base}/drafts?beforeVersion=${history.nextBeforeVersion}`, { signal });

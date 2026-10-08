@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
 import { notificationsChanged } from '../notifications/NotificationLink';
 import { Icon, PageHeading } from '../ui/WorkspaceUi';
+import { workspaceLabels } from '../ui/navigation';
 import { SourceForm } from './SourceForm';
 import { type CareerSource, type SourceFilters, type SourceKind, limitedCoverageMessage } from './types';
 
@@ -84,7 +85,7 @@ function SourceList() {
   const reload = () => { setError(''); setAttempt(value => value + 1); };
   const saved = (savedKind: SourceKind, message = '') => { setNotice(message); setAdding(null); if (savedKind !== kind) setParams({ kind: savedKind }); else reload(); };
   return <div className="profile-page workspace-page">
-    <PageHeading eyebrow="Your discovery network" title="Career sources" description="Track jobs from supported sources or bookmark company career pages for manual visits. Your list and filters are private; imported public listings also appear in the job catalog." actions={!adding && <><button onClick={() => setAdding('job-source')}><Icon name="sources" />Add job source</button><button className="secondary" onClick={() => setAdding('bookmark')}><Icon name="bookmark" />Bookmark career page</button></>} />
+    <PageHeading eyebrow="Your discovery network" title={workspaceLabels.careerSources} description="Track jobs from supported sources or bookmark company career pages for manual visits. Your list and filters are private; imported public listings also appear in the job catalog." actions={!adding && <><button onClick={() => setAdding('job-source')}><Icon name="sources" />Add job source</button><button className="secondary" onClick={() => setAdding('bookmark')}><Icon name="bookmark" />Bookmark career page</button></>} />
     <nav className="profile-nav career-source-tabs" aria-label="Career source sections"><Link to="?kind=job-source" aria-current={!bookmark ? 'page' : undefined}>Job sources</Link><Link to="?kind=bookmark" aria-current={bookmark ? 'page' : undefined}>Career bookmarks</Link></nav>
     <p className="muted">{bookmark ? 'Bookmarks stay here until you choose to enable job tracking. They do not import jobs or send alerts.' : 'Greenhouse boards and Google Careers support refreshes; Google has limited coverage. Keywords and locations must both match when provided.'}</p>
     <details className="compact-details"><summary>Other job platforms</summary><p><a href="https://www.linkedin.com/jobs/" target="_blank" rel="noopener noreferrer">Browse LinkedIn jobs</a> in a separate tab. You can bookmark company career pages below; unsupported pages do not import jobs.</p></details>

@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
 import { type DraftHistory } from '../../../../backend/platform/src/intelligence/drafts';
 import { type RankingResponse, type DeferredJob } from '../../../../backend/platform/src/intelligence/ranking';
+import { analysisVersionLabel } from '../intelligence/analysisLabels';
 
 type Resume = { id: string; name: string; version: number; active: boolean; deleting?: boolean };
 const reasons: Record<DeferredJob['reason'], string> = {
@@ -73,7 +74,7 @@ function RankingControls({ filters, canLeave }: { filters: { status: string; pri
         </select></label>
         <label>CV analysis for ranking<select value={draftId} disabled={!history?.versions.length} onChange={event => { clear(); setDraftId(event.target.value); }}>
           {!history?.versions.length && <option value="">{history ? 'No saved analysis' : 'Loading analyses…'}</option>}
-          {history?.versions.map(item => <option key={item.id} value={item.id}>Version {item.version} · {item.model} · {new Date(item.createdAt).toLocaleDateString()}</option>)}
+          {history?.versions.map(item => <option key={item.id} value={item.id}>{analysisVersionLabel(resumes.find(resume => resume.id === resumeId)?.name ?? 'Resume', item)}</option>)}
         </select></label>
       </div>
       {history?.versions.length === 0 && <p>Analyze this resume before ranking. <Link to="/resumes" onClick={event => { if (!canLeave()) event.preventDefault(); }}>Open resumes</Link></p>}

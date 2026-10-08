@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { addPassword, dismissPasswordPrompt, RequestError, startProviderSignIn, useSession } from './session';
+import { useDialogDismiss } from '../ui/dialogDismiss';
 
 function PasswordForm({ onSaved }: { onSaved?: () => void }) {
   const { user } = useSession();
@@ -67,7 +68,8 @@ export function PasswordPrompt() {
     try { await dismissPasswordPrompt(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save your choice.'); setBusy(false); }
   }
-  return <dialog ref={dialog} className="password-prompt" aria-labelledby="password-prompt-title" onCancel={event => { event.preventDefault(); void dismiss(); }}>
+  const dismissal = useDialogDismiss(() => { void dismiss(); });
+  return <dialog ref={dialog} className="password-prompt" aria-labelledby="password-prompt-title" {...dismissal}>
     <h2 id="password-prompt-title">Make your next login easier</h2>
     {editing ? <PasswordForm /> : <p>You can add an optional CareerOS password now or later from your profile. Then you can sign in directly with your email.</p>}
     {error && <p className="form-error" role="alert">{error}</p>}

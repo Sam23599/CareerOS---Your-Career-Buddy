@@ -1,6 +1,6 @@
 # Phase 2 — Resume intelligence and job matching
 
-Updated: 2026-10-08, Asia/Kolkata. **Batches 1–4, the batch 5 baseline, batch 6 saved-job baseline and notebook follow-up, personalized AI preparation and initial Cady plus weekly-roadmap/shared-chat refinement implemented locally; Celery migration remains planned.**
+Updated: 2026-10-08, Asia/Kolkata. **Batches 1–4, the batch 5 baseline, batch 6 saved-job baseline and notebook follow-up, personalized AI preparation and initial Cady plus weekly-roadmap/shared-chat refinement implemented locally; E0 usability/source/evaluation foundation added; E1 and Celery migration remain planned.**
 
 This follows the planning step agreed after Phase 1. The original [Phase 2 roadmap](development-plan.md#5-phase-2--intelligence--ai) remains the product scope. [ADR-010](adr/010-resume-intelligence-foundation.md) defines the first batch; the [API contract](api/intelligence.md) makes it implementable. Later milestones below are a sequence, not a claim that they are built.
 
@@ -103,6 +103,8 @@ The approved UI/source/filter/recovery/task-history requests have an implemented
 The selected preparation/Cady refinement is implemented in [ADR-018](adr/018-weekly-roadmaps-and-shared-cady-conversation.md): 1–8 flexible weeks, compact inputs, combined deterministic review, app-wide widget and bounded account-persisted history. Celery remains a separately scoped foundation; Phase 2 verification still needs an explicit release scope and recorded results. The user's latest review adds proposed UI corrections, account AI defaults and full chats before the separate retrieval/tool expansion. See the [current notebook review](project-notes.md#latest-review--2026-10-08-changed-and-unreviewed-requests) and [batch sequence](intelligence-evolution-plan.md#independently-deliverable-batches); documentation is not implementation approval.
 
 ### Confirmed completion sequence — 2026-10-08
+
+The user selected implementation after planning. [E0's initial foundation](intelligence-foundation.md) now provides the focused UI corrections, typed source/evidence contract and offline evaluator with 16 synthetic draft cases. Browser/contract checks pass; these are not a live Cady accuracy benchmark, and human fixture review remains pending before retrieval/model comparisons. E1 is next for central AI defaults, durable threads/context and shared real usage. This does not release Phase 2 or implement RAG/tools/Celery.
 
 Finish the selected E0–E9 intelligence expansion, then **finalize Phase 2 release verification and proceed to Phase 3 application management**. The plan now includes [four-stage RAG, optional BM25 and pgvector/FAISS](rag-pipeline-and-storage-plan.md), [shared real usage accounting](ai-usage-and-credits-plan.md), and confirmed Cady Read/Write/Agent tools with aggregated live context. No implementation is selected by this documentation update. Record completed checks and any explicitly agreed scope deferrals before declaring Phase 2 release-ready; full Phase 3 workflow tools depend on their owning service rather than blocking Phase 2.
 

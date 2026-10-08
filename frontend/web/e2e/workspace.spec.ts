@@ -35,11 +35,11 @@ test('workspace navigation preserves discard confirmations for profile and saved
   await page.goto('/saved-jobs?priority=HIGH');
   await page.getByLabel('Private notes').fill('Keep filtered-view notes');
   page.once('dialog', dialog => dialog.dismiss());
-  await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('link', { name: 'Shortlist', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('link', { name: 'Saved jobs', exact: true }).click();
   await expect(page).toHaveURL(/\/saved-jobs\?priority=HIGH$/);
   await expect(page.getByLabel('Private notes')).toHaveValue('Keep filtered-view notes');
   page.once('dialog', dialog => dialog.accept());
-  await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('link', { name: 'Shortlist', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('link', { name: 'Saved jobs', exact: true }).click();
   await expect(page).toHaveURL(/\/saved-jobs$/);
   await expect(page.getByLabel('Private notes')).toHaveValue('');
   await page.getByLabel('Private notes').fill('Keep these unsaved notes');
@@ -60,12 +60,12 @@ test('mobile navigation supports keyboard dismissal and preserves all destinatio
   await page.getByRole('button', { name: 'Open workspace navigation' }).click();
   const navigation = page.getByRole('navigation', { name: 'Mobile workspace', exact: true });
   await expect(navigation.getByRole('link')).toHaveCount(7);
-  await navigation.getByRole('link', { name: 'Shortlist', exact: true }).focus();
+  await navigation.getByRole('link', { name: 'Saved jobs', exact: true }).focus();
   await page.keyboard.press('Escape');
   await expect(navigation).not.toBeVisible();
   await expect(page.getByRole('button', { name: 'Open workspace navigation' })).toBeFocused();
   await page.getByRole('button', { name: 'Open workspace navigation' }).click();
-  await navigation.getByRole('link', { name: 'Shortlist', exact: true }).click();
+  await navigation.getByRole('link', { name: 'Saved jobs', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Saved jobs', exact: true })).toBeVisible();
   await expect(navigation).not.toBeVisible();
   await expect(page.locator('#workspace-content')).toBeFocused();

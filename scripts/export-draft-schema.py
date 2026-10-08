@@ -11,10 +11,12 @@ from app.matching.models import MatchResult
 from app.reviews.models import ReviewReport
 from app.preparation.models import PreparationRecord, PreparationInput, PreparationHistory, PlanReview
 from app.cady.models import CadyResult, CadyInput, CadyConversation, ResetConversation
+from app.knowledge.models import EvidenceBundle
 
 for name, model in [("resume-draft", DraftRecord), ("job-analysis", JobAnalysisRecord), ("matching", MatchResult), ("resume-review", ReviewReport),
                     ("preparation", PreparationRecord), ("preparation-input", PreparationInput), ("preparation-history", PreparationHistory),
-                    ("preparation-review", PlanReview), ("cady", CadyResult), ("cady-input", CadyInput), ("cady-conversation", CadyConversation), ("cady-reset", ResetConversation)]:
+                    ("preparation-review", PlanReview), ("cady", CadyResult), ("cady-input", CadyInput), ("cady-conversation", CadyConversation), ("cady-reset", ResetConversation),
+                    ("knowledge-evidence", EvidenceBundle)]:
     path = root / f"backend/platform/src/intelligence/{name}.schema.json"
     content = json.dumps(model.model_json_schema(), indent=2) + "\n"
     if "--check" in sys.argv:

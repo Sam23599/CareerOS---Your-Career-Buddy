@@ -18,6 +18,9 @@ One ongoing notebook for the whole project: bugs, rough ideas, UX observations, 
 Add entries below. Dates, screenshots/paths, expected behavior, and examples help, but are optional. If you change your mind, append a follow-up referencing the earlier note.
 
 <!-- Write freely below this line. The reviewer will add IDs without changing your words. -->
+
+- list bugs later after E0 implementation.
+
 <!-- N-001 -->
 - (just the ui/ux and frontend changes needed mainly) to give a modern fresh and user friendly look.
 <!-- N-002 -->
@@ -225,6 +228,8 @@ Readiness     History   Preferences    Interviews
 Current review: **2026-10-08, Asia/Kolkata**. Compared with the supplied last-review commit `0d5902cc9d232b97fac701db25eb6c1e06ef5968` and current HEAD `f55f005`. Later implementation results remain recorded below; new/changed requests are refined in the latest section. Raw wording, existing IDs, decisions and history are preserved. N-035–N-044 identify previously unnumbered follow-ups. N-045–N-053 record the later conversation's confirmed planning requirements and tool extension.
 
 This review and the requested separate intelligence planning authorize **documents only**. Raw requests such as “introduce celery service now” are not application implementation selection in this conversation. Code was inspected read-only; reported browser symptoms were not reproduced and no tests or paid AI calls ran. Historical proposals do not imply that already implemented features are missing.
+
+**Later implementation selection — 2026-10-08:** The user accepted the next implementation direction in conversation. E0 usability/source/evaluation foundation is now implemented and verified in [the foundation batch](intelligence-foundation.md). Results below supersede the relevant planning-only statuses; E1 remains next. Raw wording and the planning review's history stay unchanged. No paid AI calls, commit or push were made.
 
 ### Approved follow-up and current scope
 
@@ -476,13 +481,15 @@ These proposals were not implementation approval on 2026-10-06. Your later clari
 - **Raw sources:** Batch CV/job analysis; shortlist pop-up view/edit; theme overhaul; navigation/page naming; real dashboard statistics; clearer analysis-version names.
 - **Status:** Preserved for separate discussion/selection. They were outside the approved preparation/Cady batch and were not implemented. Suggested timing is not approval.
 
+- **Later result (2026-10-08):** N-032/N-034 were selected with E0 and implemented below. N-029/N-030/N-031/N-033 remain deferred; this does not select the broader UI/dashboard/batch-analysis work.
+
 ### Latest review — 2026-10-08: changed and unreviewed requests
 
 The supplied commit contained N-001–N-022; subsequent commits implemented that batch, added the Celery plan, and implemented preparation/Cady and their refinement. This review does not repeat those completed proposals. The entries below refine the outstanding N-029–N-034 and the newly separated N-035–N-044.
 
 | Suggested scope | Raw IDs | Proposed timing / dependency |
 | --- | --- | --- |
-| Small usability corrections | N-035, N-038a, N-034, N-041, N-042, N-044, N-032 | Soon; a separately selected UI batch |
+| Small usability corrections | N-035, N-038a, N-034, N-041, N-042, N-044, N-032 | Selected and implemented in E0; browser checks recorded below |
 | Account AI defaults and durable chats | N-036, N-037 | First intelligence foundation; explicit source/memory contracts |
 | Reliable background execution | N-023, N-043, then N-029 | Shared capacity/Celery; jobs and preparation together, then resumes and batches |
 | Accurate Cady with retrieval/tools | N-040, N-037, then N-038b | Separate intelligence expansion plan; private evidence before external research |
@@ -514,6 +521,8 @@ Timing is a recommendation, not approval. The [expansion plan](intelligence-evol
 - **Proposal:** Share a small destination-label map for sidebar, breadcrumbs and page headings. Keep routes stable and preserve the user's dashboard/profile exceptions.
 - **Status / timing:** Planning only; include in the small UI correction batch.
 
+- **2026-10-08 result:** Implemented shared destination labels for Jobs, Saved jobs, Resumes, Career sources and Notifications across navigation/breadcrumbs/list headings. Dashboard/profile exceptions and routes stay. [Label map](../frontend/web/src/ui/navigation.ts#L4).
+
 ### N-033 — Useful dashboard summaries
 
 - **Evidence:** [Dashboard](../frontend/web/src/auth/Dashboard.tsx#L44) contains guidance and links, without platform summary counts.
@@ -527,11 +536,15 @@ Timing is a recommendation, not approval. The [expansion plan](intelligence-evol
 - **Proposal:** Shared display-name helpers and compact primary/secondary text; distinguish PDF version from analysis version. Keep stable IDs, hashes, version numbering and stored source filenames unchanged.
 - **Status / timing:** Planning only; small UI batch with N-041/N-042. Additional requests previously grouped beneath this note now have N-041–N-044.
 
+- **2026-10-08 result:** Implemented a [shared source-based label](../frontend/web/src/intelligence/analysisLabels.ts#L4) across CV/JD history and comparison/check/ranking/Cady selectors: filename or job/company, analysis version, model, optional reasoning and date. Stable IDs, filenames, numbering and PDF/analysis relationships are preserved.
+
 ### N-035 — “Next session” returns to Week 1
 
 - **Cause supported by code:** [Selection](../frontend/web/src/preparation/PreparationReview.tsx#L10) takes the first globally `planned` action; [button](../frontend/web/src/preparation/PreparationReview.tsx#L20) jumps only to its week. Merely browsing a later week does not advance progress. This explains the symptom while earlier sessions remain planned; it is not proof of saved-state corruption. Browser reproduction remains pending.
 - **Proposal:** Label the global action “Continue preparation”/“Next unfinished session”, focus the actual session and provide separate sequential navigation within the viewed roadmap. Marking done/skipped remains explicit; moving weeks must not silently mark work complete.
 - **Status / timing:** Planning only; focused usability correction before further preparation expansion.
+
+- **2026-10-08 result:** Implemented **Continue preparation**, which names and focuses the first unfinished session, plus separate Previous week / Next week browsing. Mocked browser checks verify Week 2 browsing can return to the unfinished Week 1 session without marking progress or making an update request. [Focus](../frontend/web/src/preparation/PreparationReview.tsx#L13), [controls](../frontend/web/src/preparation/PreparationReview.tsx#L31).
 
 ### N-036 — Central AI preferences
 
@@ -552,6 +565,8 @@ Timing is a recommendation, not approval. The [expansion plan](intelligence-evol
 - **N-038b proposal:** Default-off page-aware suggestions only while open; use authorized page descriptors, recent messages and retrieval. Debounce/deduplicate meaningful changes, cache by source/settings revisions and expose higher usage/budget settings. No call on every render or while hidden. This is an AI-dependent extension, unlike N-038a.
 - **Status / timing:** Planning only; N-038a small UI batch, N-038b after grounded retrieval/tools and measured usage.
 
+- **2026-10-08 result:** N-038a implemented: collapsed context, smaller welcome, one message scroller in the widget, reading-position preservation and **Jump to latest**. Mocked checks cover a reply arriving while reading older messages and follow behavior when the ten-pair history rotates; mobile widget inspected. [Chat following](../frontend/web/src/cady/CadyPage.tsx#L39). N-038b remains planned; no Smart Cady calls were introduced.
+
 ### N-039 — Friendly Cady persona and face/icon
 
 - **Evidence:** [Welcome/assistant mark](../frontend/web/src/cady/CadyPage.tsx#L39) uses the generic sparkles icon; no dedicated persona/icon specification exists.
@@ -565,17 +580,23 @@ Timing is a recommendation, not approval. The [expansion plan](intelligence-evol
 - **Updated plan:** Four OOP RAG stages; selectable pgvector/FAISS, optional BM25, cloud/S3/Redis lifecycle, exact evidence and claim checks. Read, Write and Agent/action tools combine aggregate live context with bounded drill-down and approved changes through owning APIs. Pgvector is the first local delivery; LangGraph is optional for resumable workflows.
 - **Status / timing:** Corpus/memory/action requirements are now confirmed by N-045/N-048/N-049/N-050/N-053. Documentation only; implementation and paid verification remain unselected. Framework/runtime/default limits stay reviewable proposals.
 
+- **2026-10-08 foundation result:** E0 adds [typed source/evidence models](../backend/intelligence/app/knowledge/models.py#L11), an exact-span/revision/owner/lifecycle validator and an [offline evaluator](../backend/intelligence/app/evaluation/service.py#L4) with 16 synthetic draft cases. They are not wired into current Cady or live RAG/tool execution. Human benchmark review, the planned larger held-out set and actual answer-quality comparisons remain pending; no paid model call or claimed accuracy improvement.
+
 ### N-041 — Entire analysis and selected-version disclosures
 
 - **Evidence:** [Job analysis](../frontend/web/src/jobs/JobAnalysisPanel.tsx#L143) selects one saved version and already collapses its individual fields, but surrounding controls/comparison/warnings remain fully expanded.
 - **Proposal:** A compact source/version header, default-collapsed analysis details and selected-version content on demand. Preserve visible processing/error/stale notices, history pagination and generation controls. Reuse N-034 names; do not remove analysis features.
 - **Status / timing:** Planning only; small UI batch. Existing per-field expanders stay useful inside the panel.
 
+- **2026-10-08 result:** Implemented default-collapsed settings/history and selected-version disclosures. Existing field expanders, generation, comparisons and older-version loading remain; task/loading/error/stale/expired notices are visible when collapsed. Mocked browser checks confirm saved-version reopening/failure preservation and stale notices after refresh. [Disclosures](../frontend/web/src/jobs/JobAnalysisPanel.tsx#L134).
+
 ### N-042 — Clear linked resume/analysis inputs
 
 - **Cause:** [Comparison inputs](../frontend/web/src/jobs/JobMatchPanel.tsx#L123) expose “Resume version” and “CV analysis version” independently, obscuring their parent/child relationship.
 - **Proposal:** Group “Resumes” and “Resume analysis” together with a subtle container and concise explanation. Keep PDF/analysis version distinction, dependent loading/reset behavior and the job-analysis selector.
 - **Status / timing:** Planning only; small UI batch with N-034/N-041.
+
+- **2026-10-08 result:** Implemented the **Your resume & analysis** group containing Resumes and Resume analysis, with source-based labels and a short parent/child explanation. Existing dependent loading/reset, pagination, review and stale-input handling pass mocked browser checks. [Grouped inputs](../frontend/web/src/jobs/JobMatchPanel.tsx#L125).
 
 ### N-043 — Resume analysis must survive navigation
 
@@ -588,6 +609,8 @@ Timing is a recommendation, not approval. The [expansion plan](intelligence-evol
 - **Evidence:** Cady and [resume preview](../frontend/web/src/resumes/ResumePreview.tsx#L25) already handle Escape through native `onCancel`; the broad claim that Escape never works is not supported. A backdrop-close handler is absent in the inspected dialogs, and some [draft close paths](../frontend/web/src/resumes/ResumeDraftReview.tsx#L44) guard unsaved changes.
 - **Proposal:** Audit actual dialogs/popovers; route Escape, close button and genuine backdrop clicks through one close function, preserving dirty-state confirmation and focus recovery. Clicks/drags inside content must not dismiss. Closing an accepted task view stops waiting, not durable execution.
 - **Status / timing:** Planning only; small UI batch. Inline sections need expand/collapse, not modal dismissal behavior.
+
+- **2026-10-08 result:** Added a [shared guarded dismissal hook](../frontend/web/src/ui/dialogDismiss.ts#L4) for Cady, resume PDF/text/draft/check dialogs, preparation and the optional password prompt. Escape/backdrop route through current close functions; inside clicks/drags stay open. Browser checks confirm cancelling discard preserves CV edits, accepting it closes, and Escape restores focus/cancels existing temporary review requests. Accepted preparation tasks still continue.
 
 ### N-045–N-053 — Confirmed intelligence planning additions
 
@@ -605,6 +628,8 @@ Timing is a recommendation, not approval. The [expansion plan](intelligence-evol
 
 **Outcome:** Plans updated; existing raw wording/IDs/review history and staged snapshot preserved. No application changes, infrastructure startup, dependencies, tests, paid AI calls, commit or push. The user selects the next implementation batch.
 
+**Later E0 outcome:** The selected usability changes and source/evaluation foundation are implemented locally. Checks: 155 Python tests pass in Linux Docker, eight isolated-database tests skip; 11 component and 11 mocked end-to-end browser checks pass; typecheck/lint/build/schema consistency pass. Fixture validation covers 16 synthetic case definitions only, not generated answers. E1 account settings/durable chats/usage/context is next; RAG, tools, Celery, Smart Cady and payments are not implemented by this batch. Raw notes and prior decisions are preserved; no paid calls or publication.
+
 ## Review log
 
 | Review date (IST) | Notes reviewed | Outcome / decisions |
@@ -616,6 +641,7 @@ Timing is a recommendation, not approval. The [expansion plan](intelligence-evol
 | 2026-10-08 | N-024–N-028; N-029–N-034 deferred | User selected flexible weekly roadmap sessions and account-persisted shared Cady history. Implemented combined review, compact setup, roadmap viewer, full-page/widget chat and revisioned storage. Mocked checks only; no paid calls, commit or push. Unrelated new notes remain deferred. |
 | 2026-10-08 | Comparison to `0d5902c`; N-029–N-034 refined, N-035–N-044 assigned | Preserved raw text/earlier decisions; verified current implementation boundaries read-only. Documented next-session affordance, centralized settings, full chats, widget/persona, RAG, compact versions/labels, queued resumes and dismissal. User requested separate intelligence expansion planning focused on Cady accuracy/tools; new plan/design and narrow backlog/executor-plan alignment added. Three corpus/memory/action preferences asked; defaults proposed pending answers. No application edits, tests, paid AI calls, commit, push or staged-snapshot changes. |
 | 2026-10-08 | Conversation N-045–N-053; N-037/N-040 decisions updated | User confirmed corpus/memory/actions and extended tools to Read/Write/Agent plus aggregate context. Added four-stage RAG/cloud/cache plan, official per-call usage/model costs, independent graph/browser research and Phase 2 → Phase 3 checkpoint. Future graph/payment work placed after product stages. Documentation only; raw/history and staged snapshot preserved; no runtime changes, tests, paid AI calls or publication. |
+| 2026-10-08 | E0: N-032/N-034/N-035/N-038a/N-041/N-042/N-044; N-040 foundation | User selected implementation. Added source/evidence contracts and offline evaluation starter plus the selected usability fixes. Verified 155 Python/11 component/11 mocked browser checks, typecheck/lint/build/schemas. Eight database tests skipped; synthetic expected evidence still needs human review before live benchmarking. E1 remains next. Raw notes/history/index preserved; no paid AI calls, commit or push. |
 
 ## Daily review setup
 

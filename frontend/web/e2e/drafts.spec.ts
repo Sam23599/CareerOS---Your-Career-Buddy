@@ -66,13 +66,13 @@ test('draft generation is explicit, shows evidence, keeps review edits on confli
   await dialog.getByRole('button', { name: 'Analyze resume', exact: true }).click();
   await expect(dialog.getByRole('heading', { name: 'Review profile fields', exact: true })).toBeVisible();
   expect(generated).toBe(1); expect(applies).toBe(0);
-  await expect(dialog.getByLabel('Saved draft version')).toContainText('Version 1');
+  await expect(dialog.getByLabel('Saved draft version')).toContainText('draft.pdf · Analysis v1');
   await dialog.getByRole('button', { name: 'Analyze with selected settings', exact: true }).click();
   await expect(dialog.getByLabel('Saved draft version')).toHaveValue(versions[1].id);
   expect(generated).toBe(2);
   await dialog.getByLabel('Saved draft version').selectOption(versions[0].id);
   await expect(dialog.getByLabel('Saved draft version')).toHaveValue(fixture.id);
-  await expect(dialog.getByText(/^Saved draft · Version 1/)).toBeVisible();
+  await expect(dialog.locator('p.muted').filter({ hasText: /^draft.pdf · Analysis v1/ })).toBeVisible();
   expect(generated).toBe(2);
   await dialog.getByText('All extracted details and source evidence', { exact: true }).click();
   await expect(dialog.locator('.draft-fact').filter({ hasText: /^Resume Tester$/ })).toBeVisible();

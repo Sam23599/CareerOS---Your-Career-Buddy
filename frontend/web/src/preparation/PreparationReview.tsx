@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { authenticatedRequest } from '../auth/session';
 import { type PreparationResponse, type ReviewedAction } from '../../../../backend/platform/src/intelligence/preparation';
 
@@ -9,6 +9,17 @@ export function PreparationReview({ value, jobId, onSaved, onDirty }: { value: P
   const weeks = [...new Set(record.plan.actions.map(item => item.week))].sort((a, b) => a - b);
   const next = record.plan.actions.find(action => actions.find(item => item.id === action.id)?.status === 'planned');
   const [week, setWeek] = useState(next?.week ?? weeks[0]);
+  const sessions = useRef(new Map<string, HTMLLIElement>());
+  function continuePreparation() {
+    if (!next) return;
+    setWeek(next.week);
+    requestAnimationFrame(() => {
+      const element = sessions.current.get(next.id);
+      element?.scrollIntoView({ block: 'nearest' });
+      element?.focus({ preventScroll: true });
+    });
+  }
+  const weekIndex = weeks.indexOf(week);
   function change(id: string, patch: Partial<ReviewedAction>) { setActions(values => values.map(item => item.id === id ? { ...item, ...patch } : item)); onDirty(true); setMessage(''); }
   const header = record.plan.weeks?.find(item => item.week === week), current = record.plan.actions.filter(item => item.week === week), done = actions.filter(item => item.status === 'done').length;
   return <section aria-label="Preparation plan review">
@@ -17,8 +28,9 @@ export function PreparationReview({ value, jobId, onSaved, onDirty }: { value: P
     {(sourceStatus.stale || sourceStatus.profileChanged || sourceStatus.expired) && <p className="extraction-warning">{sourceStatus.stale ? 'The listing changed. ' : ''}{sourceStatus.profileChanged ? 'Your profile changed. ' : ''}{sourceStatus.expired ? 'This job has expired. ' : ''}Review this as a historical plan; generate with current sources for new advice.</p>}
     {!record.plan.weeks && <p className="muted">This earlier plan keeps its original actions. New plans include objectives, session outcomes and a checkpoint for every week.</p>}
     <p className="muted">Move sessions around your schedule. “Done” is your own progress note; saving never edits your CV or profile.</p>
-    {next ? <div className="roadmap-next"><span className="eyebrow">Next session · Week {next.week}</span><strong>{actions.find(item => item.id === next.id)?.title}</strong><p>{next.outcome ?? actions.find(item => item.id === next.id)?.detail}</p><button type="button" className="secondary" onClick={() => setWeek(next.week)}>Go to next session</button></div> : <p role="status">All sessions are done or skipped. Review your deliverables before your interview.</p>}
+    {next ? <div className="roadmap-next"><span className="eyebrow">First unfinished session · Week {next.week}</span><strong>{actions.find(item => item.id === next.id)?.title}</strong><p>{next.outcome ?? actions.find(item => item.id === next.id)?.detail}</p><button type="button" className="secondary" onClick={continuePreparation}>Continue preparation</button></div> : <p role="status">All sessions are done or skipped. Review your deliverables before your interview.</p>}
     <nav className="roadmap-weeks" aria-label="Roadmap weeks">{weeks.map(item => <button type="button" key={item} className="secondary" aria-pressed={week === item} onClick={() => setWeek(item)}>Week {item}<small>{record.plan.actions.filter(action => action.week === item).reduce((sum, action) => sum + action.hours, 0)}h</small></button>)}</nav>
+    <div className="actions" aria-label="Browse preparation weeks"><button type="button" className="secondary" disabled={weekIndex <= 0} onClick={() => setWeek(weeks[weekIndex - 1])}>Previous week</button><button type="button" className="secondary" disabled={weekIndex >= weeks.length - 1} onClick={() => setWeek(weeks[weekIndex + 1])}>Next week</button></div>
     <div className="roadmap-week-heading"><h4>Week {week}{header ? ` · ${header.objective}` : ''}</h4>{header && <p><strong>Checkpoint:</strong> {header.milestone}</p>}</div>
     <form onSubmit={event => { event.preventDefault(); setBusy(true); setError(''); void authenticatedRequest<PreparationResponse>(`/intelligence/jobs/${jobId}/preparation-plans/${record.id}/review`, {
       method: 'PATCH', body: JSON.stringify({ revision: record.review.revision, actions }),
@@ -26,7 +38,7 @@ export function PreparationReview({ value, jobId, onSaved, onDirty }: { value: P
       <fieldset disabled={busy || sourceStatus.stale || sourceStatus.profileChanged}><legend className="sr-only">Review & track your actions</legend>
         <ol className="roadmap-sessions">{current.map(action => {
           const edited = actions.find(item => item.id === action.id)!;
-          return <li className="roadmap-session" key={action.id}><div className="section-heading"><h4>{edited.title}</h4><span className="muted">{action.hours}h · {action.kind.replace('_', ' ')}</span></div><p className="profile-prose">{edited.detail}</p>
+          return <li className="roadmap-session" key={action.id} tabIndex={-1} ref={element => { if (element) sessions.current.set(action.id, element); else sessions.current.delete(action.id); }}><div className="section-heading"><h4>{edited.title}</h4><span className="muted">{action.hours}h · {action.kind.replace('_', ' ')}</span></div><p className="profile-prose">{edited.detail}</p>
             {action.outcome && <p className="roadmap-outcome"><strong>Finish with:</strong> {action.outcome}</p>}
             <div className="roadmap-session-controls"><label>Progress<select value={edited.status} onChange={event => change(action.id, { status: event.target.value as ReviewedAction['status'] })}><option value="planned">Planned</option><option value="skipped">Skip this action</option><option value="done">Done (self-reported)</option></select></label>
               <details><summary>Customize session</summary><label>Action title<input maxLength={150} required value={edited.title} onChange={event => change(action.id, { title: event.target.value })} /></label><label>Action details<textarea maxLength={1200} required value={edited.detail} rows={3} onChange={event => change(action.id, { detail: event.target.value })} /></label></details>

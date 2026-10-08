@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
 import { Icon, PageHeading } from '../ui/WorkspaceUi';
+import { workspaceLabels } from '../ui/navigation';
 import { useWorkspaceNavigationGuard } from '../ui/navigation';
 import { type SavedJob, statusLabels, applicationLabels } from './types';
 import { SavedJobRanking } from './SavedJobRanking';
@@ -79,7 +80,7 @@ function SavedList() {
     else setParams(next);
   }
   return <div className="profile-page workspace-page"><nav className="profile-nav"><Link to="/dashboard" onClick={event => { if (!canLeave()) event.preventDefault(); }}>← Dashboard</Link><Link to="/jobs" onClick={event => { if (!canLeave()) event.preventDefault(); }}>Find more jobs</Link></nav>
-    <PageHeading eyebrow="Your next opportunities" title="Saved jobs" description="Keep your shortlist, priorities, and private notes together. Record application progress separately from your interest. This is manual tracking; it does not submit applications." />
+    <PageHeading eyebrow="Your next opportunities" title={workspaceLabels.savedJobs} description="Keep your shortlist, priorities, and private notes together. Record application progress separately from your interest. This is manual tracking; it does not submit applications." />
     <form className="panel profile-section workspace-filter-bar" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(); for (const [key, value] of new FormData(event.currentTarget)) if (value) next.set(key, String(value)); navigate(next); }}>
       <div className="profile-grid"><label>Location<input name="location" maxLength={100} defaultValue={params.get('location') ?? ''} /></label><label>Posted from<input type="date" name="postedFrom" defaultValue={params.get('postedFrom') ?? ''} /></label><label>Posted through<input type="date" name="postedTo" defaultValue={params.get('postedTo') ?? ''} /></label><label>Application progress<select name="applicationStatus" defaultValue={params.get('applicationStatus') ?? ''}><option value="">Any progress</option>{Object.entries(applicationLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Company history<select name="companyHistory" defaultValue={params.get('companyHistory') ?? ''}><option value="">All companies</option><option value="first_application">No previous application recorded</option><option value="previously_applied">Previously applied</option></select></label><label>Filter by status<select name="status" defaultValue={params.get('status') ?? ''}><option value="">All statuses</option>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         <label>Filter by priority<select name="priority" defaultValue={params.get('priority') ?? ''}><option value="">All priorities</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option></select></label></div>

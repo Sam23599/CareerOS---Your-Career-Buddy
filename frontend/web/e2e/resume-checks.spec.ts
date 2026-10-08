@@ -56,7 +56,7 @@ test('job preparation stays compact, explains evidence gaps and clears reports o
   await page.goto(`/jobs/${job.id}`);
   const panel = page.getByRole('region', { name: 'CV-to-job matching', exact: true });
   await panel.getByRole('button', { name: 'Load older CV analyses' }).click();
-  await panel.getByLabel('CV analysis version').selectOption(cv.id);
+  await panel.getByRole('combobox', { name: 'Resume analysis', exact: true }).selectOption(cv.id);
   expect(state.reviews).toBe(0);
   await panel.getByRole('button', { name: 'Review fit & gaps' }).click();
   await expect(panel.getByRole('status')).toHaveText('75%');

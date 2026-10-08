@@ -19,12 +19,7 @@ before implementation. Verification uses synthetic mocked providers, without pai
 4. The accepted task continues after navigation, refresh or closing the dialog.
    Follow it here or at `/tasks`. Queued tasks can be cancelled; running work may
    incur its charge. Interrupted/failed generations are not automatically retried.
-5. Follow the week menu and **Go to next session**. Each week has an objective
-   and checkpoint; each ordered session has a tangible outcome. Mark progress as
-   planned/skipped/done (self-reported), or expand **Customize session** to edit
-   titles/details. **Save reviewed plan** preserves original AI suggestions.
-   Closing with unsaved edits prompts for discard. An old review revision returns
-   409; reopen before saving. Saving never changes a CV/profile.
+5. Use the week menu or **Previous week** / **Next week** to browse. **Continue preparation** focuses the first globally unfinished session and names its week; browsing never marks progress complete. Each week has an objective/checkpoint and each ordered session has an outcome. Mark progress as planned/skipped/done (self-reported), or expand **Customize session** to edit titles/details. **Save reviewed plan** preserves original AI suggestions. Closing with unsaved edits prompts for discard. An old review revision returns 409; reopen before saving. Saving never changes a CV/profile.
 
 Successful generation saves a numbered version per owner/job in Python-owned
 PostgreSQL. Every chosen requirement needs an action; summed integer hours per week
@@ -58,6 +53,8 @@ Both share the same account conversation. Close/Escape hides the widget and retu
 focus; accepted answers continue when switching views. The widget uses a native
 dialog for keyboard focus and adapts to small screens. Source references stay
 expandable, and follow-up buttons fill the composer without sending.
+
+E0 adds guarded backdrop dismissal, default-collapsed context and compact welcome content. Messages scroll within the widget while its header/composer remain accessible. Reading older replies preserves your position when an answer arrives; **Jump to latest** resumes following. Analysis selectors identify the source filename or job/company, version, model and date. See [the foundation batch](intelligence-foundation.md) for checks and remaining limits.
 
 One active conversation per account is saved in Python-owned PostgreSQL (migration
 `005_cady_conversations.sql`). The last ten question-and-answer pairs survive

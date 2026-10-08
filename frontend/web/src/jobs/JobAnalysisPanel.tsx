@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { authenticatedRequest, RequestError, useSession } from '../auth/session';
 import { type Job } from './JobsPage';
 import { type JobAnalysisRecord, type JobAnalysisSummary, type JobEvidence, type JobFact, type JobWarning, type Requirement } from '../../../../backend/platform/src/intelligence/jobs';
+import { analysisVersionLabel } from '../intelligence/analysisLabels';
 
 type SavedAnalysis = { analysis: JobAnalysisRecord; sourceStatus: { stale: boolean; expired: boolean } };
 type History = { versions: (JobAnalysisSummary & { stale: boolean })[]; nextBeforeVersion: number | null };
@@ -126,7 +127,11 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
     {task && <p role="status">Task: {task.state}. {pending && 'You can leave this page; analysis will continue.'} <Link to="/tasks">Task history</Link></p>}
     {loading && <p role="status">Loading saved analysis…</p>}
     {error && <p className="form-error" role="alert">{error}</p>}
+    {saved?.sourceStatus.stale && <p className="extraction-warning" role="status">This listing changed since this analysis. The results and quotes describe the saved version. Analyze again for current requirements.</p>}
+    {(expired || saved?.sourceStatus.expired) && <p className="extraction-warning">This listing has expired. Saved analysis remains available for reference.</p>}
+    {busy && <><p role="status">Submitting or loading analysis…</p><button className="secondary" onClick={() => { active.current?.abort(); setBusy(false); setError('Stopped waiting. An accepted task may still continue; check task history before retrying.'); }}>Stop waiting</button></>}
     {!loading && !capabilities && <button onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1); }}>Retry loading analysis</button>}
+    <details className="analysis-workspace"><summary>Analysis versions & settings{history.versions.length ? ` (${history.versions.length} saved)` : ''}</summary>
     {capabilities && <fieldset disabled={busy || pending}><legend>Job analysis settings</legend><div className="profile-grid">
       <label>AI model<select value={model} onChange={event => {
         setModel(event.target.value);
@@ -138,15 +143,12 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
       {!job.description.trim() && <p className="muted">This listing has no description to analyze. Check the original listing.</p>}
       <button disabled={!capabilities.available || expired || saved?.sourceStatus.expired || !job.description.trim()} onClick={analyze}>{record ? 'Analyze job again' : 'Analyze job'}</button>
     </fieldset>}
-    {busy && <><p role="status">Submitting or loading analysis…</p><button className="secondary" onClick={() => { active.current?.abort(); setBusy(false); setError('Stopped waiting. An accepted task may still continue; check task history before retrying.'); }}>Stop waiting</button></>}
     {record && <>
       <fieldset disabled={busy || pending}><legend>Saved job analyses</legend><label>Saved analysis version<select value={record.id} onChange={event => openVersion(event.target.value)}>
         {[...(history.versions.some(item => item.id === record.id) ? [] : [{ ...record, stale: saved!.sourceStatus.stale }]), ...history.versions].map(item =>
-          <option key={item.id} value={item.id}>Version {item.version} · {item.model}{item.reasoning ? ` · ${item.reasoning}` : ''} · {new Date(item.createdAt).toLocaleString()}{item.stale ? ' · Listing changed' : ''}</option>)}
+          <option key={item.id} value={item.id}>{analysisVersionLabel(`${job.title} · ${job.company}`, item)}{item.stale ? ' · Listing changed' : ''}</option>)}
       </select></label>{history.nextBeforeVersion !== null && <button className="secondary" onClick={loadOlder}>Load older analyses</button>}</fieldset>
-      <p className="muted">Saved analysis · Version {record.version} · {record.model} · {new Date(record.createdAt).toLocaleString()}</p>
-      {saved!.sourceStatus.stale && <p className="extraction-warning" role="status">This listing changed since this analysis. The results and quotes below describe the saved version. Analyze again for current requirements.</p>}
-      {(expired || saved!.sourceStatus.expired) && <p className="extraction-warning">This listing has expired. Saved analysis remains available for reference.</p>}
+      <details className="analysis-version" key={record.id}><summary>{analysisVersionLabel(`${job.title} · ${job.company}`, record)}</summary>
       {wordingDiffers && <p className="extraction-warning">Some listing details and extracted details use different wording. Review both and confirm on the original listing.</p>}
       <table><caption>Listing details and saved analysis</caption><thead><tr><th>Field</th><th>Listing details</th><th>Extracted details</th></tr></thead>
         <tbody>{comparisons.map(item => <tr key={item.field}><th>{item.field}</th><td>{item.listing || 'Not specified'}</td><td>{item.extracted ?? 'Not stated'}</td></tr>)}</tbody>
@@ -157,7 +159,9 @@ function Analysis({ job, onSaved }: { job: Job; onSaved?: () => void }) {
       {Object.entries(record.analysis).filter(([key]) => key !== 'warnings').map(([key, value]) => <details data-analysis-section className="compact-details" key={key}><summary>{label(key)}{Array.isArray(value) ? ` (${value.length})` : ''}</summary>
         {Array.isArray(value) ? value.length ? (value as JobFact[]).map((item, index) => <Fact key={index} item={item} />) : <p className="muted">Not stated</p> : <Fact item={value as JobFact} />}
       </details>)}
+      </details>
     </>}
+    </details>
   </section>;
 }
 

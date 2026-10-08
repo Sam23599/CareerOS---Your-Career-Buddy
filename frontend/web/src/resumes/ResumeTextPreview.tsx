@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { authenticatedRequest } from '../auth/session';
+import { useDialogDismiss } from '../ui/dialogDismiss';
 
 type TextResult = {
   status: 'extracted' | 'no_text'; pageCount: number;
@@ -12,6 +13,7 @@ export function ResumeTextPreview({ resume, onClose }: { resume: { id: string; n
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
+  const dismissal = useDialogDismiss(onClose);
   useEffect(() => {
     const element = dialog.current!;
     element.showModal();
@@ -31,7 +33,7 @@ export function ResumeTextPreview({ resume, onClose }: { resume: { id: string; n
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [resume.id, attempt]);
-  return <dialog className="resume-preview" ref={dialog} aria-labelledby="resume-text-title" onCancel={event => { event.preventDefault(); onClose(); }}>
+  return <dialog className="resume-preview" ref={dialog} aria-labelledby="resume-text-title" {...dismissal}>
     <div className="preview-heading"><h2 id="resume-text-title">Text from {resume.name}</h2><button type="button" onClick={onClose} autoFocus>Close text preview</button></div>
     <p className="muted">Review the wording and reading order against your PDF. Complex layouts may read differently; scanned pages may need OCR. Your profile is unchanged.</p>
     {loading && <p role="status">Extracting text…</p>}

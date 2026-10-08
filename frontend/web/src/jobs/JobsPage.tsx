@@ -4,6 +4,7 @@ import { JobMatchPanel } from './JobMatchPanel';
 import { limitedCoverageMessage } from '../career-sources/types';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
+import { workspaceLabels } from '../ui/navigation';
 
 export type Job = {
   id: string; title: string; company: string; description: string; location: string; employmentType: string; remoteType: string;
@@ -46,7 +47,7 @@ function JobResults() {
   }
   function page(number: number) { const next = new URLSearchParams(params); next.set('page', String(number)); setParams(next); }
   return <div className="profile-page">
-    <nav className="profile-nav"><Link to="/dashboard">Your workspace</Link><Link to="/career-sources">Your career sources</Link></nav><h1>Find your next role</h1>
+    <nav className="profile-nav"><Link to="/dashboard">Your workspace</Link><Link to="/career-sources">Your career sources</Link></nav><h1>{workspaceLabels.jobs}</h1>
     <p className="description">Explore opportunities and check location requirements on the original listing. Remote does not always mean worldwide.</p>
     <form className="panel profile-section" onSubmit={search} aria-label="Job search"><div className="profile-grid">
       <label>Search jobs<input name="q" defaultValue={params.get('q') ?? ''} maxLength={100} placeholder="Title, company, keyword…" /></label>
@@ -91,7 +92,7 @@ function JobDetail({ id }: { id: string }) {
       </section>
       {job.skills.length > 0 && <section className="panel profile-section"><h2>Skills</h2><ul className="profile-tags">{job.skills.map(skill => <li key={skill}>{skill}</li>)}</ul></section>}
       <section className="panel profile-section"><h2>Company research and contacts</h2><p className="muted">External research links. CareerOS has not imported employee reviews or verified a recruiter for this job.</p><div className="actions"><a target="_blank" rel="noopener noreferrer" href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.company)}`}>LinkedIn jobs</a><a target="_blank" rel="noopener noreferrer" href={`https://www.google.com/search?q=${encodeURIComponent(job.company + ' employee reviews site:glassdoor.com')}`}>Glassdoor reviews</a><a target="_blank" rel="noopener noreferrer" href={`https://www.google.com/search?q=${encodeURIComponent(job.company + ' employee reviews site:ambitionbox.com')}`}>AmbitionBox reviews</a><a target="_blank" rel="noopener noreferrer" href="https://app.apollo.io/">Research contacts in Apollo</a></div>{!!job.metadata.contactEmails?.length && <div><h3>Emails published in this listing</h3><ul>{job.metadata.contactEmails.map(email => <li key={email}><a href={`mailto:${email}`}>{email}</a></li>)}</ul><p className="muted">These addresses come from the source text. Recruiter identity and deliverability are not independently verified.</p></div>}<p className="muted">Save verified contacts in your private job notes. External services may require their own account or credits.</p></section>
-      <JobMatchPanel jobId={job.id} revision={analysisRevision} />
+      <JobMatchPanel jobId={job.id} revision={analysisRevision} jobLabel={`${job.title} · ${job.company}`} />
       <JobAnalysisPanel job={job} onSaved={() => setAnalysisRevision(value => value + 1)} />
       <details className="panel profile-section" open><summary>Original job description</summary><p className="profile-prose">{job.description || 'See the original listing for the full description.'}</p></details>
     </>}

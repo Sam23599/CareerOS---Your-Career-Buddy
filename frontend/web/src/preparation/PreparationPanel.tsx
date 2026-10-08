@@ -7,6 +7,7 @@ import { type AnalysisTask } from '../../../../backend/platform/src/intelligence
 import { type GapChoice, type PreparationHistory, type PreparationResponse } from '../../../../backend/platform/src/intelligence/preparation';
 import { PreparationReview } from './PreparationReview';
 import { useWorkspaceNavigationGuard } from '../ui/navigation';
+import { useDialogDismiss } from '../ui/dialogDismiss';
 
 function PreparationDialog({ match, value, jobId, task, onClose, onAccepted, onSaved }: { match: MatchResult | null; value: PreparationResponse | null; jobId: string; task: AnalysisTask | null;
   onClose: () => void; onAccepted: (id: string) => void; onSaved: (value: PreparationResponse) => void }) {
@@ -19,6 +20,7 @@ function PreparationDialog({ match, value, jobId, task, onClose, onAccepted, onS
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const pending = task?.state === 'queued' || task?.state === 'running';
   function close() { if (!dirty.current || window.confirm('Discard unsaved plan edits?')) onClose(); }
+  const dismissal = useDialogDismiss(close);
   useWorkspaceNavigationGuard(() => !dirty.current || window.confirm('Discard unsaved plan edits?'));
   useEffect(() => { const element = dialog.current!; element.showModal(); return () => element.close(); }, []);
   const intent = JSON.stringify({ choices, hours, weeks, goal, options: settings.options, source: match?.source });
@@ -35,7 +37,7 @@ function PreparationDialog({ match, value, jobId, task, onClose, onAccepted, onS
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not queue preparation.'); }
     finally { setBusy(false); }
   }
-  return <dialog className="resume-preview preparation-dialog" ref={dialog} aria-labelledby="preparation-title" onCancel={event => { event.preventDefault(); close(); }}>
+  return <dialog className="resume-preview preparation-dialog" ref={dialog} aria-labelledby="preparation-title" {...dismissal}>
     <div className="preview-heading"><div><p className="eyebrow">Your next steps</p><h2 id="preparation-title">Personalized preparation</h2></div><button className="secondary" onClick={close} autoFocus>Close</button></div>
     {value ? <PreparationReview key={value.record.id} jobId={jobId} value={value} onSaved={onSaved} onDirty={value => { dirty.current = value; }} /> : <>
       <p>Confirm what you know before choosing what to learn. AI will build ordered weekly sessions from these saved requirements.</p>

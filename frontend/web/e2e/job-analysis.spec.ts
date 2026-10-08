@@ -3,12 +3,10 @@ import { test, expect } from '@playwright/test';
 import fixture from '../../../backend/platform/test/fixtures/job-analysis.json' with { type: 'json' };
 
 test('job analysis requires an explicit click, reopens versions, labels stale data and keeps saved results after failure', async ({ page }) => {
-  await page.goto('/register');
-  await page.getByLabel('Your name').fill('Job Analysis Tester');
-  await page.getByLabel('Email', { exact: true }).fill(`e2e-jd-${randomUUID()}@example.com`);
-  await page.getByLabel('Password', { exact: true }).fill('a job analysis testing passphrase');
-  await page.getByRole('button', { name: 'Create account', exact: true }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.route('**/api/v1/**', route => route.fulfill({ status: 404, json: { error: { message: 'Unexpected test request.' } } }));
+  await page.route(/\/api\/v1\/auth\/(restore|refresh)$/, route => route.fulfill({ json: {
+    user: { id: randomUUID(), name: 'Job Analysis Tester', email: 'jd@example.com', roles: ['USER'], hasPassword: true }, accessToken: 'mock-session', expiresAt: '2030-01-01T00:00:00Z',
+  } }));
   const fields = Object.fromEntries(fixture.source.sections.map(item => [item.id, item.text]));
   const job = { id: fixture.source.jobId, ...fields, source: 'remotive', sourceUrl: 'https://remotive.com/remote-jobs/example',
     employmentType: 'UNKNOWN', remoteType: 'REMOTE', skills: [], metadata: {}, postedAt: null, expiresAt: null, updatedAt: '2026-10-05T00:00:00Z' };
@@ -42,12 +40,16 @@ test('job analysis requires an explicit click, reopens versions, labels stale da
   });
   await page.goto(`/jobs/${job.id}`);
   const panel = page.getByRole('region', { name: 'Job analysis', exact: true });
+  await expect(panel.locator('.analysis-workspace')).not.toHaveAttribute('open');
+  await panel.locator('.analysis-workspace > summary').click();
   await expect(panel.getByRole('button', { name: 'Analyze job', exact: true })).toBeEnabled();
   expect(generated).toBe(0);
   await panel.getByLabel('AI model').selectOption('gpt-4.1');
   await expect(panel.getByLabel('Reasoning effort')).toHaveCount(0);
   await panel.getByRole('button', { name: 'Analyze job', exact: true }).click();
-  await expect(panel.getByText(/^Saved analysis · Version 1/)).toBeVisible();
+  await expect(panel.locator('.analysis-version > summary')).toContainText('Analysis v1');
+  await expect(panel.locator('.analysis-version')).not.toHaveAttribute('open');
+  await panel.locator('.analysis-version > summary').click();
   await panel.getByRole('button', { name: 'Expand all' }).click();
   await expect(panel.getByText('Python · required', { exact: true })).toBeVisible();
   await expect(panel.getByText('TypeScript · preferred', { exact: true })).toBeVisible();
@@ -57,16 +59,18 @@ test('job analysis requires an explicit click, reopens versions, labels stale da
   await panel.getByRole('button', { name: 'Analyze job again', exact: true }).click();
   await expect(panel.getByLabel('Saved analysis version')).toHaveValue(versions[1].id);
   await panel.getByLabel('Saved analysis version').selectOption(fixture.id);
-  await expect(panel.getByText(/^Saved analysis · Version 1/)).toBeVisible();
+  await expect(panel.locator('.analysis-version > summary')).toContainText('Analysis v1');
   expect(generated).toBe(2);
   failing = true;
   await panel.getByRole('button', { name: 'Analyze job again', exact: true }).click();
   await expect(panel.getByRole('alert')).toHaveText('Analysis took too long. Try again.');
-  await expect(panel.getByText(/^Saved analysis · Version 1/)).toBeVisible();
+  await expect(panel.locator('.analysis-version > summary')).toContainText('Analysis v1');
   expect(versions).toHaveLength(2);
   stale = true; await page.reload();
-  await expect(panel.getByText(/^Saved analysis · Version 2/)).toBeVisible();
   await expect(panel.getByText('This listing changed since this analysis.', { exact: false })).toBeVisible();
+  await expect(panel.locator('.analysis-workspace')).not.toHaveAttribute('open');
+  await panel.locator('.analysis-workspace > summary').click();
+  await expect(panel.locator('.analysis-version > summary')).toContainText('Analysis v2');
   expect(generated).toBe(3);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

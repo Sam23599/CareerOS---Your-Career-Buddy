@@ -64,6 +64,13 @@ test('preparation requires explicit generation, survives navigation and preserve
   await expect(section.getByRole('button', { name: 'Review plan version 1' })).toBeVisible({ timeout: 12000 });
   await section.getByRole('button', { name: 'Review plan version 1' }).click();
   await expect(dialog.getByRole('navigation', { name: 'Roadmap weeks' }).getByRole('button')).toHaveCount(4);
+  await dialog.getByRole('button', { name: 'Next week', exact: true }).click();
+  await expect(dialog.getByRole('heading', { name: /^Week 2/ })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Continue preparation', exact: true }).click();
+  await expect(dialog.locator('.roadmap-session').first()).toBeFocused();
+  await expect(dialog.getByRole('heading', { name: /^Week 1/ })).toBeVisible();
+  await expect(dialog.getByRole('combobox', { name: 'Progress', exact: true }).first()).toHaveValue('planned');
+  expect(edited).toBe(false);
   await dialog.getByText('Customize session', { exact: true }).first().click();
   await dialog.getByLabel('Action title').first().fill('My typed API practice');
   await dialog.getByRole('combobox', { name: 'Progress', exact: true }).first().selectOption('done');
@@ -102,6 +109,8 @@ test('Cady waits for explicit questions, explains cited context, persists histor
     return route.fulfill({ status: 404, json: { error: { message: 'Unconfigured endpoint.' } } });
   });
   await page.goto('/cady');
+  await expect(page.locator('.cady-context')).not.toHaveAttribute('open');
+  await page.getByText('Choose context · 0 of 3 jobs selected', { exact: true }).click();
   await page.getByText('Selected & saved jobs (optional)', { exact: true }).click();
   await page.getByRole('checkbox', { name: `${job.title} · ${job.company}` }).check();
   await expect(page.getByLabel(`Job analysis for ${job.title}`)).toHaveValue(jd.id);
@@ -159,6 +168,7 @@ test('Cady preserves a linked CV analysis outside the first history page without
     return route.fulfill({ status: 404, json: { error: { message: 'Unconfigured endpoint.' } } });
   });
   await page.goto(`/cady?resumeId=${cv.source.resumeId}&draftId=${cv.id}`);
+  await page.getByText('Choose context · 0 of 3 jobs selected', { exact: true }).click();
   await expect(page.getByRole('combobox', { name: 'CV analysis', exact: true })).toHaveValue(cv.id);
   expect(reads).toBe(1); expect(calls).toBe(0);
 });

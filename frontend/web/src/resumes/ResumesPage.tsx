@@ -6,6 +6,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
 import { Icon, PageHeading } from '../ui/WorkspaceUi';
+import { workspaceLabels } from '../ui/navigation';
 
 type Resume = { id: string; name: string; size: number; version: number; uploadedAt: string; active: boolean; deleting?: boolean };
 type Library = { resumes: Resume[] };
@@ -45,7 +46,7 @@ export function ResumesPage() {
     });
   }
   return <div className="profile-page resumes-page">
-    <PageHeading eyebrow="My documents" title="Your resumes" description="Keep different versions for different opportunities. Only you can access these files." actions={<Link className="secondary button-link" to="/profile">Profile<Icon name="arrow-right" /></Link>} />
+    <PageHeading eyebrow="My documents" title={workspaceLabels.resumes} description="Keep different versions for different opportunities. Only you can access these files." actions={<Link className="secondary button-link" to="/profile">Profile<Icon name="arrow-right" /></Link>} />
     <section className="panel profile-section resume-upload-panel">
       <div className="section-heading"><span className="section-icon"><Icon name="upload" /></span><div><h2>Upload a resume</h2><p className="section-description">PDF only, up to 5 MB. Each upload creates a new version. An upload becomes active when no resume is selected.</p></div></div>
       <form className="resume-upload-form" onSubmit={upload}><label>Resume file<input key={inputKey} type="file" accept=".pdf,application/pdf" disabled={busy || loading} onChange={event => setFile(event.target.files?.[0] ?? null)} /></label>

@@ -5,16 +5,16 @@ import { NotificationLink } from '../notifications/NotificationLink';
 import { Icon, type IconName } from './WorkspaceUi';
 import { CadyProvider } from '../cady/CadyProvider';
 import { CadyWidget } from '../cady/CadyPage';
-import { workspaceNavigationEvent } from './navigation';
+import { workspaceLabels, workspaceNavigationEvent } from './navigation';
 
 const destinations: { to: string; label: string; icon: IconName; end?: boolean }[] = [
   { to: '/dashboard', label: 'Overview', icon: 'dashboard' },
-  { to: '/jobs', label: 'Opportunities', icon: 'jobs' },
-  { to: '/saved-jobs', label: 'Shortlist', icon: 'bookmark' },
-  { to: '/resumes', label: 'Documents', icon: 'resume' },
+  { to: '/jobs', label: workspaceLabels.jobs, icon: 'jobs' },
+  { to: '/saved-jobs', label: workspaceLabels.savedJobs, icon: 'bookmark' },
+  { to: '/resumes', label: workspaceLabels.resumes, icon: 'resume' },
   { to: '/cady', label: 'Cady', icon: 'sparkles' },
-  { to: '/career-sources', label: 'Company feeds', icon: 'sources' },
-  { to: '/notifications', label: 'Activity', icon: 'bell' },
+  { to: '/career-sources', label: workspaceLabels.careerSources, icon: 'sources' },
+  { to: '/notifications', label: workspaceLabels.notifications, icon: 'bell' },
   { to: '/settings', label: 'Settings', icon: 'settings' },
   { to: '/recycle-bin', label: 'Recycle bin', icon: 'bookmark' },
   { to: '/tasks', label: 'Task history', icon: 'bell' },

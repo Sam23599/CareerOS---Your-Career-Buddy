@@ -9,7 +9,7 @@ test('public job search preserves filters, paginates and opens safe attributed d
     return route.fulfill({ json: { jobs: url.searchParams.get('q') === 'no-match' ? [] : [{ ...job, title: pageNumber === 2 ? 'Second role' : job.title }], total: url.searchParams.get('q') === 'no-match' ? 0 : 2, page: pageNumber, limit: 1 } });
   });
   await page.goto('/jobs');
-  await expect(page.getByRole('heading', { name: 'Find your next role' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Jobs', exact: true })).toBeVisible();
   await page.getByLabel('Location', { exact: true }).fill('India');
   await page.getByLabel('Work mode').selectOption('REMOTE');
   await page.getByRole('button', { name: 'Search', exact: true }).click();

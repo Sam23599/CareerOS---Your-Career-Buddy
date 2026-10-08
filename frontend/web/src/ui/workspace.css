@@ -509,15 +509,19 @@ blockquote p { margin: 8px 0 0; }
 .cady-notice, .cady-retention { font-size: .75rem; }
 .cady-retention { color: var(--muted); margin-top: 8px; }
 .cady-launcher { position: fixed; bottom: 24px; right: 24px; z-index: 40; display: flex; align-items: center; gap: 8px; border-radius: 999px; box-shadow: 0 8px 28px #0002; }
-.cady-widget { position: fixed; inset: auto 20px 20px auto; margin: 0; padding: 0; width: min(440px, calc(100vw - 32px)); max-width: none; max-height: min(740px, calc(100dvh - 40px)); border: 1px solid var(--border); border-radius: 18px; background: var(--surface); color: var(--text); overflow: auto; box-shadow: 0 16px 60px #0003; }
+.cady-widget { position: fixed; inset: auto 20px 20px auto; margin: 0; padding: 0; width: min(440px, calc(100vw - 32px)); max-width: none; max-height: min(740px, calc(100dvh - 40px)); border: 1px solid var(--border); border-radius: 18px; background: var(--surface); color: var(--text); overflow: hidden; box-shadow: 0 16px 60px #0003; }
+.cady-widget[open] { display: flex; flex-direction: column; height: min(740px, calc(100dvh - 40px)); }
+.cady-widget > .cady-conversation { flex: 1; min-height: 0; overflow: hidden; }
 .cady-widget::backdrop { background: #0003; }
-.cady-widget-heading { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; gap: 12px; border-bottom: 1px solid var(--border); }
+.cady-widget-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; padding: 14px 18px; gap: 12px; border-bottom: 1px solid var(--border); }
 .cady-widget-heading h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.15rem; }
-.cady-widget-context { padding: 12px 18px; border-bottom: 1px solid var(--border); }
-.cady-widget .cady-messages { max-height: 34vh; min-height: 140px; padding: 16px; }
-.cady-widget .cady-composer { padding: 12px 18px; }
+.cady-widget-context { flex-shrink: 0; max-height: 35%; overflow-y: auto; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.cady-widget .cady-messages { flex: 1; max-height: none; min-height: 0; padding: 16px; }
+.cady-widget .cady-composer { flex-shrink: 0; max-height: 70%; overflow-y: auto; padding: 12px 18px; }
 .cady-widget .cady-welcome { margin-block: 8px; }
-.cady-widget .cady-welcome h2 { font-size: 1.3rem; }
+.cady-welcome h2 { font-size: 1.25rem; }
+.cady-widget .cady-welcome h2 { font-size: 1.05rem; }
+.cady-latest { align-self: center; margin-block: 4px; font-size: .8rem; }
 .cady-widget .cady-prompts { gap: 6px; }
 .cady-link-notice { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px; margin-bottom: 16px; }
 .roadmap-heading { display: flex; justify-content: space-between; gap: 16px; align-items: start; }
@@ -530,6 +534,7 @@ blockquote p { margin: 8px 0 0; }
 .roadmap-sessions { padding-left: 24px; }
 .roadmap-session { padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; }
 .roadmap-session h4 { margin: 0; }
+.roadmap-session:focus { outline: 2px solid var(--brand); outline-offset: 3px; }
 .roadmap-session-controls { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); gap: 16px; align-items: start; margin-block: 12px; }
 .roadmap-session-controls details { padding-top: 26px; }
 .roadmap-outcome { padding-left: 12px; border-left: 3px solid var(--border); }
@@ -554,3 +559,7 @@ blockquote p { margin: 8px 0 0; }
 .cady-chat-panel .cady-conversation { height: clamp(420px, calc(100dvh - 245px), 780px); }
 .cady-chat-panel .cady-messages { flex: 1; min-height: 0; max-height: none; }
 .cady-chat-panel .cady-composer { flex-shrink: 0; max-height: 80%; overflow-y: auto; }
+.analysis-workspace > summary, .analysis-version > summary { padding-block: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.analysis-version { margin-top: 12px; border-top: 1px solid var(--border); }
+.resume-analysis-inputs { grid-column: 1 / -1; min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.resume-analysis-inputs .profile-grid { margin: 0; }

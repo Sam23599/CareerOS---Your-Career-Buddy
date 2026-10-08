@@ -1,5 +1,7 @@
 # Job-description analysis — local development
 
+E0 defaults **Analysis versions & settings** and the selected analysis to collapsed disclosures. Open them to generate/reopen an analysis or inspect its fields; task, failure, stale and expired notices stay visible. Version labels include the job title/company, analysis version, model and date. See [the foundation batch](intelligence-foundation.md).
+
 Phase 2 batch 3, implemented locally on 2026-10-05 (Asia/Kolkata). See [ADR-012](adr/012-job-description-analysis.md) and the [approved plan](job-description-analysis-plan.md).
 
 ## Try it

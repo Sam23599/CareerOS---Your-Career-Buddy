@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router';
 import { authenticatedRequest } from '../auth/session';
 import { notificationsChanged } from './NotificationLink';
 import { Icon, PageHeading } from '../ui/WorkspaceUi';
+import { workspaceLabels } from '../ui/navigation';
 
 type Preferences = { newJobs: boolean; sourceErrors: boolean };
 type Notification = { id: string; title: string; message: string; href: string; createdAt: string; read: boolean };
@@ -47,4 +48,4 @@ function NotificationList() {
     </>}
   </>;
 }
-export function NotificationsPage() { const [params] = useSearchParams(); return <div className="profile-page workspace-page"><nav className="profile-nav"><Link to="/dashboard">← Dashboard</Link><Link to="/career-sources">Career sources</Link></nav><PageHeading eyebrow="Stay in the loop" title="Notifications" description="Matching-job alerts and career source updates, together in your workspace." /><NotificationPreferences /><NotificationList key={params.toString()} /></div>; }
+export function NotificationsPage() { const [params] = useSearchParams(); return <div className="profile-page workspace-page"><nav className="profile-nav"><Link to="/dashboard">← Dashboard</Link><Link to="/career-sources">Career sources</Link></nav><PageHeading eyebrow="Stay in the loop" title={workspaceLabels.notifications} description="Matching-job alerts and career source updates, together in your workspace." /><NotificationPreferences /><NotificationList key={params.toString()} /></div>; }

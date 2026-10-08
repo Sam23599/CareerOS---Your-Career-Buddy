@@ -7,6 +7,7 @@ import { type MatchItem, type MatchResponse } from '../../../../backend/platform
 import { type ReviewReport, type ReviewResponse } from '../../../../backend/platform/src/intelligence/reviews';
 import { ResumeCheckReport } from '../resumes/ResumeCheckReport';
 import { PreparationPanel } from '../preparation/PreparationPanel';
+import { analysisVersionLabel } from '../intelligence/analysisLabels';
 
 type Resume = { id: string; name: string; version: number; active: boolean; deleting?: boolean };
 type JobHistory = { versions: (JobAnalysisSummary & { stale: boolean })[]; nextBeforeVersion: number | null };
@@ -28,7 +29,7 @@ function MatchRow({ item }: { item: MatchItem }) {
   </li>;
 }
 
-function Comparison({ jobId }: { jobId: string }) {
+function Comparison({ jobId, jobLabel }: { jobId: string; jobLabel: string }) {
   const active = useRef<AbortController | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [resumeId, setResumeId] = useState('');
@@ -120,13 +121,15 @@ function Comparison({ jobId }: { jobId: string }) {
       {!resumes.length && <p><Link to="/resumes">Upload and analyze a resume</Link> to prepare your comparison.</p>}
       {!jobAnalysisId && <p className="extraction-warning"><a href="#job-analysis">Analyze the current job description</a> before comparing. Older analyses of changed listings cannot be used.</p>}
       <form onSubmit={event => { event.preventDefault(); review(); }}><fieldset disabled={busy}><legend>Comparison inputs</legend><div className="profile-grid">
-        <label>Resume version<select value={resumeId} onChange={event => {
+        <fieldset className="resume-analysis-inputs"><legend>Your resume & analysis</legend><p className="muted">Choose a PDF, then one of the analyses saved for that resume.</p><div className="profile-grid">
+        <label>Resumes<select value={resumeId} onChange={event => {
           setResumeId(event.target.value); setDrafts({ versions: [], nextBeforeVersion: null }); setDraftId(''); setDraftLoading(true); clearResult(); setError('');
         }} disabled={!resumes.length}><option value="" disabled>Select a resume</option>{resumes.map(item => <option key={item.id} value={item.id}>{item.name} · PDF version {item.version}{item.active ? ' · Active' : ''}</option>)}</select></label>
-        <label>CV analysis version<select value={draftId} disabled={draftLoading || !drafts.versions.length} onChange={event => { setDraftId(event.target.value); clearResult(); setError(''); }}>
-          <option value="" disabled>{draftLoading ? 'Loading analyses…' : 'No saved analysis'}</option>{drafts.versions.map(item => <option key={item.id} value={item.id}>Version {item.version} · {item.model} · {new Date(item.createdAt).toLocaleString()}</option>)}</select></label>
+        <label>Resume analysis<select value={draftId} disabled={draftLoading || !drafts.versions.length} onChange={event => { setDraftId(event.target.value); clearResult(); setError(''); }}>
+          <option value="" disabled>{draftLoading ? 'Loading analyses…' : 'No saved analysis'}</option>{drafts.versions.map(item => <option key={item.id} value={item.id}>{analysisVersionLabel(resumes.find(resume => resume.id === resumeId)?.name ?? 'Resume', item)}</option>)}</select></label>
+        </div></fieldset>
         <label>Job analysis for comparison<select value={jobAnalysisId} onChange={event => { setJobAnalysisId(event.target.value); clearResult(); setError(''); }}>
-          <option value="" disabled>No current saved analysis</option>{jobs.versions.map(item => <option key={item.id} value={item.id} disabled={item.stale}>Version {item.version} · {item.model}{item.stale ? ' · Listing changed' : ''}</option>)}</select></label>
+          <option value="" disabled>No current saved analysis</option>{jobs.versions.map(item => <option key={item.id} value={item.id} disabled={item.stale}>{analysisVersionLabel(jobLabel, item)}{item.stale ? ' · Listing changed' : ''}</option>)}</select></label>
       </div>
         {draftLoading && <p role="status">Loading saved CV analyses…</p>}
         {resumeId && !draftLoading && !drafts.versions.length && <p><Link to="/resumes">Analyze this resume</Link> first, then refresh these inputs.</p>}
@@ -151,8 +154,8 @@ function Comparison({ jobId }: { jobId: string }) {
   </section><PreparationPanel jobId={jobId} match={match ?? null} /></>;
 }
 
-export function JobMatchPanel({ jobId, revision }: { jobId: string; revision: number }) {
+export function JobMatchPanel({ jobId, revision, jobLabel = 'Job' }: { jobId: string; revision: number; jobLabel?: string }) {
   const session = useSession();
   if (session.state !== 'authenticated') return null;
-  return <Comparison key={`${session.user!.id}:${jobId}:${revision}`} jobId={jobId} />;
+  return <Comparison key={`${session.user!.id}:${jobId}:${revision}`} jobId={jobId} jobLabel={jobLabel} />;
 }

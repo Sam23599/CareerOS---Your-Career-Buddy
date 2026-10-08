@@ -4,6 +4,8 @@ import { authenticatedRequest, RequestError } from '../auth/session';
 import { Entries, TagsInput } from '../profiles/Fields';
 import { type CareerProfile } from '../profiles/types';
 import { DraftReview, fieldLabels, readableValue, supportedFields, type DraftHistory, type DraftRecord, type Fact, type ReviewField, type ReviewValues } from './draftReview';
+import { useDialogDismiss } from '../ui/dialogDismiss';
+import { analysisVersionLabel } from '../intelligence/analysisLabels';
 
 type Capabilities = { available: boolean; models: { id: string; reasoningOptions: string[] }[]; defaultModel: string; defaultReasoning: string | null };
 function label(key: string) { return key.replace(/([A-Z])/g, ' $1').replace(/^./, char => char.toUpperCase()); }
@@ -45,6 +47,7 @@ export function ResumeDraftReview({ resume, onClose }: { resume: { id: string; n
     if (dirty && !window.confirm('Close without applying your reviewed profile changes?')) return;
     onClose();
   }
+  const dismissal = useDialogDismiss(close);
   useEffect(() => {
     const element = dialog.current!; element.showModal();
     return () => { element.close(); active.current?.abort(); };
@@ -145,7 +148,7 @@ export function ResumeDraftReview({ resume, onClose }: { resume: { id: string; n
     finally { setBusy(false); }
   }
   const options = capabilities?.models.find(item => item.id === model)?.reasoningOptions ?? [];
-  return <dialog className="resume-preview draft-review" ref={dialog} aria-labelledby="draft-title" onCancel={event => { event.preventDefault(); close(); }}>
+  return <dialog className="resume-preview draft-review" ref={dialog} aria-labelledby="draft-title" {...dismissal}>
     <div className="preview-heading"><h2 id="draft-title">Resume draft — {resume.name}</h2><button type="button" onClick={close} autoFocus>Close draft review</button></div>
     <p>Each analysis sends this resume’s extracted text to OpenAI and saves a new version on success. Generation uses your configured API key and incurs provider charges. Opening saved versions does not call AI. Your profile changes only after review and confirmation.</p>
     {loading && <p role="status">Loading draft…</p>}
@@ -170,12 +173,12 @@ export function ResumeDraftReview({ resume, onClose }: { resume: { id: string; n
       <fieldset disabled={busy}><legend>Saved versions</legend>
         <label>Saved draft version<select value={record.id} onChange={event => void openVersion(event.target.value)}>
           {[...(history.versions.some(item => item.id === record.id) ? [] : [record]), ...history.versions].map(item => <option key={item.id} value={item.id}>
-            Version {item.version} · {item.model}{item.reasoning ? ` · ${item.reasoning}` : ''} · {new Date(item.createdAt).toLocaleString()}
+            {analysisVersionLabel(resume.name, item)}
           </option>)}
         </select></label>
         {history.nextBeforeVersion !== null && <button type="button" className="secondary" onClick={() => void loadOlderVersions()}>Load older versions</button>}
       </fieldset>
-      <p className="muted">Saved draft · Version {record.version} · {record.model}{record.reasoning ? ` · ${record.reasoning} reasoning` : ''} · {new Date(record.createdAt).toLocaleString()}</p>
+      <p className="muted">{analysisVersionLabel(resume.name, record)}</p>
       {record.extraction.warnings.length > 0 && <section aria-label="Extraction warnings"><h3>Extraction warnings</h3>
         {record.extraction.warnings.map(item => <p className="extraction-warning" key={item.code}>{item.message}</p>)}
       </section>}

@@ -90,6 +90,23 @@ test('resume preview reports download errors and supports Escape dismissal', asy
   await expect(component.getByText('Preview closed')).toBeVisible();
 });
 
+test('resume preview ignores content clicks and drags, then closes on a genuine backdrop click', async ({ page, mount }) => {
+  await previewRoute(page);
+  const component = await mount('Preview');
+  const dialog = component.getByRole('dialog', { name: 'Resume.pdf' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('heading', { name: 'Resume.pdf', exact: true }).click();
+  await expect(dialog).toBeVisible();
+  const box = (await dialog.boundingBox())!;
+  await page.mouse.move(box.x + 30, box.y + 30);
+  await page.mouse.down();
+  await page.mouse.move(1, box.y + 30);
+  await page.mouse.up();
+  await expect(dialog).toBeVisible();
+  await page.mouse.click(1, box.y + 30);
+  await expect(component.getByText('Preview closed')).toBeVisible();
+});
+
 test('saved-job control saves once and respects cancelled removal', async ({ page, mount }) => {
   let saved = false, mutations = 0;
   await page.route('**/api/v1/saved-jobs/test-job', route => {

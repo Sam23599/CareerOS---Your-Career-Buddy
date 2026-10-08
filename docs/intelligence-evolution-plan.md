@@ -1,6 +1,6 @@
 # Intelligence expansion — Cady, retrieval and tools
 
-Status: **Planning requirements confirmed; implementation not started.** Reviewed 2026-10-08, Asia/Kolkata, against HEAD `f55f005` and the user's notebook.
+Status: **E0 usability/source/evaluation foundation implemented locally; E1 is next.** Updated 2026-10-08, Asia/Kolkata, from planning baseline HEAD `5b6f3aa`. [Implementation and checks](intelligence-foundation.md) distinguish the synthetic evaluation starter from pending human-reviewed/live benchmarks. E1–E9 are not implemented by E0.
 
 ## Scope and relationship to Phase 2
 
@@ -16,7 +16,7 @@ The raw notebook's earlier request to put RAG in Phase 2 remains unchanged. The 
 | --- | --- | --- |
 | CV/JD analysis | Evidence-validated, immutable numbered analyses; explicit profile import | Resume AI generation still runs inline; original evidence is richer than Cady's projection |
 | Matching/checks | Exact/curated-alias skill coverage, literal terminology and section checks | Non-skill requirements stay `needs_review`; no semantic role/experience assessment |
-| Preparation | Source-bound AI plans, flexible 1–8-week sessions, saved review/progress | No discovered learning resources; next-session behavior needs a focused UX correction |
+| Preparation | Source-bound AI plans, flexible 1–8-week sessions, saved review/progress; E0 separates week browsing from continuing an unfinished session | No discovered learning resources |
 | Ranking | Up to 50 saved jobs; skills, explicit role/location/work-mode preferences and priority | No wider job discovery or broader experience/company/career-goal ranking |
 | Cady | Shared page/widget; one account conversation; ten saved pairs, last six messages in prompt | Selected CV required; limited skill/requirement facts; no retrieval or tools; citation IDs do not prove claim support |
 | Execution | PostgreSQL tasks for jobs/preparation; in-process executor and generation gate | No Celery/Redis; capacity must become shared before worker cutover |
@@ -37,11 +37,11 @@ Full saved history, retrieval and memory have different jobs. Keep all retained 
 
 ## Independently deliverable batches
 
-All rows below are proposals. Each batch needs its own AI/data/cost notice before implementation; paid verification needs a separately agreed scope.
+E0's initial implementation is recorded below; remaining rows are planned batches. Each new AI-dependent batch needs its AI/data/cost notice before implementation; paid verification needs a separately agreed scope.
 
 | ID | Batch and concrete work | Depends on | Acceptance before moving on |
 | --- | --- | --- | --- |
-| E0 | Establish representative Cady/retrieval evaluation cases and source contracts; resolve next-session wording/focus, widget scrolling, default disclosures, naming and modal dismissal as a small separate UI batch (N-035/N-038/N-041/N-042/N-044/N-034) | Current baseline | Reproducible behavior and human-reviewed expected evidence; no regressions in history, ownership or user edits |
+| E0 — initial foundation implemented | Typed source/evidence contracts, offline evaluator and 16 synthetic draft cases; corrected session wording/focus, widget scrolling, disclosures, naming and guarded dismissal (N-035/N-038a/N-041/N-042/N-044/N-034/N-032) | Current baseline | Mocked behavior/contract checks pass; expected evidence still needs human review and expansion before live model/retrieval benchmarking. [Results and limits](intelligence-foundation.md) |
 | E1 | Central account AI preferences, default-off per-feature overrides; durable threads/messages; stable account context, sliding windows and ~4,000-token assembly; shared per-call usage instrumentation and rate catalog (N-036/N-037/N-045/N-047) | E0 contracts | Model changes preserve chats; retained threads survive restarts; context is token-bounded and revisioned; every provider attempt has a usage record, including failures/unknown usage |
 | E2 | Shared capacity and Celery foundation; migrate jobs **and preparation** from the existing worker, then queue resume generation (N-023/N-043) | Existing [execution plan](intelligence-background-processing-plan.md); E0 source contracts | One executor per attempt; compatible task/version history; broker/restart/duplicate/source-change checks; no automatic uncertain paid retry |
 | E3 | Four OOP stages: chunking, indexing, retrieval, generation; selectable pgvector/FAISS, optional hybrid BM25, S3 artifacts/cloud factories and Redis login warming (N-040/N-045/N-048) | E0; E2 for durable indexing/warming; E1 for conversation retrieval and usage | Held-out retrieval/support checks beat baseline; removed/foreign/obsolete content excluded; rebuildable indexes, cold-cache database fallback and safe backend switching |
@@ -85,7 +85,7 @@ The user supplied the knowledge/memory/tool direction and the requirements below
 
 ## First implementation scope to select
 
-Recommended first selection: **E0 + E1**, including the usage foundation; then E2 execution, E3's four-stage private RAG and selectable backends, and E4's grounded tools/public research. This fixes daily friction, preserves history and gives retrieval stable inputs. Current application-control tools use existing APIs; full application/interview lifecycle actions wait for Phase 3's owning service.
+The user accepted the first implementation direction, and E0 is implemented in [the foundation batch](intelligence-foundation.md). **E1 is the next batch**, including shared usage accounting, central account AI settings, durable threads and bounded context; then E2 execution, E3's four-stage private RAG and selectable backends, and E4's grounded tools/public research. This preserves history and gives retrieval stable inputs. Current application-control tools use existing APIs; full application/interview lifecycle actions wait for Phase 3's owning service. No paid benchmark was run in E0.
 
 ## Release closure and later work
 

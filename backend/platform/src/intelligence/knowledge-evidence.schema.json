@@ -1,0 +1,232 @@
+{
+  "$defs": {
+    "EvidenceSpan": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "quote": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        },
+        "start": {
+          "maximum": 60000,
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "maximum": 60000,
+          "minimum": 1,
+          "title": "End",
+          "type": "integer"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "section": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section"
+        },
+        "fieldPath": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fieldpath"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "quote",
+        "start",
+        "end"
+      ],
+      "title": "EvidenceSpan",
+      "type": "object"
+    },
+    "KnowledgeSource": {
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "lifecycle": {
+          "enum": [
+            "active",
+            "trash",
+            "archived",
+            "obsolete"
+          ],
+          "title": "Lifecycle",
+          "type": "string"
+        },
+        "trustKind": {
+          "enum": [
+            "source_text",
+            "user_reported",
+            "assistant_advice",
+            "derived"
+          ],
+          "title": "Trustkind",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 60000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "lifecycle",
+        "trustKind",
+        "text"
+      ],
+      "title": "KnowledgeSource",
+      "type": "object"
+    },
+    "SourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "enum": [
+            "private",
+            "public"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "ownerId": {
+          "anyOf": [
+            {
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ownerid"
+        },
+        "sourceType": {
+          "enum": [
+            "resume",
+            "profile",
+            "job",
+            "job_analysis",
+            "preparation",
+            "conversation",
+            "application",
+            "company",
+            "resource"
+          ],
+          "title": "Sourcetype",
+          "type": "string"
+        },
+        "sourceId": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Sourceid",
+          "type": "string"
+        },
+        "sourceVersion": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Sourceversion",
+          "type": "string"
+        },
+        "contentHash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Contenthash",
+          "type": "string"
+        },
+        "visibilityRevision": {
+          "minimum": 0,
+          "title": "Visibilityrevision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "ownerId",
+        "sourceType",
+        "sourceId",
+        "sourceVersion",
+        "contentHash",
+        "visibilityRevision"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/KnowledgeSource"
+      },
+      "maxItems": 100,
+      "title": "Sources",
+      "type": "array"
+    },
+    "passages": {
+      "items": {
+        "$ref": "#/$defs/EvidenceSpan"
+      },
+      "maxItems": 100,
+      "title": "Passages",
+      "type": "array"
+    }
+  },
+  "required": [
+    "sources",
+    "passages"
+  ],
+  "title": "EvidenceBundle",
+  "type": "object"
+}
