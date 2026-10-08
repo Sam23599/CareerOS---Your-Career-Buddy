@@ -4,6 +4,8 @@ Updated: 2026-10-08, Asia/Kolkata. **Batches 1–4, the batch 5 baseline, batch 
 
 This follows the planning step agreed after Phase 1. The original [Phase 2 roadmap](development-plan.md#5-phase-2--intelligence--ai) remains the product scope. [ADR-010](adr/010-resume-intelligence-foundation.md) defines the first batch; the [API contract](api/intelligence.md) makes it implementable. Later milestones below are a sequence, not a claim that they are built.
 
+**2026-10-08 scope steering:** The user requested planning the remaining AI areas separately from Phase 2. The [intelligence expansion plan](intelligence-evolution-plan.md) now tracks RAG, richer matching, verified learning resources, wider recommendations and tool-enabled Cady as independent batches. The [retrieval/tool design](cady-retrieval-and-tools-design.md) details shared contracts. This carries forward the original ambitions; it does not declare the full original roadmap complete, renumber Phase 3 or replace Phase 2 baseline release verification. No new implementation is approved here.
+
 ## First usable outcome
 
 `Upload PDF → Extract text → Review text → Generate structured draft → Approve profile changes → Compare with a job`
@@ -27,9 +29,9 @@ Start with extraction so incorrect reading order, missing text and unsupported P
 | 4. Explainable matching — implemented | Compare saved CV/job analyses and optional profile skills using `skill-coverage-v1` | Show quoted matched/not-found skills, unscored review requirements and weighted score calculation; source/owner checks and fixtures demonstrate predictable results |
 | 5. Resume checks and skill gaps — baseline implemented | Recognized-section/PDF-warning checks, literal job terminology, prioritized evidence gaps and preparation actions | Findings link back to saved inputs; compact reports distinguish missing evidence from skill gaps and CareerOS heuristics from actual employer ATS behavior |
 | 6. Job ranking — saved-job baseline implemented | Rank up to 50 saved jobs across applied filters using matching, then explicit preferences/priority/date | Expand reasons; separate unanalysed/stale/expired/unavailable/unscorable/not-interested jobs; wider discovery ranking remains an extension |
-| Celery execution foundation — planned | Migrate the existing PostgreSQL-backed job worker to Celery/Redis, then resume AI drafts in a separate batch | Preserve task/history/version contracts, outbox delivery recovery, one shared generation across processes and no automatic uncertain paid retry |
+| Celery execution foundation — planned | Migrate the existing PostgreSQL-backed job/preparation worker to Celery/Redis, then resume AI drafts in a separate batch | Preserve task/history/version contracts, outbox delivery recovery, one shared generation across processes and no automatic uncertain paid retry |
 | Personalized AI preparation — implemented | Confirm evidence-versus-learning gaps/time goals; explicitly generate, review and save a source-bound learning plan | Shared provider infrastructure, strict requirement links, versioning/cleanup and cost/consent controls; no silent CV/profile edits |
-| 7. Initial Cady — implemented | Answer career questions from selected CV/job analyses and optional profile skills | Answers use authorized context and source references; no mutation tools or durable chat memory in this initial scope |
+| 7. Initial Cady — implemented and refined | Answer career questions from selected CV/job analyses and optional profile skills; shared page/widget with ten persisted pairs | Answers use authorized context and source references; last six messages provide continuity; long-term memory/retrieval/tools remain extensions |
 
 Batch 3 follows the approved [job-description analysis plan](job-description-analysis-plan.md); see [local use](job-description-analysis.md) and [ADR-012](adr/012-job-description-analysis.md). Batch 4 implements the [deterministic matching baseline](cv-job-matching.md) and [ADR-013](adr/013-cv-job-matching.md). Batch 5 adds [resume checks and preparation](resume-checks.md) in [ADR-014](adr/014-resume-checks.md). Batch 6 adds [saved-job ranking](job-ranking.md) in [ADR-015](adr/015-saved-job-ranking.md). These reuse saved analyses without new provider calls. The [personalized preparation plan](personalized-preparation-plan.md) records the optional AI extension now implemented before initial Cady in [ADR-017](adr/017-personalized-preparation-and-initial-cady.md). AI notices were delivered before implementation; mocked verification makes no paid calls. Notify again before future AI-dependent stages.
 
@@ -86,12 +88,7 @@ Source removal suppresses access immediately. The approved notebook batch now re
 
 ## Decisions needed later
 
-The [Celery migration plan](intelligence-background-processing-plan.md) records
-the approved planning direction and current task inventory. Start implementation
-with existing background job analysis when selected; keep matching/checks and
-bounded ranking synchronous. Redis is proposed as the task broker in Phase 2,
-independent of the later Phase 4 Kafka event roadmap. No worker/dependency change
-is implemented by this planning update.
+The [Celery migration plan](intelligence-background-processing-plan.md) records the approved planning direction and current task inventory. Start implementation with existing background job/preparation analysis when selected; keep matching/checks and bounded ranking synchronous. Redis is proposed as the task broker in Phase 2, independent of the later Phase 4 Kafka event roadmap. No worker/dependency change is implemented by this planning update.
 
 | Decision | When | Default direction |
 | --- | --- | --- |
@@ -103,4 +100,10 @@ is implemented by this planning update.
 
 The approved UI/source/filter/recovery/task-history requests have an implemented [notebook batch](notes-improvements.md). Google live sign-in verification and supported native LinkedIn/contact/review access remain pending prerequisites. Saved jobs now include manual application progress/history as a small foundation; the full application workflow remains Phase 3, community Phase 5 and production deployment Phase 7. Personalized preparation and initial Cady are now implemented; see [use and limits](personalized-preparation.md).
 
-The selected preparation/Cady refinement is implemented in [ADR-018](adr/018-weekly-roadmaps-and-shared-cady-conversation.md): 1–8 flexible weeks, compact inputs, combined deterministic review, app-wide widget and bounded account-persisted history. Next planned work remains the separately scoped Celery foundation, followed by Phase 2 verification.
+The selected preparation/Cady refinement is implemented in [ADR-018](adr/018-weekly-roadmaps-and-shared-cady-conversation.md): 1–8 flexible weeks, compact inputs, combined deterministic review, app-wide widget and bounded account-persisted history. Celery remains a separately scoped foundation; Phase 2 verification still needs an explicit release scope and recorded results. The user's latest review adds proposed UI corrections, account AI defaults and full chats before the separate retrieval/tool expansion. See the [current notebook review](project-notes.md#latest-review--2026-10-08-changed-and-unreviewed-requests) and [batch sequence](intelligence-evolution-plan.md#independently-deliverable-batches); documentation is not implementation approval.
+
+### Confirmed completion sequence — 2026-10-08
+
+Finish the selected E0–E9 intelligence expansion, then **finalize Phase 2 release verification and proceed to Phase 3 application management**. The plan now includes [four-stage RAG, optional BM25 and pgvector/FAISS](rag-pipeline-and-storage-plan.md), [shared real usage accounting](ai-usage-and-credits-plan.md), and confirmed Cady Read/Write/Agent tools with aggregated live context. No implementation is selected by this documentation update. Record completed checks and any explicitly agreed scope deferrals before declaring Phase 2 release-ready; full Phase 3 workflow tools depend on their owning service rather than blocking Phase 2.
+
+[Graph-memory experiments](graph-memory-and-browser-tools-research.md) and payment integration/auto-refill are future work after product-development stages, not Phase 2 release gates. The current credits/payments page stays demo until that later scope.

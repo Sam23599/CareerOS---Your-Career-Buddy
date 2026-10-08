@@ -88,12 +88,18 @@ cady:
 - Personalized preparation: keep all user field but compact them 
 <!-- N-028 -->
 - current "Create AI preparation plan" is shitty. it doesnt exactly work how it's supposed to. it only return data randomly (http://localhost:5173/jobs/6999e0b6f77164924365d45f9e93e83f84809ef14ac0dc1a193a8fb0d65c4968?skill=python&remoteType=REMOTE&source=remotive) with editable action title and details etc. that's weird. we need a proper preperation plan for the user to start preping step by step, based on the user input of like 1-8 weeks long plan, with a proper menu or component. 
+<!-- N-035 -->
 - bug: "go to next session" in Personalized preparation always goes back to week 1.
+<!-- N-036 -->
 - centralise model selection for ai tasks and feature into settings. give advance settings (default off) for user to select and decide llm model for custom feature there in settings. this will remove the cluture from the windows that asks for model preference everywhere
+<!-- N-037 -->
 - cady conversation: save all conversations. send last 6 to llm for continuity. the context for cady remains constant for all conversation. better lets lay document and plan baseline for RAG, then extend these features from there. 
+<!-- N-038 -->
 - cady widget chat app: scrolling isnt consistent. also 'Choose context' should be compressed by default. 'What’s your next move?' make it small (future scope if possible and feasible: this should be dynmaic suggestion based on current window context and past couple of conversation. give user an option of smart cady in settings: this will allow the cady to use rag and llm on almost every window where cady widget is open, but every window change will require new call for llm but only when cady is still open/re-opened on it, also suggest user for higher token/usage limits).
+<!-- N-039 -->
+- give cady a sweet friendly persona, with a cute charming face like icon. 
 
-
+<!-- N-040 -->
 - MAJOR: implement RAG baseline plan either raw, or with langchain or langgraph. a proper plan and disscussion is needed around it and should be placed in the current phase 2 development stage properly.
 
 
@@ -109,18 +115,116 @@ cady:
 - add more details from overall platform on dashboard, like statatics and status. currently it only holds the redirects to different pages of the platform.
 <!-- N-034 -->
 - improve namings of the ai analysed results everywher for different versions (preferrably use something like job_title-company-version_numb-model-date, resume_file_name-version-model-date), currently its confusing to know what's what!
+<!-- N-041 -->
 - job analysis: make the whole tab compact and expandable. by default it will be compessed. also compress each analysis version compressed under their name, when selected then only expand to details. all improve their detail's view menu.
+<!-- N-042 -->
 - in "Compare your CV to this job": why have similar thing with 2 different naming 'Resume version and CV analysis version'. instead have something like 'Resumes and Resume Analysis'. also add a small background box to combine these 2 in one, such that from user's pov it makes sense that they are inter-related.
+<!-- N-043 -->
 - analyse resume doesnt still work in background. make it or introduce celery service now for these kind of background tasks or llm processings (except chat feature), and move them to celery for independent processing.
+<!-- N-044 -->
 - UI: background click or esc button should close the active component. currently everywhere on app, we need to explictly click close window on top right. we should also support this user friendly feature as well.
+
+### Conversation follow-ups — 2026-10-08
+
+The following wording was supplied directly in conversation, after the review above. These entries request planning, not application implementation.
+
+<!-- N-045 -->
+ok. first, update in plan for RAG to distribute pipeline in 4 separate stages and their own classes and functions. chunking, indexing, retrieval, generation. also, introduce hybrid search with bm25 as optional. option to choose faiss vs pgvector (but prompt user in crisp about the pros and cons in a small info icon). when using faiss, store indexes in s3 (create a proper factory method design structure in intelligient backend service for cloud providers and thier basic services), load/warm index id doc into redis on login and fallback to db for instant queries. context memory length would be approx 4000 tokens. build whole context from separate parts of memory and knowledge from overall user context, history, conversations, profile, cv, recent jobs applied etc. for conversation and jobs applied stuffs keep sliding window context memory. for rest keep them consistent across the sessions and conversations.
+
+<!-- N-046 -->
+RESERCH: graph memory if possible to include in our pipeline for better context management (my reserach suggests- supermemory, cognee, neo4j, langmem). do your separate research and prepare docs for future plans (probably after final stage completion)
+
+<!-- N-047 -->
+common utlitiy:  create plan for to measure ai usage properly. track every llm call for input/output/total tokens based on official openai doc, keep model specific charges separate in the 'AI usage and credits' settings menu. for autorecharge/refill credits we would need some disscussion around it along with integration of 3rd party payment service like service (inlcude in future plans at the end of the all stages of the product development).
+
+<!-- N-048 -->
+Knowledge: all user realted and jobs realted data across every recent company and applies and statuses etc.
+
+<!-- N-049 -->
+Memory: looks good
+
+<!-- N-050 -->
+tools: doubtful about what you exactly mean and where can we use it. care to explain yourself?
+llm tool calls: based on conversations in chat, llm can like update user profile, list jobs as asked by the user along with the careeros job page if that specific job, change interest/status of job application (future), cv-jd gaps analysis, etc, all of it after user's confirmation. in short this will give the Cady the extensive perosanlised assistant level capabilites and the ability to control the overall logged in user's app just from the chat.
+
+<!-- N-051 -->
+Independent Reserch: if internal auto browser search feature can be added as a tool, to give smart updated informations.
+
+<!-- N-052 -->
+Lets update the docs with these recommendations then we'll proceed with the recommended implementation plan. also note, afte all this, we need to finalize phase 2 release and move to phase 3. so just note it down somewhere as well in the current planned docs
+
+<!-- N-053 -->
+extension on tool calls: tools that aren't "features"
+
+divide your tools into three categories: Read tools (eg. get/search), Write tools (eg. save/update/record), Agent/action tools (eg. planning/assessment/scheduling/report)
+
+That gives the LLM the ability to **observe → reason → act → observe again**.
+
+```css
+User:
+"I have an interview with Google next week. What should I focus on?"
+
+        ↓
+
+get_user_profile()
+        ↓
+get_job_context()
+        ↓
+get_readiness()
+        ↓
+get_interview_history()
+        ↓
+identify biggest gaps
+        ↓
+create_prep_plan()
+        ↓
+
+Assistant:
+"You should spend ~60% of your preparation on system design..."
+
+```
+
+## One more idea I'd strongly consider -
+
+Create a single higher-level tool like: get_recommendation_context()
+
+It could return the minimum relevant current state:
+```arduino
+{
+  "user": {...},
+  "active_job": {...},
+  "recent_applications": [...],
+  "skill_gaps": [...],
+  "interview_history": [...],
+  "current_goals": [...]
+}
+
+```
+
+Then the LLM can reason over that, while the lower-level tools are available when it needs to drill deeper.
+
+This gives you a nice architecture:
+```
+                    LLM
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+   Context / Read           Action / Write
+          │                     │
+   ┌──────┴──────┐        ┌─────┴────────┐
+   │             │        │              │
+Profile       Jobs      Applications   Practice
+Readiness     History   Preferences    Interviews
+
+```
+
+**The biggest opportunity isn't converting your existing functions into tools. It's letting the LLM decide which pieces of your application's live state it needs and which actions it should take.**
 
 ## Refined notes
 
-Current update: **2026-10-07, Asia/Kolkata**. You explicitly requested
-implementation after clarifying the questions below. Raw wording, IDs and the
-original review history are preserved. The **2026-10-07 result** on each item is
-authoritative; the evidence/proposals/decisions preceding it describe the original
-2026-10-06 review, not current missing features or pending authorization.
+Current review: **2026-10-08, Asia/Kolkata**. Compared with the supplied last-review commit `0d5902cc9d232b97fac701db25eb6c1e06ef5968` and current HEAD `f55f005`. Later implementation results remain recorded below; new/changed requests are refined in the latest section. Raw wording, existing IDs, decisions and history are preserved. N-035–N-044 identify previously unnumbered follow-ups. N-045–N-053 record the later conversation's confirmed planning requirements and tool extension.
+
+This review and the requested separate intelligence planning authorize **documents only**. Raw requests such as “introduce celery service now” are not application implementation selection in this conversation. Code was inspected read-only; reported browser symptoms were not reproduced and no tests or paid AI calls ran. Historical proposals do not imply that already implemented features are missing.
 
 ### Approved follow-up and current scope
 
@@ -136,9 +240,7 @@ authoritative; the evidence/proposals/decisions preceding it describe the origin
 | LinkedIn/contact enrichment | N-012, N-017 | Published listing emails and external research links available; native integration needs supported provider access |
 | Celery execution direction | N-023 | Planning only: existing job tasks first, resume AI drafts next; keep PostgreSQL history/results and fast synchronous checks |
 
-Implementation contracts, storage behavior and limits are in
-[notebook improvements](notes-improvements.md) and [ADR-016](adr/016-notebook-improvements.md).
-Personalized AI preparation was held during the notebook batch. Later on 2026-10-07 you selected the original preparation → Cady sequence; both initial features are now implemented in [ADR-017](adr/017-personalized-preparation-and-initial-cady.md). This follow-up makes no paid provider call or publication change.
+Implementation contracts, storage behavior and limits are in [notebook improvements](notes-improvements.md) and [ADR-016](adr/016-notebook-improvements.md). Personalized AI preparation was held during the notebook batch. Later on 2026-10-07 you selected the original preparation → Cady sequence; both initial features are now implemented in [ADR-017](adr/017-personalized-preparation-and-initial-cady.md). This follow-up makes no paid provider call or publication change.
 
 ### Original 2026-10-06 proposed order — historical
 
@@ -151,8 +253,7 @@ Personalized AI preparation was held during the notebook batch. Later on 2026-10
 | E. Preferences/status | N-002, N-004, N-019, N-020 | Settings, theme and dependency labels |
 | F. Storage/tracking/providers | N-003, N-004, N-009, N-011, N-012, N-013, N-015, N-017 | Separate storage/manual tracking/provider research |
 
-These proposals were not implementation approval on 2026-10-06. Your later
-clarifications and explicit implementation request supersede that pending state.
+These proposals were not implementation approval on 2026-10-06. Your later clarifications and explicit implementation request supersede that pending state.
 
 ### N-001 — Continue focused UI refinement
 
@@ -375,6 +476,135 @@ clarifications and explicit implementation request supersede that pending state.
 - **Raw sources:** Batch CV/job analysis; shortlist pop-up view/edit; theme overhaul; navigation/page naming; real dashboard statistics; clearer analysis-version names.
 - **Status:** Preserved for separate discussion/selection. They were outside the approved preparation/Cady batch and were not implemented. Suggested timing is not approval.
 
+### Latest review — 2026-10-08: changed and unreviewed requests
+
+The supplied commit contained N-001–N-022; subsequent commits implemented that batch, added the Celery plan, and implemented preparation/Cady and their refinement. This review does not repeat those completed proposals. The entries below refine the outstanding N-029–N-034 and the newly separated N-035–N-044.
+
+| Suggested scope | Raw IDs | Proposed timing / dependency |
+| --- | --- | --- |
+| Small usability corrections | N-035, N-038a, N-034, N-041, N-042, N-044, N-032 | Soon; a separately selected UI batch |
+| Account AI defaults and durable chats | N-036, N-037 | First intelligence foundation; explicit source/memory contracts |
+| Reliable background execution | N-023, N-043, then N-029 | Shared capacity/Celery; jobs and preparation together, then resumes and batches |
+| Accurate Cady with retrieval/tools | N-040, N-037, then N-038b | Separate intelligence expansion plan; private evidence before external research |
+| Persona and wider product polish | N-039, N-030, N-031, N-033 | Independently selected; persona can accompany the Cady UI |
+
+Timing is a recommendation, not approval. The [expansion plan](intelligence-evolution-plan.md) and [retrieval/tool design](cady-retrieval-and-tools-design.md) record implementable batches, dependencies, quality gates and proposed discussion defaults.
+
+### N-029 — Batch CV/job analysis
+
+- **Evidence:** Jobs/preparation already have owned task intake/history, while [resume analysis](../frontend/web/src/resumes/ResumeDraftReview.tsx#L78) awaits an inline result. Batch execution is not present.
+- **Proposal:** Select a bounded set, preview charge-producing work, create one independently tracked task per source/settings snapshot and show partial completion/failures. Reuse per-owner/global admission and request IDs; avoid one unbounded batch LLM request.
+- **Status / timing:** Planning only; after N-043 shared execution. Batch UI selection does not authorize new model calls during this review.
+
+### N-030 — Compact saved-job view/edit
+
+- **Evidence:** [SavedCard](../frontend/web/src/saved-jobs/SavedJobsPage.tsx#L29) renders a full editable form per row, including notes/progress. This is a density concern, not a verified data defect.
+- **Proposal:** Compact summary cards plus a view/edit dialog or drawer; reuse revision conflicts, dirty-edit protection, filters, ranking and recovery. N-044 dismissal must use the same guarded close path.
+- **Status / timing:** Planning only; separate UI batch. Existing data contracts need no replacement.
+
+### N-031 — More comfortable themes
+
+- **Evidence:** Light/Dark/System already exists (N-002). [Shared tokens](../frontend/web/src/ui/workspace.css#L2) and surfaces need a focused visual/contrast audit; the reported harsh dark appearance was not reproduced in this review.
+- **Proposal:** Review real screens, adjust semantic surfaces/text/borders and remaining hard-coded colors before selecting a larger KDE-inspired restyle. Preserve theme choice and behavior.
+- **Status / timing:** Planning only; independent design selection, not an automatic full redesign.
+
+### N-032 — Consistent navigation/page labels
+
+- **Cause:** [Sidebar](../frontend/web/src/ui/WorkspaceShell.tsx#L10) uses “Opportunities”, “Shortlist”, “Documents” and “Company feeds”, while pages use jobs/saved jobs/resumes/career sources. The mismatch is visible in source.
+- **Proposal:** Share a small destination-label map for sidebar, breadcrumbs and page headings. Keep routes stable and preserve the user's dashboard/profile exceptions.
+- **Status / timing:** Planning only; include in the small UI correction batch.
+
+### N-033 — Useful dashboard summaries
+
+- **Evidence:** [Dashboard](../frontend/web/src/auth/Dashboard.tsx#L44) contains guidance and links, without platform summary counts.
+- **Proposal:** One owner-scoped summary API for saved jobs/application progress, resumes, active plans/tasks and unread notifications. Show loading/unavailable states honestly; do not use demo AI-credit figures as real statistics.
+- **Status / timing:** Planning only; separately selected API/UI batch. Application data remains the current manual foundation until Phase 3.
+
+### N-034 — Clear analysis-version display names
+
+- **Changed requirement:** Use job title/company or resume filename plus analysis version, model and date, as in the revised raw examples.
+- **Evidence:** [Job versions](../frontend/web/src/jobs/JobAnalysisPanel.tsx#L143) and [resume versions](../frontend/web/src/resumes/ResumeDraftReview.tsx#L170) show version/model/date without a reusable source-based display label.
+- **Proposal:** Shared display-name helpers and compact primary/secondary text; distinguish PDF version from analysis version. Keep stable IDs, hashes, version numbering and stored source filenames unchanged.
+- **Status / timing:** Planning only; small UI batch with N-041/N-042. Additional requests previously grouped beneath this note now have N-041–N-044.
+
+### N-035 — “Next session” returns to Week 1
+
+- **Cause supported by code:** [Selection](../frontend/web/src/preparation/PreparationReview.tsx#L10) takes the first globally `planned` action; [button](../frontend/web/src/preparation/PreparationReview.tsx#L20) jumps only to its week. Merely browsing a later week does not advance progress. This explains the symptom while earlier sessions remain planned; it is not proof of saved-state corruption. Browser reproduction remains pending.
+- **Proposal:** Label the global action “Continue preparation”/“Next unfinished session”, focus the actual session and provide separate sequential navigation within the viewed roadmap. Marking done/skipped remains explicit; moving weeks must not silently mark work complete.
+- **Status / timing:** Planning only; focused usability correction before further preparation expansion.
+
+### N-036 — Central AI preferences
+
+- **Cause:** [useAiSettings](../frontend/web/src/intelligence/AiSettings.tsx#L6) resets local choices from capabilities; job/resume/preparation/Cady each expose model controls. [Settings](../frontend/web/src/settings/SettingsPage.tsx#L6) has no real AI preference controls.
+- **Proposal:** Account-wide provider/model/reasoning defaults, with default-off advanced per-feature overrides; server validates available capabilities and captures effective settings per run. Show compact settings summaries on feature pages. Existing saved outputs retain their original settings; model changes must not erase chats.
+- **Status / timing:** Planning only; E1 foundation. Actual billing remains demo; useful usage/budget controls are separately specified in the expansion plan.
+
+### N-037 — All chats, reusable context and memory
+
+- **Cause:** Current [store](../backend/intelligence/app/storage/cady_postgres.py#L47) overwrites one conversation; [save](../backend/intelligence/app/cady/service.py#L79) retains ten pairs. Last six messages already enter the prompt, but complete history and cross-thread retrieval do not exist.
+- **Proposal:** Durable threads/messages; shared current account knowledge plus explicit thread/task sources; last six messages for continuity and relevant older passages retrieved separately. New conversation creates a new thread. Preserve current source/revision checks; label past assistant output as advice, not confirmed user facts.
+- **Clarification/history:** The earlier memory question was pending. The later N-045/N-049 answers confirm stable revisioned profile/CV/preferences, sliding chat/application windows and approximately 4,000 tokens of composed memory/knowledge. This is stable account scope, not a frozen CV/job snapshot; complete history remains stored separately.
+- **Status / timing:** Planning only; E1/E3. Historical discarded pairs cannot be restored. Saved chat deletion/recovery must follow the existing retention policy.
+
+### N-038 — Widget behavior and optional Smart Cady
+
+- **N-038a evidence/proposal:** [Chat view](../frontend/web/src/cady/CadyPage.tsx#L36) scrolls to bottom on turn-count changes; [context](../frontend/web/src/cady/CadyPage.tsx#L9) opens when history is empty; [widget CSS](../frontend/web/src/ui/workspace.css#L512) adds an outer scroller around an inner message scroller. These are candidates for the reported scrolling friction, not browser-verified causes. Reproduce, preserve position when reading older replies, follow new messages only when appropriate, default the context disclosure closed and shrink welcome content.
+- **N-038b proposal:** Default-off page-aware suggestions only while open; use authorized page descriptors, recent messages and retrieval. Debounce/deduplicate meaningful changes, cache by source/settings revisions and expose higher usage/budget settings. No call on every render or while hidden. This is an AI-dependent extension, unlike N-038a.
+- **Status / timing:** Planning only; N-038a small UI batch, N-038b after grounded retrieval/tools and measured usage.
+
+### N-039 — Friendly Cady persona and face/icon
+
+- **Evidence:** [Welcome/assistant mark](../frontend/web/src/cady/CadyPage.tsx#L39) uses the generic sparkles icon; no dedicated persona/icon specification exists.
+- **Proposal:** A warm, brief, encouraging voice and a small original accessible face/SVG mark. Preserve candid uncertainty and evidence; charm must not imply verified expertise or completed actions.
+- **Status / timing:** Planning only; separately selected Cady polish. Static artwork needs no new paid generation call.
+
+### N-040 — RAG, tools and accuracy expansion
+
+- **Evidence:** [Architecture](architecture/system-overview.md#15-rag-strategy) anticipates RAG with pre-LLM visibility filtering; current Cady selects fixed [skill/requirement summaries](../backend/intelligence/app/cady/service.py#L42), with no retrieval or tools. [Reference checks](../backend/intelligence/app/cady/service.py#L70) validate membership, not whether prose is supported.
+- **Direction/history:** The earlier request organized remaining intelligence work separately from Phase 2. N-052 now explicitly sequences that expansion, Phase 2 release finalization, then Phase 3. This preserves the raw placement note and does not claim Phase 2 is already released.
+- **Updated plan:** Four OOP RAG stages; selectable pgvector/FAISS, optional BM25, cloud/S3/Redis lifecycle, exact evidence and claim checks. Read, Write and Agent/action tools combine aggregate live context with bounded drill-down and approved changes through owning APIs. Pgvector is the first local delivery; LangGraph is optional for resumable workflows.
+- **Status / timing:** Corpus/memory/action requirements are now confirmed by N-045/N-048/N-049/N-050/N-053. Documentation only; implementation and paid verification remain unselected. Framework/runtime/default limits stay reviewable proposals.
+
+### N-041 — Entire analysis and selected-version disclosures
+
+- **Evidence:** [Job analysis](../frontend/web/src/jobs/JobAnalysisPanel.tsx#L143) selects one saved version and already collapses its individual fields, but surrounding controls/comparison/warnings remain fully expanded.
+- **Proposal:** A compact source/version header, default-collapsed analysis details and selected-version content on demand. Preserve visible processing/error/stale notices, history pagination and generation controls. Reuse N-034 names; do not remove analysis features.
+- **Status / timing:** Planning only; small UI batch. Existing per-field expanders stay useful inside the panel.
+
+### N-042 — Clear linked resume/analysis inputs
+
+- **Cause:** [Comparison inputs](../frontend/web/src/jobs/JobMatchPanel.tsx#L123) expose “Resume version” and “CV analysis version” independently, obscuring their parent/child relationship.
+- **Proposal:** Group “Resumes” and “Resume analysis” together with a subtle container and concise explanation. Keep PDF/analysis version distinction, dependent loading/reset behavior and the job-analysis selector.
+- **Status / timing:** Planning only; small UI batch with N-034/N-041.
+
+### N-043 — Resume analysis must survive navigation
+
+- **Confirmed implementation gap:** [Resume UI](../frontend/web/src/resumes/ResumeDraftReview.tsx#L78) awaits the analyze HTTP response and aborts on unmount; [Python](../backend/intelligence/app/resumes/service.py#L27) generates inline. Jobs and preparation already use durable tasks; Celery is only planned.
+- **Proposal:** E2 shared permit/outbox/worker first; migrate existing job/preparation tasks together, then resume task intake with private source snapshots/rechecks, accepted-task status/history and retained results. Keep deterministic checks and interactive chat inline; embeddings/expensive tools can reuse task infrastructure later.
+- **Status / timing:** Planning only in this turn despite “now” in the raw note. Implementation needs an explicit batch selection in conversation; do not migrate all AI with a single broad executor change.
+
+### N-044 — Consistent Escape/backdrop dismissal
+
+- **Evidence:** Cady and [resume preview](../frontend/web/src/resumes/ResumePreview.tsx#L25) already handle Escape through native `onCancel`; the broad claim that Escape never works is not supported. A backdrop-close handler is absent in the inspected dialogs, and some [draft close paths](../frontend/web/src/resumes/ResumeDraftReview.tsx#L44) guard unsaved changes.
+- **Proposal:** Audit actual dialogs/popovers; route Escape, close button and genuine backdrop clicks through one close function, preserving dirty-state confirmation and focus recovery. Clicks/drags inside content must not dismiss. Closing an accepted task view stops waiting, not durable execution.
+- **Status / timing:** Planning only; small UI batch. Inline sections need expand/collapse, not modal dismissal behavior.
+
+### N-045–N-053 — Confirmed intelligence planning additions
+
+| Raw IDs | Refined decision / location | Timing |
+| --- | --- | --- |
+| N-045 | Separate chunking/indexing/retrieval/generation classes; selectable FAISS/pgvector and optional BM25; concise Settings info text. [RAG plan](rag-pipeline-and-storage-plan.md#four-explicit-stages) | E3, after source/execution contracts |
+| N-045 | S3 stores immutable FAISS artifacts; cloud factories produce typed service adapters. Redis caches manifest/ID/hot context, serving processes load indexes into RAM. Login warming is async; database fallback preserves availability rather than guaranteeing instant dense equivalence | E2/E3 |
+| N-045, N-048, N-049 | All authorized career-relevant knowledge, stable revisioned profile/CV memory, sliding chats/application events, ~4,000-token bundle; Phase 3 data enters through owning APIs when implemented | E1/E3 |
+| N-046 | Compare Supermemory, Cognee, Neo4j and LangMem against the baseline; LangMem is memory management, not a graph database. No candidate selected or installed. [Research](graph-memory-and-browser-tools-research.md) | After product-development stages |
+| N-047 | Record every provider attempt and official input/output/total/cache/reasoning fields; model-specific effective rates and cost/unknown states in Settings. Real usage is distinct from credits/payments. [Usage plan](ai-usage-and-credits-plan.md) | Instrument current provider E0/E1, extend to separated API/worker E2, extend before E3/E4 live work |
+| N-047 | Discuss wallet/provider integration, purchase ledger and optional bounded auto-refill separately | After all product-development stages; not a Phase 2 gate |
+| N-050, N-053 | Read/get/search, Write/save/update/record and Agent/planning/assessment/scheduling/report capabilities, not feature-page wrappers; aggregated `get_recommendation_context()` plus drill-down. Approved bounded tool plan, concrete write confirmation and post-action observation/receipt | E4, broader integrations E8; full application/interview actions depend on Phase 3 |
+| N-051 | Public search/fetch first, isolated browser rendering/navigation when needed; CareerOS control uses APIs. Research sources/private data remain separated | E4; authenticated external browser actions separately scoped |
+| N-052 | Complete selected E0–E9 expansion, record agreed release checks/deferrals, finalize Phase 2, then move to Phase 3. Graph/payment future experiments do not hold release open | Explicit next-phase checkpoint |
+
+**Outcome:** Plans updated; existing raw wording/IDs/review history and staged snapshot preserved. No application changes, infrastructure startup, dependencies, tests, paid AI calls, commit or push. The user selects the next implementation batch.
+
 ## Review log
 
 | Review date (IST) | Notes reviewed | Outcome / decisions |
@@ -384,6 +614,8 @@ clarifications and explicit implementation request supersede that pending state.
 | 2026-10-07 | N-001–N-022 | Latest answers supersede the ordinary-return auth report: seven-day expiry only; all-filters-empty observation confirmed; archive restore reserved for support; settings credits/billing explicitly demo. User then authorized implementation. Implemented the available scopes above; unsupported provider integrations/Google live consent remain prerequisites. Mocked AI verification only; no paid calls, commit or push. |
 | 2026-10-07 | N-023; related N-005/N-014 | User requested a Celery planning addition and current-task migration inventory. Added job-first/resume-next migration, PostgreSQL-owned history/results, Redis broker proposal, shared capacity/outbox/restart/cost controls and future preparation alignment. Planning docs only; no runtime/dependency changes, tests, AI calls, commit or push. Previous implementation patch preserved. |
 | 2026-10-08 | N-024–N-028; N-029–N-034 deferred | User selected flexible weekly roadmap sessions and account-persisted shared Cady history. Implemented combined review, compact setup, roadmap viewer, full-page/widget chat and revisioned storage. Mocked checks only; no paid calls, commit or push. Unrelated new notes remain deferred. |
+| 2026-10-08 | Comparison to `0d5902c`; N-029–N-034 refined, N-035–N-044 assigned | Preserved raw text/earlier decisions; verified current implementation boundaries read-only. Documented next-session affordance, centralized settings, full chats, widget/persona, RAG, compact versions/labels, queued resumes and dismissal. User requested separate intelligence expansion planning focused on Cady accuracy/tools; new plan/design and narrow backlog/executor-plan alignment added. Three corpus/memory/action preferences asked; defaults proposed pending answers. No application edits, tests, paid AI calls, commit, push or staged-snapshot changes. |
+| 2026-10-08 | Conversation N-045–N-053; N-037/N-040 decisions updated | User confirmed corpus/memory/actions and extended tools to Read/Write/Agent plus aggregate context. Added four-stage RAG/cloud/cache plan, official per-call usage/model costs, independent graph/browser research and Phase 2 → Phase 3 checkpoint. Future graph/payment work placed after product stages. Documentation only; raw/history and staged snapshot preserved; no runtime changes, tests, paid AI calls or publication. |
 
 ## Daily review setup
 
