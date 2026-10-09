@@ -1,795 +1,379 @@
 # CareerOS — Your Career Buddy
 
-> **A personal career operating system for discovering opportunities, preparing intelligently, tracking applications, and connecting with other job seekers.**
+A personal career workspace to discover jobs, organize resumes, understand your fit, prepare for interviews and keep track of your job search. **Cady** is the built-in AI career assistant: Career + Buddy.
 
-**CareerOS** is a full-stack, AI-powered job hunting and career development platform designed to bring the entire job-search journey into one place.
+**Status:** Active development. The core platform, initial intelligence features and E0 usability/evidence foundation are implemented. E1 is next; the remaining intelligence expansion and full Phase 2 release verification are pending. Full application workflows and community are later phases. Status reviewed against the repository on **9 October 2026**.
 
-Instead of treating job search, resume optimization, interview preparation, application tracking, and professional networking as separate activities, CareerOS brings them together into a single platform.
+[Setup](#set-up-locally) · [Features](#current-features) · [Product vision](docs/product-vision-and-features.md) · [Architecture](#current-architecture) · [Roadmap](#planned-work) · [Development](#developing-and-checking) · [Documentation](#documentation)
 
-At the center of the platform is **Cady**, the personalized AI career assistant.
+## Set up locally
 
-Cady is designed to understand a user's profile, skills, experience, career goals, job preferences, applications, and preparation progress, and use that context to provide personalized recommendations throughout the career journey.
+### 1. Install the prerequisites
 
----
+| Requirement | What to install |
+| --- | --- |
+| Git | [Git for your operating system](https://git-scm.com/install/) |
+| Node.js and npm | [Node.js 24](https://nodejs.org/en/download) and npm 11, as required by `package.json`; `.nvmrc` selects Node 24 |
+| Docker and Compose | [Docker with the Compose plugin](https://docs.docker.com/compose/install/); Docker Desktop includes both on macOS, Windows and Linux |
 
-## Project notebook
+Start Docker before continuing. The default setup runs the application and databases in Linux containers, so you do not need to install Python, MongoDB or PostgreSQL on your host. The shell examples below use Bash; Windows users can run them with [WSL2 and Docker integration](https://docs.docker.com/desktop/features/wsl/).
 
-Add observations, change requests, and future ideas to [project notes](docs/project-notes.md). Your raw notes, refined proposals, decisions, and review history stay in that one file.
-
-## Run locally
-
-The implemented foundation is React + TypeScript, Express + TypeScript, and MongoDB. The rest of this README describes the planned product.
+Check your tools:
 
 ```bash
-npm run setup
-docker compose up --build -d --wait
+git --version
+node --version
+npm --version
+docker compose version
+docker info
 ```
 
-Open http://localhost:5173 to register or sign in. JWT sessions, protected pages, and configurable Google/GitHub OAuth are implemented. Career profiles are available at `/profile` after signing in; see the [profile API](docs/api/profiles.md). Private PDF resume uploads, versions, in-page previews, downloads, and active selection are available at `/resumes`; see the [resume API](docs/api/resumes.md). Public job search and details are available at `/jobs`; Remotive listings refresh automatically every four hours while the API runs. See [job ingestion commands](docs/api/jobs.md). Save jobs and manage private notes, priorities, and interest statuses at `/saved-jobs`. Manage job sources and career bookmarks at `/career-sources`, with complete Greenhouse checks, limited Google Careers checks and explicit bookmark tracking setup; read alerts and set preferences at `/notifications`. See [career sources](docs/api/career-sources.md), the [source integration plan](docs/architecture/career-source-integration.md), and [notifications](docs/api/notifications.md). The connection diagnostic is at `/status`. Docker must be running; `npm run setup` creates a local signing secret without replacing existing settings.
+### 2. Clone and configure the repository
 
-See [local development](docs/local-development.md) for host development, checks, ports, and persistence, and [ADR-001](docs/adr/001-local-platform-foundation.md) for the setup decisions. See [authentication and OAuth setup](docs/api/authentication.md) to configure Google/GitHub credentials.
+```bash
+git clone https://github.com/Sam23599/CareerOS---Your-Career-Buddy.git
+cd CareerOS---Your-Career-Buddy
+npm run setup
+```
 
-The [notebook improvements](docs/notes-improvements.md) add Light/Dark/System at `/settings`, recovery at `/recycle-bin`, durable background job analyses at `/tasks`, source New/Earlier groups and saved-job manual application filters. Credits/payments are demo only; native LinkedIn/contact/review integrations and live Google consent remain pending prerequisites.
+`npm run setup` creates the root `.env` from [`.env.example`](.env.example) and generates separate random values for the JWT signing secret, private intelligence service token and intelligence database password. It preserves existing settings and credentials. This script uses Node's built-in modules, so `npm ci` is not required for the Docker quick start.
 
----
+Email/password registration works without OAuth credentials. PDF extraction works without an AI key. You can leave the Google, GitHub and OpenAI fields empty initially and configure them later. Keep `.env` private; it is ignored by Git.
+
+### 3. Start the application
+
+```bash
+docker compose up --build -d --wait
+docker compose ps
+```
+
+The first run downloads images, installs dependencies and starts five services: `web`, `api`, `mongodb`, `intelligence` and `intelligence-postgres`. The intelligence service applies its database schema and migrations at startup. Test containers are excluded from ordinary startup.
+
+| Destination | Default address |
+| --- | --- |
+| CareerOS | [http://localhost:5173](http://localhost:5173) |
+| Connection status | [http://localhost:5173/status](http://localhost:5173/status) |
+| API liveness | [http://localhost:3000/api/v1/health](http://localhost:3000/api/v1/health) |
+| API database readiness | [http://localhost:3000/api/v1/ready](http://localhost:3000/api/v1/ready) |
+| MongoDB | `mongodb://127.0.0.1:27017/careeros` |
+
+Python and PostgreSQL have no published host ports in the default stack. The browser accesses backend features through Express at `/api/v1`; Python is an internal service.
+
+### 4. Try the core workflow
+
+1. Open CareerOS and register your own account.
+2. Build your career profile and preferences at `/profile` → **Edit profile**.
+3. Upload a PDF at `/resumes`. Preview it on the page or use **Extract text** to inspect how it was read.
+4. Explore `/jobs`, save opportunities and organize them at `/saved-jobs`.
+5. Add a supported company feed or a career-page bookmark at `/career-sources` and set notification preferences at `/notifications`.
+6. Configure OpenAI below to generate resume/job analyses, create a preparation roadmap and chat with Cady.
+
+Remotive jobs are fetched from its current public feed when a refresh is due, then served from CareerOS's database. CareerOS checks at startup and every four hours while the API is running; [Remotive delays listings in its public feed by 24 hours](https://github.com/remotive-com/remote-jobs-api). Internet access and provider availability affect imports. To request a manual import:
+
+```bash
+docker compose exec -T api npm run jobs:ingest -- remotive
+```
+
+Manual imports share the stored cooldown with scheduled refreshes. For explicitly labelled demo jobs, use `fixture` instead of `remotive`. See [job ingestion](docs/api/jobs.md).
+
+### 5. Optional: enable Google or GitHub sign-in
+
+Create a provider application and set its matching client ID/secret pair in the root `.env`:
+
+```dotenv
+OAUTH_PUBLIC_ORIGIN=http://localhost:5173
+GITHUB_CLIENT_ID=your-client-id
+GITHUB_CLIENT_SECRET=your-client-secret
+# Configure these only if enabling Google as well:
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+```
+
+| Provider | Application setup | Callback URL |
+| --- | --- | --- |
+| GitHub | OAuth App; homepage `http://localhost:5173` | `http://localhost:5173/api/v1/auth/oauth/github/callback` |
+| Google | Web application OAuth client; configure consent/test users | `http://localhost:5173/api/v1/auth/oauth/google/callback` |
+
+Configure either provider independently; leave unused pairs empty. Recreate the API to load the settings:
+
+```bash
+docker compose up -d --force-recreate api
+```
+
+Use the same host and port consistently for login, `OAUTH_PUBLIC_ORIGIN` and the provider callback. If you change the frontend origin, update the allowed origins and provider application too. Unconfigured providers appear disabled with an explanation. GitHub's live account flow has been verified locally; Google is implemented but live verification remains deferred. See the [authentication and OAuth guide](docs/api/authentication.md#google-and-github-setup).
+
+### 6. Optional: enable AI generation
+
+Add your provider key to the root `.env`:
+
+```dotenv
+OPENAI_API_KEY=your-openai-api-key
+LLM_MODEL=gpt-6-luna
+LLM_REASONING_EFFORT=medium
+```
+
+```bash
+docker compose up -d --force-recreate intelligence
+```
+
+OpenAI is the current provider. The repository's model registry lists `gpt-4.1`, `gpt-6-luna` and `gpt-6.1-sol`, with model-specific reasoning choices. These are configured model IDs; actual access depends on the provider account. Future Gemini/Grok adapters are planned.
+
+Explicit resume analysis, job analysis, preparation generation and Cady questions send the relevant text/context to OpenAI and may incur provider charges. The API key stays in the intelligence service; never put it in a `VITE_*` variable. Opening saved analyses, matching, resume checks and saved-job ranking make no new AI call. The **AI usage and credits** settings panel currently displays demo figures, not measured account usage or a working payment balance.
+
+See [resume draft configuration](docs/resume-drafts.md) and [preparation/Cady inputs and limits](docs/personalized-preparation.md). Removing the key and recreating intelligence disables new generation while retained analyses remain readable.
+
+### Stop, restart and keep your data
+
+```bash
+docker compose logs -f api web intelligence
+```
+
+Press **Ctrl+C** to leave the log stream. Stop or start the stack with:
+
+```bash
+docker compose down
+docker compose up -d --wait
+```
+
+Ordinary container recreation and `docker compose down` preserve the named volumes:
+
+| Data | Owner and storage | Default Docker volume |
+| --- | --- | --- |
+| Accounts, password hashes, sessions, profiles, jobs, saved jobs, career sources and notifications | Express / MongoDB | `careeros_mongodb_data` |
+| Original uploaded PDF bytes | Express / private file storage at `/data/resumes` | `careeros_resume_data` |
+| Derived CV/JD analyses, preparation plans, tasks and the current saved Cady conversation | Python / PostgreSQL | `careeros_intelligence_db_data` |
+
+**`docker compose down -v` deletes these volumes, including uploaded resumes and stored account data.** Keep the volumes and `.env` when retaining a local installation. Resume removal through the app follows the recovery policy described below; deleting Docker volumes bypasses it.
+
+This Compose stack is for local development. The production deployment and hardening work belongs to a later phase.
+
+### Common setup problems
+
+| Symptom | What to check |
+| --- | --- |
+| Docker connection error | Start the Docker engine; confirm `docker info` works. |
+| A port is already in use | Change `WEB_PORT`, `API_PORT` or `MONGO_PORT` in `.env`, then recreate the affected services. For host development, also align `MONGODB_URI` with `MONGO_PORT`. |
+| Missing secret or database-password error | Run `npm run setup` from the repository root. |
+| Provider button is disabled | Supply both its client ID and secret, then recreate `api`. |
+| OAuth returns an error | Check the exact callback/origin, start a fresh login and inspect `docker compose logs --since 5m api`; see the authentication guide. |
+| New analysis is unavailable | Check the OpenAI key/model configuration and intelligence/PostgreSQL logs. Core API readiness does not prove AI availability. |
+| PDF extraction fails on host Python | Keep the parser in Linux Docker; its enforced memory limits deliberately require Linux. |
+| Jobs are missing from a company source | Check source coverage, saved/temporary filters and its last refresh result. Bookmarks do not import jobs; Google coverage is limited. |
+
+For more detail, see [local development](docs/local-development.md) and [intelligence setup](docs/intelligence-development.md).
 
 ## What is CareerOS?
 
-CareerOS focuses on four major areas:
+CareerOS brings the job-search journey into one workspace:
 
 ```text
-Discover → Match → Prepare → Apply → Track → Improve
-                     ↕
-                  Connect
+Discover → Understand your fit → Prepare → Save and track progress
+                                  ↕
+                                 Cady
 ```
 
-### 1. Discover
+The product aims to connect career profiles, resumes, job discovery, evidence-based assessments, preparation, applications and eventually collaboration. It is built incrementally so that each stage delivers a usable workflow before introducing more infrastructure.
 
-Find relevant opportunities from multiple sources:
+For the detailed feature-by-feature vision, examples and long-term architecture direction from the previous README, see the [product vision and feature guide](docs/product-vision-and-features.md).
 
-* LinkedIn
-* Naukri
-* Indeed
-* Wellfound
-* Foundit
-* Other major job platforms
-* Remote-focused platforms
-* Country-specific job platforms
-* Custom company career pages
-* Custom job sources
+## Current features
 
-Users can define companies, locations, countries, technologies, roles, and other preferences to personalize their search.
+### Core platform
 
----
+| Feature | Available today |
+| --- | --- |
+| Identity and sessions | Email/password registration, email or optional username login, JWT access/refresh sessions, automatic session restoration, remembered-account card, USER/ADMIN foundation and optional Google/GitHub OAuth. OAuth accounts can add an optional CareerOS password. |
+| Career profile | Separate view/edit pages for skills, experience, education, certifications, links and career preferences, with revision checks for conflicting edits. |
+| Resume library | Private PDF uploads up to 5 MiB, immutable upload versions, active-resume selection, in-page PDF preview, download, extracted-text preview and recovery after removal. OCR and DOCX support are future work. |
+| Job discovery | Live Remotive ingestion, normalized public listings, search, filters, sorting, pagination, original-source links and stale/expired listing handling. |
+| Company career sources | Greenhouse feeds, limited Google Careers imports, manual or 4/12/24-hour checks, optional temporary check filters, reset/update-saved-filter controls and New/Earlier groups based on the previous source visit. |
+| Career bookmarks | Separate saved links for unsupported company pages, with an explicit option to enable job tracking when native support is available. |
+| Saved jobs | Private notes, priority, interest state, manual application progress/history, search/filtering and recoverable removal. Full application/interview workflows are planned for Phase 3. |
+| Notifications | In-app matching-job/source-failure alerts, unread/read states and notification preferences. |
+| Workspace and recovery | Responsive navigation, Light/Dark/System appearance, guarded dialog dismissal and a recycle bin for resumes, saved jobs and sources/bookmarks. Default user recovery is 30 days; later retained data is recoverable only through support. |
 
-### 2. Match
+**Source coverage matters:** Greenhouse supports complete board refreshes. Google imports only the first 20 unfiltered public results per check and does not provide complete-site coverage. Bookmarks save links without fetching jobs. Native LinkedIn, Naukri, Indeed, recruiter/contact enrichment and employer-review imports are planned, rather than existing connectors. See [career-source behavior](docs/api/career-sources.md).
 
-CareerOS analyzes the relationship between a user's profile and available jobs.
+### Intelligence and preparation
 
-Features include:
+| Feature | How to use it | Current behavior |
+| --- | --- | --- |
+| Structured resume drafts | `/resumes` → **Resume draft** → **Analyze resume** | Generate detailed fields with source evidence, retain numbered analyses, review/edit selected fields and explicitly confirm profile import. |
+| Job-description analysis | Job detail → **Job analysis** → **Analysis versions & settings** | Generate private numbered analyses of requirements, priorities and responsibilities, with quoted evidence and stale/expired notices. Settings and selected-version details start collapsed. |
+| CV-to-job review | Job detail → choose **Resumes** and **Resume analysis** → **Review fit & gaps** | Combine weighted skill coverage, matched/missing evidence, requirements needing review and resume findings from saved analyses. |
+| Resume checks | `/resumes` → **Check resume** | Inspect recognized sections, PDF-reading warnings, literal job terminology and evidence gaps in compact expandable reports. |
+| Saved-job ranking | `/saved-jobs` → **Rank your shortlist** | Rank up to 50 filtered saved jobs using skill coverage, explicit preferences and priority, with reasons and separate unavailable/unanalysed results. |
+| Personalized preparation | Job detail → **Create AI preparation plan** after selecting comparison inputs | Confirm learning versus evidence gaps, choose a 1–8-week/time budget, generate a versioned roadmap and review/save session progress. Week browsing is separate from **Continue preparation**, which focuses the first unfinished session. |
+| Task history | `/tasks` | Follow accepted job-analysis/preparation tasks after navigation, inspect status/failures and cancel queued work. Resume AI generation still runs inline; its queue migration is planned. |
 
-* Resume/CV parsing
-* ATS analysis
-* Resume ↔ Job Description matching
-* Skill extraction
-* Matched and missing skills
-* Skill-gap analysis
-* Job relevance scoring
-* Personalized job recommendations
-* Profile improvement suggestions
+Matching, checks and ranking use existing analyses without a new provider call. The current matching score measures explainable skill coverage; it is not a hiring probability or an employer's ATS score. Other experience/role requirements remain explicitly reviewable. Generated content and source quotations still need user review.
 
-The AI intelligence layer will eventually combine traditional NLP/ML techniques with LLM-based analysis, embeddings, RAG, and agentic workflows.
+### Cady today
 
----
+Open `/cady` or the **Ask Cady** widget on an authenticated workspace page. Choose one saved CV analysis, optionally up to three job analyses and self-reported profile skills. Cady answers explicit questions, shows expandable source references and shares the conversation between its page and widget.
 
-### 3. Prepare
+The current account conversation retains the last ten question-and-answer pairs across refreshes/restarts; the last six messages provide prompt continuity. Changing context/model or choosing **New conversation** resets this bounded history. Full retained threads and shared account memory are planned in E1. Context starts collapsed, the widget keeps messages scrollable and **Jump to latest** lets you return after reading older replies.
 
-CareerOS doesn't stop at finding a job.
+Cady currently gives advice from selected saved facts. Web research, retrieval across all career history and confirmed app-control actions are planned extensions. See [Cady use and limits](docs/personalized-preparation.md).
 
-It helps users prepare for it.
+### Latest foundation: E0
 
-Examples:
+E0 adds the focused navigation, preparation, chat-scrolling, analysis-label/disclosure and guarded-dismissal improvements above. It also adds reusable Python source/evidence contracts, a generated platform schema and an offline evaluator with 16 synthetic draft cases covering ownership, revisions, removed sources, unsupported claims and other evidence boundaries.
 
-* Personalized interview preparation
-* Company-specific preparation
-* Technical topic recommendations
-* Coding problems
-* System-design preparation
-* Mini-project recommendations
-* Short 1–5 day projects based on current technologies
-* AI/Backend/System Design learning recommendations
-* Skill-gap driven learning paths
-* Preparation based on previously saved or applied jobs
+These contracts prepare the later RAG/tool work. Human review and a larger held-out benchmark remain pending before measuring Cady accuracy. See [E0 implementation and recorded verification](docs/intelligence-foundation.md).
 
-Coding recommendations can also be influenced by the companies a user is targeting.
+## Current architecture
 
----
+| Layer | Stack | Responsibility |
+| --- | --- | --- |
+| Web | React, TypeScript, Vite | Workspace UI, account flows, reviews and Cady page/widget |
+| Platform | Node.js 24, Express, TypeScript, MongoDB | Authentication, owned profiles/files, public jobs, saved jobs, sources, notifications and frontend API gateway |
+| Intelligence | Python 3.14, FastAPI, Pydantic, pypdf/fontTools, PostgreSQL, OpenAI | PDF extraction, derived analyses, matching/checks, preparation, Cady and shared AI infrastructure |
+| Local runtime | Docker Compose | Five running services, development reloads and persistent data volumes |
 
-### 4. Apply & Track
-
-The initial platform focuses on helping users **manage and track** their applications.
-
-Users can:
-
-* Save jobs
-* Record applications
-* Track application status
-* Maintain application history
-* Track interviews
-* Manage preparation progress
-* View application analytics
-
-A future version may support automated job applications through browser automation where technically and legally appropriate.
-
----
-
-### 5. Connect
-
-CareerOS also acts as a career-focused community platform.
-
-Users can:
-
-* Create teams/groups
-* Invite people using shareable links
-* Discover available groups
-* Request to join groups
-* Manage members using RBAC
-* Share jobs
-* Share articles and blogs
-* Share projects
-* Discuss opportunities
-* Exchange preparation resources
-* Communicate within the platform
-
-Future iterations can include real-time communication and voice capabilities.
-
----
-
-# Cady — Your AI Career Assistant
-
-**Cady** is the personalized AI assistant inside CareerOS.
-
-The name comes from:
-
-> **CA**reer + bu**DY**
-
-Cady is intended to evolve beyond a traditional chatbot into an AI career agent capable of working with the user's career context.
-
-Potential responsibilities include:
-
-```text
-User Profile
-     ↓
-Cady
-     ├── Job Discovery
-     ├── Job Matching
-     ├── Resume Analysis
-     ├── Skill Gap Analysis
-     ├── Job Preparation
-     ├── Project Recommendations
-     ├── Coding Preparation
-     ├── Application Insights
-     └── Career Recommendations
+```mermaid
+flowchart LR
+    Web[React workspace] -->|/api/v1| API[Express platform]
+    API --> Mongo[(MongoDB)]
+    API --> PDFs[Private PDF storage]
+    API -->|Authenticated /internal/v1| AI[FastAPI intelligence]
+    AI --> PG[(PostgreSQL)]
+    AI -->|Explicit generation| OpenAI[OpenAI API]
 ```
 
-The long-term goal is for Cady to become the intelligent layer connecting the different parts of CareerOS.
+Node resolves the signed-in user's owned sources before forwarding data to Python. Python owns derived records and shares its provider infrastructure across features; Cady is one consumer. Backend domain services and provider/storage adapters use OOP responsibilities. Routes and startup compose those services.
 
----
+The current background executor uses PostgreSQL task records and an in-process worker. Redis, Celery, vector databases, Kafka and Java/Spring Boot are planned additions. See [system overview](docs/architecture/system-overview.md), [service boundaries](docs/architecture/service-boundaries.md) and [architecture decisions](docs/adr/README.md).
 
-# Core Features
+## Planned work
 
-## Profile & Identity
+### Intelligence expansion before Phase 2 release closure
 
-Users can connect/import:
+The [intelligence expansion plan](docs/intelligence-evolution-plan.md) preserves the original roadmap while organizing the remaining work into implementable batches:
 
-* LinkedIn profile
-* CV/Resume
-* Email
-* Primary mobile number
-* GitHub
-* Coding profiles
-* Portfolio websites
-* Other professional profiles
+| Batch | Planned scope |
+| --- | --- |
+| E0 | Initial usability/source/evaluation foundation implemented; human benchmark review remains pending |
+| E1 — next | Central account AI preferences, durable threads/messages, shared revisioned context of about 4,000 tokens, sliding conversation/application windows and real per-call/model usage accounting |
+| E2 | Shared execution capacity and Celery/Redis; migrate existing job/preparation tasks, then queue resume analysis and later batch work |
+| E3 | Separate chunking, indexing, retrieval and generation classes; selectable pgvector/FAISS, optional BM25 hybrid search, cloud/storage factories and Redis warming with database fallback |
+| E4 | Cady Read, Write and Agent/action tools, aggregated recommendation context, targeted live-state reads, verified public research, approved action plans and explicitly confirmed writes with execution receipts and post-action checks |
+| E5 | Verified learning-resource discovery and recommendations for preparation sessions |
+| E6 | Richer role/experience alignment and resume improvement supported by CV/JD evidence |
+| E7 | Wider job discovery/recommendations and explainable reranking beyond the saved-job baseline |
+| E8 | Curated API/MCP/plugin integrations, signed webhooks and resumable approved workflows; optional LangGraph where required |
+| E9 | Cady persona/icon and optional page-aware Smart Cady, with measured usage and bounded calls |
 
-Users can control which information is shared and used by the platform.
+For the planned FAISS backend, **S3 stores index artifacts; actual document content remains in database/Redis**. Graph-memory options are researched for later experimentation. Real AI usage will precede any wallet/payments integration; credit purchase, payments and optional auto-refill need a separate future stage after product-development stages.
 
----
+After the selected expansion, finalize Phase 2 release verification and record any agreed deferrals, then proceed to Phase 3. Full application/interview tools depend on the future application domain. See the [RAG/storage plan](docs/rag-pipeline-and-storage-plan.md), [Cady tool design](docs/cady-retrieval-and-tools-design.md), [usage/credits plan](docs/ai-usage-and-credits-plan.md) and [graph/browser research](docs/graph-memory-and-browser-tools-research.md).
 
-## Job Intelligence
+### Original product roadmap
 
-* Multi-source job aggregation
-* Job normalization
-* Duplicate detection
-* Job filtering
-* Profile-based recommendations
-* Resume ↔ JD matching
-* ATS analysis
-* Skill extraction
-* Skill-gap analysis
-* Company-specific recommendations
+| Phase | Scope and current position |
+| --- | --- |
+| 0 — Foundation | Repository, architecture decisions and local development setup established |
+| 1 — Core platform | Core job workflow implemented and verified locally; Google live OAuth verification remains deferred |
+| 2 — Intelligence | CV/JD analysis, skill review, saved-job ranking, preparation and initial Cady implemented; expansion and release closure remain |
+| 3 — Applications | Java/Spring Boot application lifecycle, history, interviews, scheduling, analytics and transactional workflows |
+| 4 — Events | Kafka where domain events and asynchronous communication provide value |
+| 5 — Community | Teams, invitations, membership roles, job/resource sharing, discussions and real-time collaboration |
+| 6 — Notifications and automation | Broader delivery channels, reminders, scheduled preparation/application follow-ups and integrations |
+| 7 — Production | AWS deployment, CI/CD, orchestration, observability, scaling and production security |
+| 8 — Advanced Cady | Broader career-agent workflows, personalization and appropriately scoped automation |
 
----
+Multi-source discovery, profile improvement, richer preparation and collaboration remain part of the product vision. Future provider/platform integrations depend on supported access and their own adapters. The authoritative scope is the [development plan](docs/development-plan.md), with current milestones in the [Phase 2 backlog](docs/phase-2-backlog.md).
 
-## Job Sources
+## Developing and checking
 
-CareerOS is designed around an extensible job-source architecture.
+### Run React and Express on your host
 
-```text
-                CareerOS
-                   │
-       ┌───────────┼───────────┐
-       ↓           ↓           ↓
- Job Platforms  Companies   Custom Sources
-       │           │           │
-       ├─ Naukri   ├─ Career A ├─ Country X
-       ├─ Indeed   ├─ Career B ├─ Remote
-       ├─ Wellfound└─ Career C └─ Custom
-       └─ Foundit
+Use Node 24/npm 11 on the host while keeping MongoDB, PostgreSQL and the Linux intelligence service in Docker. The inline Compose override below lets Python reach the host API for background-task source checks; changing the root `.env` alone does not override Compose's `http://api:3000` setting.
+
+```bash
+npm run setup
+npm ci
+docker compose stop api web
+docker compose -f docker-compose.yml -f docker-compose.intelligence-host.yml -f - up --build -d --wait mongodb intelligence <<'YAML'
+services:
+  intelligence:
+    environment:
+      INTELLIGENCE_PLATFORM_URL: http://host.docker.internal:${API_PORT:-3000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+YAML
+API_HOST=0.0.0.0 npm run dev
 ```
 
-Each source can eventually have its own integration/adapter.
+The override publishes intelligence on `127.0.0.1:8000` and uses Docker's [host gateway](https://docs.docker.com/reference/cli/docker/container/run/#add-entries-to-container-hosts-file---add-host) for the return connection. `API_HOST=0.0.0.0` lets the container reach Express. The root `.env` should use `INTELLIGENCE_SERVICE_URL=http://127.0.0.1:8000` and the correct host `MONGODB_URI`. The Vite proxy reads the same root configuration. Host resume files default to `backend/platform/data/resumes/`, configurable through `RESUME_STORAGE_DIR`.
 
-Users can also configure custom company career pages and allow CareerOS to periodically search them for relevant opportunities.
+Web/API source edits reload automatically in either mode. Rebuild intelligence after Python changes with `docker compose up -d --build intelligence` for the default stack; repeat the Compose command with its inline override when using host mode. Recreate affected containers after environment changes and rebuild after dependency/configuration changes. To return to the full Docker stack, stop `npm run dev` and run `docker compose up --build -d --wait`.
 
----
+### Available checks
 
-## AI-Powered Profile Improvement
+Install host dependencies with `npm ci` before Node or browser checks:
 
-CareerOS can analyze professional profiles and identify areas that could be improved from a recruiter/hiring perspective.
-
-Potential sources:
-
-* LinkedIn
-* Naukri
-* GitHub
-* Coding platforms
-* Portfolio
-* Resume
-
-The system can provide recommendations around:
-
-* Skills
-* Experience presentation
-* Project visibility
-* Keywords
-* Profile completeness
-* Role alignment
-* Technical positioning
-
----
-
-## Community & Teams
-
-CareerOS supports collaborative career groups.
-
-A team can contain:
-
-* Members
-* Admins
-* Shared discussions
-* Jobs
-* Articles
-* Projects
-* Resources
-* Preparation activities
-
-Teams use role-based access control to manage permissions.
-
-Example:
-
-```text
-Team
-├── Owner
-├── Admin
-├── Member
-└── Pending Members
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:intelligence
 ```
 
-Future versions can introduce:
+`npm run test:intelligence` builds an isolated Linux test image and runs Python tests with temporary test storage. PostgreSQL integration checks require explicit test-database configuration; see [intelligence verification](docs/resume-drafts.md#checks). AI generation is mocked in automated checks.
 
-* Real-time messaging
-* WebSocket communication
-* Voice calls
-* Group discussions
-* Shared preparation sessions
+Install [Playwright's browser dependencies](https://playwright.dev/docs/intro) before browser checks:
 
----
-
-# Architecture Direction
-
-CareerOS will progressively evolve into a **polyglot microservice and event-driven architecture**.
-
-The project intentionally gives each backend technology a meaningful domain responsibility rather than using multiple languages only for demonstration purposes.
-
-### Frontend
-
-**React**
-
-Responsible for:
-
-* User interface
-* Job discovery
-* Profile management
-* AI interactions
-* Application dashboard
-* Team/community experience
-* Notifications
-* Real-time experiences
-
-### Node.js / MERN
-
-**Core Platform & Integrations**
-
-Responsible for:
-
-* Authentication
-* Users
-* Profiles
-* Connected accounts
-* Job aggregation
-* External integrations
-* API gateway
-* Notifications
-* Frontend-facing APIs
-* Community & Collaboration: team/group management, invitations, memberships, RBAC, discussions, shared resources, and real-time community interactions.
-
-### Python / FastAPI
-
-**Job Intelligence & AI**
-
-Responsible for:
-
-* Resume parsing
-* Skill extraction
-* Resume analysis
-* Job ↔ profile matching
-* Skill-gap analysis
-* Job ranking
-* Recommendations
-* NLP/ML
-* RAG
-* LLM integrations
-* AI agents
-
-### Java / Spring Boot
-
-**Application Management & Enterprise Workflows**
-
-Responsible for:
-
-* Job applications
-* Application lifecycle
-* Application state machine
-* Application history
-* Interview scheduling
-* Application analytics
-* Transactional workflows
-* Event-driven workflows
-
----
-
-# Technology Stack
-
-### Frontend
-
-* React
-* JavaScript/TypeScript
-* WebSockets
-
-### Backend
-
-* Node.js
-* Express.js
-* Python
-* FastAPI
-* Java
-* Spring Boot
-
-### Databases & Data
-
-* MongoDB
-* PostgreSQL
-* Redis
-
-### Messaging
-
-* Apache Kafka
-
-### AI / ML
-
-* OpenAI APIs
-* Gemini APIs
-* LangChain
-* LangGraph
-* RAG
-* NLP
-* Machine Learning
-* Embeddings / Vector Search
-
-### Infrastructure
-
-* Docker
-* Docker Compose
-* AWS
-* CI/CD
-
-Potential AWS components:
-
-* ECS
-* ECR
-* S3
-* IAM
-* CloudWatch
-* SNS
-* Secrets Manager
-* SSM
-
-### Notifications
-
-Potential providers:
-
-* AWS SNS
-* Firebase
-* OneSignal
-
-Supporting:
-
-* Browser notifications
-* Email notifications
-* Mobile notifications
-
----
-
-# Development Strategy
-
-The project will **not start as a fully distributed system**.
-
-It will be developed incrementally so that every stage remains usable while gradually introducing microservices, AI, messaging, and distributed-system concepts.
-
-## Phase 1 — Core Platform & Integrations
-
-**React + Node.js**
-
-Build the foundation of CareerOS.
-
-### Focus
-
-* React frontend
-* Node.js backend
-* Authentication
-* RBAC foundation
-* User profiles
-* Connected profiles
-* Resume upload
-* Job search
-* Job aggregation
-* Job normalization
-* Job saving
-* Custom company career sources
-* Basic notifications
-
-### Goal
-
-Build a functional CareerOS platform capable of discovering and organizing jobs.
-
----
-
-## Phase 2 — Job Intelligence & AI
-
-**Python + FastAPI**
-
-Introduce the intelligence layer.
-
-### Focus
-
-* Resume parsing
-* Skill extraction
-* ATS analysis
-* JD parsing
-* Resume ↔ JD matching
-* Skill-gap analysis
-* Job recommendations
-* Profile improvement
-* AI assistant — Cady
-* RAG
-* LLM integrations
-* NLP/ML capabilities
-* Personalized job preparation
-
-### Goal
-
-Turn CareerOS from a job aggregator into an **intelligent job-search platform**.
-
----
-
-## Phase 3 — Application Management & Enterprise Workflows
-
-**Java + Spring Boot**
-
-Introduce the application management domain.
-
-### Focus
-
-* Application tracking
-* Application lifecycle
-* Status state machine
-* Application history
-* Interview management
-* Scheduling
-* Application analytics
-* Transactional workflows
-* Event-driven workflows
-
-### Goal
-
-Build a robust application-management system with enterprise-oriented backend patterns.
-
----
-
-## Phase 4 — Event-Driven Architecture
-
-Introduce **Apache Kafka** progressively.
-
-Potential events:
-
-```text
-user.profile.updated
-job.created
-job.updated
-resume.analyzed
-job.match.calculated
-application.created
-application.status.changed
-interview.scheduled
-notification.created
+```bash
+npx playwright install --with-deps chromium
+npm run test:components
+npm run test:e2e
 ```
 
-Kafka will be introduced where asynchronous communication provides a real architectural benefit rather than replacing every REST request.
+Component checks start their own gallery on port 5183 and use mocked requests. End-to-end checks expect the local app on port 5173 unless `E2E_BASE_URL` is set; flows with real API calls create test accounts/data. MongoDB integration checks and detailed verification commands are documented in [local development](docs/local-development.md#checks).
 
----
+Pydantic is the intelligence schema source of truth; [the schema export script](scripts/export-draft-schema.py) generates the platform JSON schemas. The [offline evaluator](scripts/evaluate-cady.py) validates synthetic case definitions or reviewed observations without calling a model. Its setup, limits and historical E0 check results are documented in [the foundation guide](docs/intelligence-foundation.md).
 
-## Phase 5 — Community & Real-Time Platform
-
-Expand the social/community layer.
-
-### Focus
-
-* Teams
-* Invitations
-* Join requests
-* Team RBAC
-* Discussions
-* Shared resources
-* Real-time messaging
-* WebSockets
-* Voice communication
-
----
-
-## Phase 6 — Notifications & Automation
-
-Expand basic notifications with scheduled source scans, matching-job alerts, interview reminders, and preparation follow-ups.
-
----
-
-## Phase 7 — Production Infrastructure
-
-Containerize and deploy the platform.
-
-### Local
+### Repository layout
 
 ```text
-Docker Compose
-├── React
-├── Node.js
-├── FastAPI
-├── Spring Boot
-├── MongoDB
-├── PostgreSQL
-├── Redis
-└── Kafka
-```
-
-### Production
-
-Progressively introduce:
-
-* AWS
-* CI/CD
-* Container orchestration
-* Observability
-* Metrics
-* Logging
-* Distributed tracing
-* Scaling
-* Secrets management
-
----
-
-## Phase 8 — Advanced Cady
-
-Extend Cady into a career agent for personalized preparation, discovery, and career planning, following the detailed development roadmap.
-
----
-
-# Repository Structure
-
-The repository will initially follow a **frontend/backend separation**, with each backend technology maintaining its own services.
-
-```text
-career-os/
-│
-├── frontend/
-│   └── web/
-│
+CareerOS---Your-Career-Buddy/
+├── frontend/web/                 # React application and browser/component checks
 ├── backend/
-│   │
-│   ├── Platform & integrations (node)/
-│   │   ├── api-gateway/
-│   │   ├── user-service/
-│   │   ├── job-service/
-│   │   ├── community-service/
-│   │   └── notification-service/
-│   │
-│   ├── Intelligence & AI (python)/
-│   │   └── intelligence-service/
-│   │
-│   └── Applications & workflows (Java)/
-│       ├── application-service/
-│       └── interview-service/
-│
-├── infrastructure/
-│   ├── docker/
-│   ├── kafka/
-│   ├── mongodb/
-│   ├── postgres/
-│   └── redis/
-│
-├── docs/
-│   ├── architecture/
-│   ├── api/
-│   ├── events/
-│   └── adr/
-│
-├── docker-compose.yml
-├── README.md
-└── LICENSE
+│   ├── platform/                 # Express domains, gateway and MongoDB access
+│   └── intelligence/             # Modular FastAPI domains, providers and PostgreSQL
+├── docs/                         # Product plans, API contracts, guides and ADRs
+├── design-system/careeros/        # Shared design reference
+├── scripts/                      # Environment setup, schema export and evaluation
+├── docker-compose.yml            # Default local stack
+├── docker-compose.intelligence-host.yml
+├── .env.example                  # Public configuration template
+├── .nvmrc                        # Node 24
+└── package.json                  # npm workspaces and shared commands
 ```
 
-The exact service boundaries may evolve as development progresses.
+Future Java, Kafka, Redis and cloud modules will be added as their planned stages are implemented.
 
----
+## Documentation
 
-# Architecture Decision Records
+| Need | Start here |
+| --- | --- |
+| Detailed product vision and feature examples | [Product vision and feature guide](docs/product-vision-and-features.md) |
+| Local setup and persistence | [Local development](docs/local-development.md) · [Intelligence setup](docs/intelligence-development.md) |
+| Product roadmap and current status | [Development plan](docs/development-plan.md) · [Phase 2 backlog](docs/phase-2-backlog.md) · [Intelligence expansion](docs/intelligence-evolution-plan.md) |
+| Core API contracts | [Authentication](docs/api/authentication.md) · [Profiles](docs/api/profiles.md) · [Resumes](docs/api/resumes.md) · [Jobs](docs/api/jobs.md) · [Saved jobs](docs/api/saved-jobs.md) |
+| Sources and notifications | [Career sources](docs/api/career-sources.md) · [Source integration strategy](docs/architecture/career-source-integration.md) · [Notifications](docs/api/notifications.md) |
+| Intelligence workflows | [Resume drafts](docs/resume-drafts.md) · [Job analysis](docs/job-description-analysis.md) · [Matching](docs/cv-job-matching.md) · [Resume checks](docs/resume-checks.md) · [Ranking](docs/job-ranking.md) · [Preparation and Cady](docs/personalized-preparation.md) |
+| Current refinements | [Notebook improvements](docs/notes-improvements.md) · [E0 foundation](docs/intelligence-foundation.md) |
+| Background work, RAG and tools | [Celery plan](docs/intelligence-background-processing-plan.md) · [RAG/storage](docs/rag-pipeline-and-storage-plan.md) · [Cady retrieval/tools](docs/cady-retrieval-and-tools-design.md) |
+| Architecture and recorded verification | [System overview](docs/architecture/system-overview.md) · [ADR index](docs/adr/README.md) · [Phase 1 report](docs/phase-1-release-verification.md) |
+| Observations and change requests | [Project notebook](docs/project-notes.md) |
 
-CareerOS will maintain **Architecture Decision Records (ADRs)** from the beginning.
+Verification reports record checks performed on their stated dates; they do not certify every later change or provider integration.
 
-ADRs will document important technical decisions such as:
+## Contributing
 
-* Why a particular database was selected
-* Why a service boundary exists
-* REST vs Kafka decisions
-* Authentication strategy
-* AI/LLM provider decisions
-* RAG architecture
-* Job-source integration strategy
-* Caching strategy
-* Deployment decisions
-* Security decisions
+Keep changes focused, follow [AGENTS.md](AGENTS.md), and use existing domain services/provider adapters. Preserve ownership checks, original resume bytes, saved-version history and explicit confirmation before profile or application changes. Document behavior and planned scope accurately.
 
-Example:
-
-```text
-docs/
-└── adr/
-    ├── ADR-001-project-architecture.md
-    ├── ADR-002-database-strategy.md
-    ├── ADR-003-event-driven-architecture.md
-    └── ADR-004-ai-intelligence-service.md
-```
-
-The ADR directory will act as the historical record of how and why CareerOS evolves.
-
----
-
-# Guiding Principles
-
-### Build incrementally
-
-Do not introduce distributed-system complexity before it provides value.
-
-### Clear service ownership
-
-Each service should own its domain and data rather than creating tightly coupled services.
-
-### AI with explainability
-
-AI recommendations should provide useful reasoning and supporting information where possible.
-
-### Integration-first design
-
-External job platforms should be accessed through replaceable adapters rather than tightly coupling the platform to individual providers.
-
-### Security by design
-
-Authentication, RBAC, secrets management, data protection, rate limiting, and secure service communication will be considered throughout development.
-
-### Portfolio-quality engineering
-
-CareerOS is intended not only to solve a real problem but also to demonstrate production-oriented engineering across:
-
-```text
-Full Stack
-   +
-Microservices
-   +
-Cloud
-   +
-Event Driven Architecture
-   +
-AI / GenAI
-   +
-RAG
-   +
-Distributed Systems
-   +
-Security
-   +
-Observability
-```
-
----
-
-# Long-Term Vision
-
-CareerOS aims to become more than a job board.
-
-The long-term vision is:
-
-> **A personal career operating system that continuously helps users discover opportunities, understand where they fit, prepare for them, manage their applications, improve their professional profile, and connect with a community pursuing similar goals.**
-
-And at the center of that experience:
-
-> **Cady — your AI career companion.**
-
----
-
-## Project Status
-
-**Status:** Phase 1 core features are implemented and verified locally: JWT authentication, career profiles/preferences, PDF resumes, job ingestion/search, saved jobs, career sources/bookmarks and in-app notifications. Interrupted session restoration and GitHub issuer validation are fixed; standalone component tests and live GitHub sign-in/logout/returning-account checks pass. Google verification is deferred. See the [release verification report](docs/phase-1-release-verification.md).
-
-The architecture, service boundaries, technology choices, and feature set are expected to evolve as the project is implemented.
-
-The [development plan](docs/development-plan.md) defines the roadmap. The [Phase 1 backlog](docs/phase-1-backlog.md) tracks the first release, and the [review and next steps](docs/implementation-next-steps.md) define the proposed implementation sequence.
-
-The [Phase 2 backlog](docs/phase-2-backlog.md) and [resume intelligence decision](docs/adr/010-resume-intelligence-foundation.md) record the first implemented Phase 2 batch: private PDF text extraction with an **Extract text** preview on `/resumes`. See [local extraction setup](docs/intelligence-development.md). Structured resume drafts, job-description analysis, explainable CV-to-job matching, the [resume-checks/preparation baseline](docs/resume-checks.md) and [saved-job ranking](docs/job-ranking.md) are implemented. Matching, checks and ranking reuse saved analyses without new AI calls. [Personalized AI preparation and initial Cady](docs/personalized-preparation.md) now add explicitly generated, versioned preparation plans on job pages and a read-only assistant at `/cady`. Both reuse shared OpenAI model/reasoning settings. Celery migration remains planned separately.
-
-The first release focuses on the core job workflow; community belongs to Phase 5. This README describes the product vision and planned architecture.
-
-## Structured resume drafts
-
-At `/resumes`, choose **Resume draft** to generate detailed, evidence-backed fields using OpenAI, then edit/select, preview and explicitly apply supported fields to your profile. Python is modular/OOP and owns derived drafts in a separate PostgreSQL database. The shared provider layer serves resume/job analysis, preparation and initial Cady. See [configuration, review flow and checks](docs/resume-drafts.md) and [ADR-011](docs/adr/011-structured-resume-drafts.md).
-
-## Job-description analysis
-
-On a job detail page, use **Analyze job** to extract source-backed requirements, priorities and responsibilities. Analyses have private saved versions, quoted evidence and stale/expired listing notices. Opening saved versions makes no AI call. See [local use and checks](docs/job-description-analysis.md).
-
-## CV-to-job matching
-
-On a job detail page, choose saved resume/job analysis versions and click **Compare CV to job**. See weighted skill coverage, quoted matches, skills not found and other requirements to review. Profile skills are an optional self-reported supplement. Matching itself makes no AI call, and the score is not a hiring probability or employer ATS score. See [formula, boundaries and checks](docs/cv-job-matching.md).
-
-## Resume checks and preparation
-
-Choose **Check resume** in the resume library, or **Review resume & gaps** in the
-job comparison panel. Compact, expandable reports show recognized sections,
-PDF-reading warnings, prioritized missing evidence, profile-only claims and literal
-job terminology. Checks reuse saved versions without new AI calls or automatic
-edits. See [use, rules and limits](docs/resume-checks.md) and [ADR-014](docs/adr/014-resume-checks.md).
-
-## Saved-job ranking
-
-At `/saved-jobs`, expand **Rank your shortlist**, choose a saved CV analysis and
-click **Rank saved jobs**. Rank up to 50 jobs across the applied filters using
-skill coverage, with preferences and saved priority breaking ties. Expand reasons
-and review jobs needing analysis separately. No new AI call or automatic edits.
-See [rules and limits](docs/job-ranking.md) and [personalized preparation/Cady use and limits](docs/personalized-preparation.md).
+When reporting a bug, include the page, reproduction steps, expected/actual result and a safe error/task ID; include model/reasoning settings for AI issues. Keep credentials and private resume content out of reports. The [project notebook](docs/project-notes.md) preserves raw observations, refined requests, decisions and review history; proposed work is implemented only after its scope is selected.
